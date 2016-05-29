@@ -4,15 +4,14 @@
 #include <Rmath.h>
 #include <math.h>
 #include <R_ext/Lapack.h>
-#include <sys/time.h>
 
 //apply ADMM across lambda's when h and d are fixed
 //member_ind, csize_ind, No: identify block diagonal structure
 //LL: number of time points within neighborhood
-void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres, double *diff2);
+void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres);
 
 //apply ADMM to fixed h, d and lambda
-void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, double *diff2);
+void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len);
 
 //local group graphical lasso
 void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
@@ -42,7 +41,7 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J);
 
 
 
-void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres, double *diff2){
+void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres){
 
 	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0;
 
@@ -68,7 +67,7 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 			break;
 		}
 
-		ADMM_cluster(P, (member_ind+p*i), (csize_ind+no_sum), (No+i), LL, Pos, Pos_Len, Corr, Sigma, Z_i, (Z_pos+p*p*Pos_L*i), U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, pseudo_refit, S_L, (diff2+i));
+		ADMM_cluster(P, (member_ind+p*i), (csize_ind+no_sum), (No+i), LL, Pos, Pos_Len, Corr, Sigma, Z_i, (Z_pos+p*p*Pos_L*i), U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, pseudo_refit, S_L);
 
 		for(m=0; m<Pos_L; m++){
 			for(j=0; j<p; j++){
@@ -88,16 +87,13 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 
-void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, double *diff2){
+void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len){
 
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k, pos, S_L;
 	int *member_ind_n;
 	double rho = (*Rho)/sqrt(L);
-	struct timeval t_start, t_end;
 
 	S_Len[0] = 0;
-
-	gettimeofday(&t_start, NULL);
 
 	//iteration across block diagonals
 	for(n=0; n<no; n++){
@@ -230,9 +226,6 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 	}//end iteration across block diagonals
 
 	S_Len[0] = S_Len[0]/Pos_L;
-
-	gettimeofday(&t_end, NULL);
-	*diff2 = (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec)/1000000.0;
 }
 
 

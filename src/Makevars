@@ -1,0 +1,2 @@
+PKG_CPPFLAGS=-I/usr/include
+PKG_LIBS=-L$(R_HOME)/lib${R_ARCH} -lRlapack

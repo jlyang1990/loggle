@@ -355,17 +355,22 @@ simu.gglasso = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-simu.lglasso = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+simu.lglasso = function(pos, h, X, corr.ind = TRUE, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos); D = length(d.l); L = length(lambda.c)
+  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.l); L = length(lambda.c)
+  
+  Sigma = gene.Sigma(X, pos, h)
+  if(corr.ind == TRUE){
+    Corr = gene.corr(X, pos, h)
+  }else{
+    Corr = Sigma
+  }
   
   S.list = array(vector("list", 1), c(L, D, K))
   Omega.lg.list = array(vector("list", 1), c(L, D, K)); Omega.rf.list = array(vector("list", 1), c(L, D, K))
   edge = array(0, c(L, D, K)); time = rep(0, K)
   
   if(d.l[D]==1){
-    
-    record.list = array(0, c(L, D-1, K)); time.list = matrix(0, D-1, K)
     
     result.lg = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("simu.lglasso.pos")) %dopar%
       simu.lglasso.pos(pos[k], Corr, Sigma, d.l[-D], lambda.c, epi.abs[-D], epi.rel[-D], pseudo.fit, pseudo.refit, thres)
@@ -378,10 +383,6 @@ simu.lglasso = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseud
       Omega.lg.list[, -D, k] = result.lg.k[[2]]
       Omega.rf.list[, -D, k] = result.lg.k[[3]]
       edge[, -D, k] = result.lg.k[[4]]
-      time[k] = result.lg.k[[5]]
-      
-      record.list[, , k] = result.lg.k[[6]]
-      time.list[, k] = result.lg.k[[7]]
     }
     
     result.gg = simu.gglasso(pos, Corr, Sigma, lambda.c, epi.abs[D], epi.rel[D], pseudo.fit, pseudo.refit, thres)
@@ -392,8 +393,6 @@ simu.lglasso = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseud
     edge[, D, ] = result.gg[[4]]
   
   }else{
-    
-    record.list = array(0, c(L, D, K)); time.list = matrix(0, D, K)
     
     result.lg = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("simu.lglasso.pos")) %dopar%
       simu.lglasso.pos(pos[k], Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres)
@@ -406,102 +405,8 @@ simu.lglasso = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseud
       Omega.lg.list[, , k] = result.lg.k[[2]]
       Omega.rf.list[, , k] = result.lg.k[[3]]
       edge[, , k] = result.lg.k[[4]]
-      time[k] = result.lg.k[[5]]
-      
-      record.list[, , k] = result.lg.k[[6]]
-      time.list[, k] = result.lg.k[[7]]
     }
   }
   
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge, time, record.list, time.list))  
-}
-
-
-#FDR-power calculation########################################################################################################################################################################################################################################
-
-#Output###
-#overlap.edge: D by L by K numbers of overlapped edges between the estimated graphs and the true graphs
-#FDR: D by L FDR values
-#power: D by L power values
-
-FP = function(pos, Omega.rf.list, edge, Omega.t, edge.t){
-  
-  L = dim(Omega.rf.list)[1]; D = dim(Omega.rf.list)[2]; K = dim(Omega.rf.list)[3]
-  
-  overlap.edge = array(0, c(L, D, K))
-  
-  FDR.l = array(0, c(L, D, K)); power.l = array(0, c(L, D, K))
-  FDR = array(0, c(L ,D, 2)); power = array(0, c(L ,D, 2))
-  
-  for(j in 1:D){
-    
-    for(l in 1:L){
-      
-      for(k in 1:K){overlap.edge[l, j, k] = (sum(as.matrix(Omega.rf.list[[l, j, k]])&Omega.t[, , pos[k]])-p)/2}
-      
-      FDR.l[l, j, ] = 1-overlap.edge[l, j, ]/edge[l, j, ]; FDR.l[is.nan(FDR.l)] = 0
-      power.l[l, j, ] = overlap.edge[l, j, ]/edge.t[pos]
-      
-      #calculate FDR and power
-      FDR[l, j, 1] = mean(FDR.l[l, j, -c(1, K)])
-      power[l, j, 1] = mean(power.l[l, j, -c(1, K)])
-      
-      #calculate the standard deviation of FDR and power
-      FDR[l, j, 2] = sd(FDR.l[l, j, -c(1, K)])/sqrt(K-2)
-      power[l, j, 2] = sd(power.l[l, j, -c(1, K)])/sqrt(K-2)
-    }
-    
-    #plot of generation of ROC curves
-    plot(NULL, xlim = c(0, 1), ylim = c(0, 1), xlab = "FDR", ylab = "power")
-    sapply(1:L, function(l) points(FDR.l[l, j, ], power.l[l, j, ], pch = 20, col = l))
-    points(FDR[, j, 1], power[, j, 1], type = "o", pch = 24, col = "black", bg = 1:L)
-  }
-  
-  return(list(overlap.edge, FDR, power))
-}
-
-
-#cross validation selection###################################################################################################################################################################################################################################
-
-#Input###
-#fold: number of folds in cross validation
-#corr.ind: 0: use Sigma in model fitting, 1: use Corr in model fitting
-
-#Output###
-#result: a list of length=fold containing the results from simu.lglasso
-#cv: L by D by K by fold by 2 cv scores (the last dimension corresponds to whether we use the adjusted bandwidth h or not)
-
-cv.select = function(pos, h, fold, X, corr.ind, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
-  
-  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.l); L = length(lambda.c)
-  
-  result = vector("list", fold); cv = array(0, c(L, D, K, fold, 2))
-  
-  for(i in 1:fold){
-    
-    pos.test = seq(i, N, fold); pos.train = (1:N)[-pos.test]
-    
-    Sigma.train = gene.Sigma(X, pos.train, h)
-    if(corr.ind == 1){
-      Corr.train = gene.corr(X, pos.train, h)
-    }else{
-      Corr.train = Sigma.train
-    }
-    Sigma.test = gene.Sigma(X, pos.test, h)
-    Sigma.test2 = gene.Sigma(X, pos.test, h*(fold-1)^(1/5))
-    
-    result.i = simu.lglasso(pos, Corr.train, Sigma.train, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres)
-    Omega.rf.list = result.i[[3]]
-    result[[i]] = result.i
-    
-    for(d in 1:D){for(l in L:1){for(k in 1:K){
-      
-      Omega.rf = as.matrix(Omega.rf.list[[l, d, k]])
-      cv[l, d, k, i, 1] = sum(c(t(Sigma.test[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
-      cv[l, d, k, i, 2] = sum(c(t(Sigma.test2[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
-    }}}
-    
-  }
-  
-  return(list(result, cv))
+  return(list(S.list, Omega.lg.list, Omega.rf.list, edge))  
 }
