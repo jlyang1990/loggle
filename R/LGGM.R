@@ -63,141 +63,84 @@ gene.corr= function(X, pos, h){
 #record.list: D by L time costs in C
 #time.list: D time costs w.r.t. D d's in R
 
-LGGM.pos = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.pos = function(pos, Corr, Sigma, d, lambda, pseudo.fit, pseudo.refit, epi.abs, epi.rel){
   
-  ptm = proc.time()
+  p = dim(Sigma)[1]; N = dim(Sigma)[3]
+    
+  Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
+  Nd.index.c = Nd.index - 1; Nd = length(Nd.index)
+  Nd.pos = which(Nd.index == pos); Nd.pos.c = Nd.pos - 1; Nd.pos.l = 1
+    
+  Corr.sq = apply(Corr[, , Nd.index]^2, c(1, 2), sum)
+    
+  Z.ini.vec = rep(0, p*p); Z.pos.vec = rep(0, p*p); U.vec = rep(0, p*p); edge = 0
+    
+  lambda = sqrt(Nd)*lambda; rho = lambda
+    
+  #detect block diagonal structure
+  adj.mat = (Corr.sq>lambda^2); diag(adj.mat) = 1; graph = graph.adjacency(adj.mat)
+  cluster = clusters(graph); member = cluster$membership; csize = cluster$csize; no = cluster$no
+  member.index = sort(member, index.return=T)$ix-1; csize.index = c(0, cumsum(csize))
+    
+  result = .C("ADMM_cluster", 
+              as.integer(p),
+              as.integer(member.index),
+              as.integer(csize.index),
+              as.integer(no),
+              as.integer(Nd),
+              as.integer(Nd.pos.c),
+              as.integer(Nd.pos.l),
+              as.double(Corr[, , Nd.index]),
+              as.double(Sigma[, , Nd.index]),
+              Z.ini.vec = as.double(Z.ini.vec),
+              Z.pos.vec = as.double(Z.pos.vec),
+              as.double(U.vec),
+              as.double(lambda),
+              as.double(rho),
+              as.double(epi.abs),
+              as.double(epi.rel),
+              as.integer(pseudo.fit),
+              as.integer(pseudo.refit),
+              as.integer(edge)
+  )
+      
+  Omega.lg = matrix(result$Z.ini.vec, p, p)
+  Omega.rf = matrix(result$Z.pos.vec, p, p)
+  edge = result$edge
+  S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]
+  cv = sum(c(t(Sigma[, , pos]))*c(Omega.rf)) - log(det(Omega.rf))
+    
+  cat("complete: t =", round((pos-1)/(N-1), 2), "\n")
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; D = length(d.l); L = length(lambda.c)
-  
-  S.list = matrix(vector("list", 1), L, D)
-  Omega.lg.list = matrix(vector("list", 1), L, D); Omega.rf.list = matrix(vector("list", 1), L, D)
-  edge = matrix(0, L, D)
-  
-  time.list = rep(0, D); record.list = matrix(0, L, D)
-  
-  for(j in 1:D){
-    
-    d = d.l[j]; epi.abs.d = epi.abs[j]; epi.rel.d = epi.rel[j]
-    
-    Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
-    Nd.index.c = Nd.index - 1; Nd = length(Nd.index); Nd.pos = which(Nd.index == pos)
-    Nd.pos.c = Nd.pos - 1; Nd.pos.l = 1
-    
-    Corr.sq = apply(Corr[, , Nd.index]^2, c(1, 2), sum)
-    
-    Z.ini.vec = rep(0, p*p*L); Z.pos.vec = rep(0, p*p*L)
-    
-    lambda = sqrt(Nd)*lambda.c; rho = lambda
-    
-    member.index.list = rep(0, p*L); no.list = rep(0, L); csize.index.list = c()
-    
-    diff2 = rep(0, L)
-    
-    #detect block diagonal structure
-    for(l in L:1){
-      
-      adj.mat = (Corr.sq>lambda[l]^2); diag(adj.mat) = 1; graph = graph.adjacency(adj.mat)
-      cluster = clusters(graph); member = cluster$membership; csize = cluster$csize; no = cluster$no
-      member.index = sort(member, index.return=T)$ix-1; csize.index = c(0, cumsum(csize))
-      
-      member.index.list[(p*(l-1)+1):(p*l)] = member.index
-      no.list[l] = no
-      csize.index.list = c(csize.index.list, csize.index)
-    }
-      
-    ptm1 = proc.time()
-      
-    result = .C("ADMM_lambda", 
-                  as.integer(p),
-                  as.integer(member.index.list),
-                  as.integer(csize.index.list),
-                  as.integer(no.list),
-                  as.integer(Nd),
-                  as.integer(Nd.pos.c),
-                  as.integer(Nd.pos.l),
-                  as.double(Corr[, , Nd.index]),
-                  as.double(Sigma[, , Nd.index]),
-                  Z.ini.vec = as.double(Z.ini.vec),
-                  Z.pos.vec = as.double(Z.pos.vec),
-                  as.integer(L),
-                  as.double(lambda),
-                  as.double(rho),
-                  as.double(epi.abs.d),
-                  as.double(epi.rel.d),
-                  as.integer(pseudo.fit),
-                  as.integer(pseudo.refit),
-                  as.double(thres),
-                  diff2 = as.double(diff2)
-    )
-      
-    diff1 = (proc.time() - ptm1)[3]
-      
-    Z.ini.vec = result$Z.ini.vec
-    Z.pos.vec = result$Z.pos.vec
-      
-    for(l in L:1){
-      
-      Omega.lg = matrix(Z.ini.vec[(p*p*(l-1)+1):(p*p*l)], p, p)
-      Omega.rf = matrix(Z.pos.vec[(p*p*(l-1)+1):(p*p*l)], p, p)
-        
-      S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.L = nrow(S)
-        
-      S.list[[l, j]] = S
-      Omega.lg.list[[l, j]] = Matrix(Omega.lg, sparse = T)
-      Omega.rf.list[[l, j]] = Matrix(Omega.rf, sparse = T)
-      edge[l, j] = S.L
-    }
-      
-    time.list[j] = diff1; record.list[, j] = result$diff2
-    
-    cat("complete: d =", d, "t =", round((pos-1)/(N-1), 2), "\n")
-  }
-  
-  time = (proc.time() - ptm)[3]
-  
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge, time, record.list, time.list))
+  return(list(Omega.lg, Omega.rf, edge, S, cv))
 }
 
 
 #simulation study for global group-lasso (d=1)################################################################################################################################################################################################################
 
-LGGM.global = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.global = function(pos, Corr, Sigma, lambda, pseudo.fit, pseudo.refit, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos); L = length(lambda.c)
-  
-  S.list = matrix(vector("list", 1), L, K)
-  Omega.lg.list = matrix(vector("list", 1), L, K); Omega.rf.list = matrix(vector("list", 1), L, K)
-  edge = matrix(0, L, K)
+  p = dim(Sigma)[1]; N = dim(Sigma)[3]
   
   N.index.c = 0:(N-1)
   pos.c = pos-1
   
-  Corr.sq = apply(Corr^2, c(1, 2), sum)
+  Corr.sq = apply(Corr[, , N.index]^2, c(1, 2), sum)
   
-  Z.ini.vec = rep(0, p*p*K*L); Z.pos.vec = rep(0, p*p*K*L)
+  Z.ini.vec = rep(0, p*p*K); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*K); edge = 0
   
-  lambda = sqrt(N)*lambda.c; rho = lambda
+  lambda = sqrt(N)*lambda; rho = lambda
   
-  member.index.list = rep(0, p*L); no.list = rep(0, L); csize.index.list = c()
+  #detect block diagonal structure
+  adj.mat = (Corr.sq>lambda^2); diag(adj.mat) = 1; graph = graph.adjacency(adj.mat)
+  cluster = clusters(graph); member = cluster$membership; csize = cluster$csize; no = cluster$no
+  member.index = sort(member, index.return=T)$ix-1; csize.index = c(0, cumsum(csize))
   
-  diff2 = rep(0, L)
-  
-  for(l in L:1){
-    
-    adj.mat = (Corr.sq>lambda[l]^2); diag(adj.mat) = 1; graph = graph.adjacency(adj.mat)
-    cluster = clusters(graph); member = cluster$membership; csize = cluster$csize; no = cluster$no
-    member.index = sort(member, index.return=T)$ix-1; csize.index = c(0, cumsum(csize))
-    
-    member.index.list[(p*(l-1)+1):(p*l)] = member.index
-    no.list[l] = no
-    csize.index.list = c(csize.index.list, csize.index)
-  }
-  
-  result = .C("ADMM_lambda", 
+  result = .C("ADMM_cluster", 
               as.integer(p),
-              as.integer(member.index.list),
-              as.integer(csize.index.list),
-              as.integer(no.list),
+              as.integer(member.index),
+              as.integer(csize.index),
+              as.integer(no),
               as.integer(N),
               as.integer(pos.c),
               as.integer(K),
@@ -205,40 +148,23 @@ LGGM.global = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit,
               as.double(Sigma),
               Z.ini.vec = as.double(Z.ini.vec),
               Z.pos.vec = as.double(Z.pos.vec),
-              as.integer(L),
+              as.double(U.vec),
               as.double(lambda),
               as.double(rho),
               as.double(epi.abs),
               as.double(epi.rel),
               as.integer(pseudo.fit),
               as.integer(pseudo.refit),
-              as.double(thres),
-              diff2 = as.double(diff2)
+              as.integer(edge)
   )
   
-  Z.ini.vec = result$Z.ini.vec
-  Z.pos.vec = result$Z.pos.vec
+  Omega.lg.list = array(result$Z.ini.vec, c(p, p, K))
+  Omega.rf.list = array(result$Z.pos.vec, c(p, p, K))
+  edge.list = rep(result$edge, K)
+  S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.list = rep(list(S), K)
+  cv.list = sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf)))
   
-  for(l in L:1){
-    
-    Omega.gg = array(Z.ini.vec[(p*p*K*(l-1)+1):(p*p*K*l)], c(p, p, K))
-    Omega.rf = array(Z.pos.vec[(p*p*K*(l-1)+1):(p*p*K*l)], c(p, p, K))
-    
-    S = which(Omega.rf[, , 1]!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.L = nrow(S)
-  
-    edge[l, ] = S.L
-    
-    for(k in 1:K){
-      
-      S.list[[l, k]] = S
-      Omega.lg.list[[l, k]] = Matrix(Omega.gg[, , k], sparse = T)
-      Omega.rf.list[[l, k]] = Matrix(Omega.rf[, , k], sparse = T)
-    }
-  }
-  
-  cat("complete: d = 1", "\n")
-  
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge))
+  return(list(Omega.lg.list, Omega.rf.list, edge.list, S.list, cv.list))
 }
 
 
@@ -265,9 +191,9 @@ LGGM.global = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit,
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-LGGM = function(X, pos, pseudo.fit, h, d.l, lambda.c, epi.abs, epi.rel, corr.ind = TRUE, pseudo.refit, thres){
+LGGM = function(X, pos, pseudo.fit, h, d, lambda, epi.abs, epi.rel, corr.ind = TRUE, pseudo.refit, thres){
   
-  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.l); L = length(lambda.c)
+  p = dim(X)[1]; N = dim(X)[2]; K = length(pos)
   
   Sigma = gene.Sigma(X, pos, h)
   if(corr.ind == TRUE){
@@ -276,9 +202,9 @@ LGGM = function(X, pos, pseudo.fit, h, d.l, lambda.c, epi.abs, epi.rel, corr.ind
     Corr = Sigma
   }
   
-  S.list = array(vector("list", 1), c(L, D, K))
-  Omega.lg.list = array(vector("list", 1), c(L, D, K)); Omega.rf.list = array(vector("list", 1), c(L, D, K))
-  edge = array(0, c(L, D, K)); time = rep(0, K)
+  S.list = vector("list", K)
+  Omega.lg.list = vector("list", K); Omega.rf.list = vector("list", K)
+  edge = rep(0, K)
   
   if(d.l[D]==1){
     
