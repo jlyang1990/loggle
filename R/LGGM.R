@@ -1,97 +1,4 @@
 
-library(MASS); library(Matrix); library(sparseMVN); library(matrixcalc); library(foreach); library(doParallel); library(igraph)
-
-dyn.load("ADMM.so")
-
-#list function################################################################################################################################################################################################################################################
-
-list <- structure(NA,class="result")
-"[<-.result" <- function(x,...,value) {
-  args <- as.list(match.call())
-  args <- args[-c(1:2,length(args))]
-  length(value) <- length(args)
-  for(i in seq(along=args)) {
-    a <- args[[i]]
-    if(!missing(a)) eval.parent(substitute(a <- v,list(a=a,v=value[[i]])))
-  }
-  x
-}
-
-
-#Data generation function#####################################################################################################################################################################################################################################
-
-#Input###
-#p: dimension of each observation
-#N: number of observations (number of time points in observations)
-#alpha: value of threshold in soft-thresholding
-
-#Output###
-#Omega: list of true precision matrices
-#X: list of observations
-#edge: list of numbers of edges in true precision matrices
-
-gene.data = function(p, N, alpha){
-  
-  pd = F
-  
-  while(pd==F){
-    
-    t = seq(0, 1, length=N)
-    B1 = matrix(rnorm(p^2, 0, 1/2), p, p); B1[upper.tri(B1)] = 0
-    B2 = matrix(rnorm(p^2, 0, 1/2), p, p); B2[upper.tri(B2)] = 0
-    B3 = matrix(rnorm(p^2, 0, 1/2), p, p); B3[upper.tri(B3)] = 0
-    B4 = matrix(rnorm(p^2, 0, 1/2), p, p); B4[upper.tri(B4)] = 0
-    Omega = array(0, c(p, p, N)); edge = rep(0, N); X = matrix(0, p, N)
-    uni = runif(4, -0.5, 0.5)
-    
-    for(i in 1:N){
-      
-      G = (B1*sin(pi*t[i]/2+uni[1]) + B2*cos(pi*t[i]/2+uni[2]) + B3*sin(pi*t[i]/4+uni[3]) + B4*cos(pi*t[i]/4+uni[4]))/2
-      Omega.o = G%*%t(G)
-      Omega.o = Omega.o%*%diag(1/sqrt((1:p))); Omega.o[upper.tri(Omega.o)] = 0
-      Omega.o = Omega.o + t(Omega.o); diag(Omega.o) = diag(Omega.o)/(2*sqrt(1:p)) + log(p, 10)/4
-      Omega.temp1 = matrix(1, p, p) - alpha/abs(Omega.o)
-      Omega.temp2 = matrix(1, p, p) - alpha/(2*abs(Omega.o))
-      Omega.n = Omega.temp2*(Omega.temp1>0)*Omega.o
-      diag(Omega.n) = diag(Omega.o)
-      
-      if(is.positive.definite(Omega.n)==F){pd = F; break}
-      
-      Omega[, , i] = Omega.n
-      Omega.n = Matrix(Omega.n, sparse=T)
-      edge[i] = (sum(!(Omega.n==0))-p)/2
-      X[, i] = rmvn.sparse(1, rep(0, p), Cholesky(Omega.n))# + 0*rnorm(p, sd = 0.2)
-      if(i==N){pd = T}
-    }
-  }
-  return(list(Omega, X, edge))
-}
-
-
-#Data generation function (time-invariant)####################################################################################################################################################################################################################
-
-gene.data.2 = function(p, N){
-  pd = F
-  while(pd==F){
-    t = seq(0, 1, length=N)
-    B = matrix((runif(p^2)<(2/p)), p, p); B[upper.tri(B)] = 0; B = B + t(B); diag(B) = 1
-    C = matrix(runif(p^2), p, p); C[upper.tri(C)] = 0; C = C + t(C); diag(C) = diag(C)/2
-    Omega = array(0, c(p, p, N)); edge = rep(0, N); X = matrix(0, p, N)
-    for(i in 1:N){
-      Omega.n = sin(2*pi*t[i] + C)*B
-      diag(Omega.n) = abs(diag(Omega.n)) +log(p, 10)
-      if(is.positive.definite(Omega.n)==F){pd = F; break}
-      Omega[, , i] = Omega.n
-      Omega.n = Matrix(Omega.n, sparse=T)
-      edge[i] = (sum(!(Omega.n==0))-p)/2
-      X[, i] = rmvn.sparse(1, rep(0, p), Cholesky(Omega.n))
-      if(i==N){pd = T}
-    }
-  }
-  return(list(Omega, X, edge))
-}
-
-
 #Sigma generation function####################################################################################################################################################################################################################################
 
 #Input###
@@ -156,7 +63,7 @@ gene.corr= function(X, pos, h){
 #record.list: D by L time costs in C
 #time.list: D time costs w.r.t. D d's in R
 
-simu.lglasso.pos = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.pos = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
   
   ptm = proc.time()
   
@@ -254,7 +161,7 @@ simu.lglasso.pos = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, p
 
 #simulation study for global group-lasso (d=1)################################################################################################################################################################################################################
 
-simu.gglasso = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.global = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
   
   p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos); L = length(lambda.c)
   
@@ -339,6 +246,9 @@ simu.gglasso = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit
 
 #Input###
 #pos: list of positions of time points where graphs are estimated
+#h: bandwidth in kernel function
+#X: list of observations
+#corr.ind: 0: use Sigma in model fitting, 1: use Corr in model fitting
 #d.l: list of d's
 #lambda.c: list of lambda's
 #epi.abs, epi.rel: constants in ADMM stopping criterion
@@ -355,7 +265,7 @@ simu.gglasso = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-simu.lglasso = function(pos, h, X, corr.ind = TRUE, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM = function(X, pos, pseudo.fit, h, d.l, lambda.c, epi.abs, epi.rel, corr.ind = TRUE, pseudo.refit, thres){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.l); L = length(lambda.c)
   
