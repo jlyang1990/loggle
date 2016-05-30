@@ -112,7 +112,16 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
     
   cat("complete: t =", round((pos-1)/(N-1), 2), "\n")
   
-  return(list(Omega, Omega.rf, edge, S, cv))
+  result = new.env()
+  result$Omega = Omega
+  result$Omega.rf = Omega.rf
+  result$edge = edge
+  result$S = S
+  result$cv = cv
+  
+  result = as.list(result)
+  
+  return(result)
 }
 
 
@@ -163,9 +172,18 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
   Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
   edge.list = rep(result$edge, K)
   S = which(Omega.rf.list[[1]]!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.list = rep(list(S), K)
-  cv = sum(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(matrix(Omega.rf.list[[k]]))) - log(det(Omega.rf.list[[k]]))))
+  cv = mean(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(matrix(Omega.rf.list[[k]]))) - log(det(Omega.rf.list[[k]]))))
   
-  return(list(Omega.list, Omega.rf.list, edge.list, S.list, cv))
+  result = new.env()
+  result$Omega.list = Omega.list
+  result$Omega.rf.list = Omega.rf.list
+  result$edge.list = edge.list
+  result$S.list = S.list
+  result$cv = cv
+  
+  result = as.list(result)
+  
+  return(result)
 }
 
 
@@ -236,35 +254,28 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
       
       result.k = result[[k]]
       
-      Omega.list[[k]] = result.k[[1]]
-      Omega.rf.list[[k]] = result.k[[2]]
-      edge.list[[k]] = result.k[[3]]
-      S.list[[k]] = result.k[[4]]
-      cv.list[[k]] = result.k[[5]]
+      Omega.list[[k]] = result.k$Omega
+      Omega.rf.list[[k]] = result.k$Omega.rf
+      edge.list[[k]] = result.k$edge
+      S.list[[k]] = result.k$S
+      cv.list[[k]] = result.k$cv
     }
     
-    cv = sum(cv.list)
-  
+    cv = mean(cv.list)
+    
+    result = new.env()
+    result$Omega.list = Omega.list
+    result$Omega.rf.list = Omega.rf.list
+    result$edge.list = edge.list
+    result$S.list = S.list
+    result$cv = cv
+    
+    result = as.list(result)
   }
   else{
     
     result = LGGM.global(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, epi.rel)
-    
-    Omega.list = result[[1]]
-    Omega.rf.list = result[[2]]
-    edge.list = result[[3]]
-    S.list = result[[4]]
-    cv = result[[5]]
   }
-  
-  result = new.env()
-  result$Omega.list = Omega.list
-  result$Omega.rf.list = Omega.rf.list
-  result$edge.list = edge.list
-  result$S.list = S.list
-  result$cv = cv
-  
-  result = as.list(result)
   
   return(result)  
 }
