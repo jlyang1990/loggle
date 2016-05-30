@@ -82,7 +82,7 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
   cluster = clusters(graph); member = cluster$membership; csize = cluster$csize; no = cluster$no
   member.index = sort(member, index.return=T)$ix-1; csize.index = c(0, cumsum(csize))
     
-  result = .C("ADMM_cluster", 
+  result = .C("ADMM_cluster",
               as.integer(p),
               as.integer(member.index),
               as.integer(csize.index),
@@ -101,14 +101,14 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
               as.double(epi.rel),
               as.integer(fit.type),
               as.integer(refit.type),
-              as.integer(edge)
+              edge = as.integer(edge)
   )
       
   Omega = Matrix(result$Z.vec[(p*p*(Nd.pos-1)+1):(p*p*Nd.pos)], p, p, sparse=T)
   Omega.rf = Matrix(result$Z.pos.vec, p, p, sparse=T)
   edge = result$edge
   S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]
-  cv = sum(c(t(Sigma[, , pos]))*c(Omega.rf)) - log(det(Omega.rf))
+  cv = sum(c(t(Sigma[, , pos]))*c(matrix(Omega.rf))) - log(det(Omega.rf))
     
   cat("complete: t =", round((pos-1)/(N-1), 2), "\n")
   
@@ -125,7 +125,7 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
   N.index.c = 0:(N-1)
   pos.c = pos-1
   
-  Corr.sq = apply(Corr[, , N.index]^2, c(1, 2), sum)
+  Corr.sq = apply(Corr^2, c(1, 2), sum)
   
   Z.vec = rep(0, p*p*N); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*N); edge = 0
   
@@ -155,15 +155,15 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
               as.double(epi.rel),
               as.integer(fit.type),
               as.integer(refit.type),
-              as.integer(edge)
+              edge = as.integer(edge)
   )
   
   Z.vec = array(result$Z.vec, c(p, p, N))[, , pos]
   Omega.list = sapply(1:K, function(k) Matrix(Z.vec[, , k], p, p, sparse=T))
   Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
   edge.list = rep(result$edge, K)
-  S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.list = rep(list(S), K)
-  cv = sum(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))))
+  S = which(Omega.rf.list[[1]]!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.list = rep(list(S), K)
+  cv = sum(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(matrix(Omega.rf.list[[k]]))) - log(det(Omega.rf.list[[k]]))))
   
   return(list(Omega.list, Omega.rf.list, edge.list, S.list, cv))
 }
@@ -213,9 +213,9 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
     refit.type = 1
   }
   
-  Sigma = gene.Sigma(X, pos, h)
+  Sigma = gene.Sigma(X, 1:N, h)
   if(corr == TRUE){
-    Corr = gene.corr(X, pos, h)
+    Corr = gene.corr(X, 1:N, h)
   }else{
     Corr = Sigma
   }
@@ -236,11 +236,11 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
       
       result.k = result[[k]]
       
-      Omega.list[k] = result.k[[1]]
-      Omega.rf.list[k] = result.k[[2]]
-      edge.list[k] = result.k[[3]]
-      S.list[k] = result.k[[4]]
-      cv.list[k] = result.k[[5]]
+      Omega.list[[k]] = result.k[[1]]
+      Omega.rf.list[[k]] = result.k[[2]]
+      edge.list[[k]] = result.k[[3]]
+      S.list[[k]] = result.k[[4]]
+      cv.list[[k]] = result.k[[5]]
     }
     
     cv = sum(cv.list)
