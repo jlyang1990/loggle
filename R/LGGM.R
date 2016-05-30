@@ -73,7 +73,7 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
     
   Corr.sq = apply(Corr[, , Nd.index]^2, c(1, 2), sum)
     
-  Z.vec = rep(0, p*p); Z.pos.vec = rep(0, p*p); U.vec = rep(0, p*p); edge = 0
+  Z.vec = rep(0, p*p*Nd); Z.pos.vec = rep(0, p*p); U.vec = rep(0, p*p*Nd); edge = 0
     
   lambda = sqrt(Nd)*lambda; rho = lambda
     
@@ -104,7 +104,7 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
               as.integer(edge)
   )
       
-  Omega = Matrix(result$Z.vec, p, p, sparse=T)
+  Omega = Matrix(result$Z.vec[(p*p*(Nd.pos-1)+1):(p*p*Nd.pos)], p, p, sparse=T)
   Omega.rf = Matrix(result$Z.pos.vec, p, p, sparse=T)
   edge = result$edge
   S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]
@@ -127,7 +127,7 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
   
   Corr.sq = apply(Corr[, , N.index]^2, c(1, 2), sum)
   
-  Z.vec = rep(0, p*p*K); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*K); edge = 0
+  Z.vec = rep(0, p*p*N); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*N); edge = 0
   
   lambda = sqrt(N)*lambda; rho = lambda
   
@@ -158,7 +158,8 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
               as.integer(edge)
   )
   
-  Omega.list = sapply(1:K, function(k) Matrix(result$Z.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
+  Z.vec = array(result$Z.vec, c(p, p, N))[, , pos]
+  Omega.list = sapply(1:K, function(k) Matrix(Z.vec[, , k], p, p, sparse=T))
   Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
   edge.list = rep(result$edge, K)
   S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.list = rep(list(S), K)
@@ -215,22 +216,16 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
   Sigma = gene.Sigma(X, pos, h)
   if(corr == TRUE){
     Corr = gene.corr(X, pos, h)
-  }
-  else{
+  }else{
     Corr = Sigma
   }
   
   if(d<1){
     
-    Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
-    Nd.pos = which(Nd.index == pos)
-    Corr = Corr[, , Nd.index]
-    Sigma = Sigma[, , Nd.index]
-    
     registerDoParallel(num.core)
 
     result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Nd.index, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs, epi.rel)
+      LGGM.local(pos[k], Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs, epi.rel)
     
     stopImplicitCluster()
     
