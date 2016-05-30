@@ -63,17 +63,17 @@ gene.corr= function(X, pos, h){
 #record.list: D by L time costs in C
 #time.list: D time costs w.r.t. D d's in R
 
-LGGM.local = function(pos, Corr, Sigma, d, lambda, pseudo.fit, pseudo.refit, epi.abs, epi.rel){
+LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs, epi.rel){
   
   p = dim(Sigma)[1]; N = dim(Sigma)[3]
-    
+  
   Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
-  Nd.index.c = Nd.index - 1; Nd = length(Nd.index)
-  Nd.pos = which(Nd.index == pos); Nd.pos.c = Nd.pos - 1; Nd.pos.l = 1
+  Nd.index.c = Nd.index-1; Nd = length(Nd.index)
+  Nd.pos = which(Nd.index == pos); Nd.pos.c = Nd.pos-1; Nd.pos.l = 1
     
-  Corr.sq = apply(Corr^2, c(1, 2), sum)
+  Corr.sq = apply(Corr[, , Nd.index]^2, c(1, 2), sum)
     
-  Z.ini.vec = rep(0, p*p); Z.pos.vec = rep(0, p*p); U.vec = rep(0, p*p); edge = 0
+  Z.vec = rep(0, p*p); Z.pos.vec = rep(0, p*p); U.vec = rep(0, p*p); edge = 0
     
   lambda = sqrt(Nd)*lambda; rho = lambda
     
@@ -90,21 +90,21 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, pseudo.fit, pseudo.refit, epi
               as.integer(Nd),
               as.integer(Nd.pos.c),
               as.integer(Nd.pos.l),
-              as.double(Corr),
-              as.double(Sigma),
-              Z.ini.vec = as.double(Z.ini.vec),
+              as.double(Corr[, , Nd.index]),
+              as.double(Sigma[, , Nd.index]),
+              Z.vec = as.double(Z.vec),
               Z.pos.vec = as.double(Z.pos.vec),
               as.double(U.vec),
               as.double(lambda),
               as.double(rho),
               as.double(epi.abs),
               as.double(epi.rel),
-              as.integer(pseudo.fit),
-              as.integer(pseudo.refit),
+              as.integer(fit.type),
+              as.integer(refit.type),
               as.integer(edge)
   )
       
-  Omega.lg = Matrix(result$Z.ini.vec, p, p, sparse=T)
+  Omega = Matrix(result$Z.vec, p, p, sparse=T)
   Omega.rf = Matrix(result$Z.pos.vec, p, p, sparse=T)
   edge = result$edge
   S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]
@@ -112,22 +112,22 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, pseudo.fit, pseudo.refit, epi
     
   cat("complete: t =", round((pos-1)/(N-1), 2), "\n")
   
-  return(list(Omega.lg, Omega.rf, edge, S, cv))
+  return(list(Omega, Omega.rf, edge, S, cv))
 }
 
 
 #simulation study for global group-lasso (d=1)################################################################################################################################################################################################################
 
-LGGM.global = function(pos, Corr, Sigma, lambda, pseudo.fit, pseudo.refit, epi.abs, epi.rel){
+LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]
+  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos)
   
   N.index.c = 0:(N-1)
   pos.c = pos-1
   
   Corr.sq = apply(Corr[, , N.index]^2, c(1, 2), sum)
   
-  Z.ini.vec = rep(0, p*p*K); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*K); edge = 0
+  Z.vec = rep(0, p*p*K); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*K); edge = 0
   
   lambda = sqrt(N)*lambda; rho = lambda
   
@@ -146,25 +146,25 @@ LGGM.global = function(pos, Corr, Sigma, lambda, pseudo.fit, pseudo.refit, epi.a
               as.integer(K),
               as.double(Corr),
               as.double(Sigma),
-              Z.ini.vec = as.double(Z.ini.vec),
+              Z.vec = as.double(Z.vec),
               Z.pos.vec = as.double(Z.pos.vec),
               as.double(U.vec),
               as.double(lambda),
               as.double(rho),
               as.double(epi.abs),
               as.double(epi.rel),
-              as.integer(pseudo.fit),
-              as.integer(pseudo.refit),
+              as.integer(fit.type),
+              as.integer(refit.type),
               as.integer(edge)
   )
   
-  Omega.lg.list = sapply(1:K, function(k) Matrix(result$Z.ini.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
+  Omega.list = sapply(1:K, function(k) Matrix(result$Z.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
   Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
   edge.list = rep(result$edge, K)
   S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.list = rep(list(S), K)
-  cv.list = sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf)))
+  cv = sum(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))))
   
-  return(list(Omega.lg.list, Omega.rf.list, edge.list, S.list, cv.list))
+  return(list(Omega.list, Omega.rf.list, edge.list, S.list, cv))
 }
 
 
@@ -191,58 +191,83 @@ LGGM.global = function(pos, Corr, Sigma, lambda, pseudo.fit, pseudo.refit, epi.a
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-LGGM = function(X, pos, pseudo.fit, h, d, lambda, epi.abs, epi.rel, corr.ind = TRUE, pseudo.refit, thres){
+LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h, d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, num.core = detectCores()-1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos)
   
+  if(fit.type == "glasso"){
+    fit.type = 0
+  }
+  if(fit.type == "pseudo"){
+    fit.type = 1
+  }
+  if(fit.type == "space"){
+    fit.type = 2
+  }
+  
+  if(refit.type == "glasso"){
+    refit.type = 0
+  }
+  if(refit.type == "pseudo"){
+    refit.type = 1
+  }
+  
   Sigma = gene.Sigma(X, pos, h)
-  if(corr.ind == TRUE){
+  if(corr == TRUE){
     Corr = gene.corr(X, pos, h)
-  }else{
+  }
+  else{
     Corr = Sigma
   }
   
-  Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
-  Corr = Corr[, , Nd.index]
-  Sigma = Sigma[, , Nd.index]
-  
-  if(d!=1){
+  if(d<1){
     
-    result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.pos")) %dopar%
-      LGGM.local(pos[k], Corr, Sigma, d, lambda, pseudo.fit, pseudo.refit, epi.abs, epi.rel)
+    Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
+    Nd.pos = which(Nd.index == pos)
+    Corr = Corr[, , Nd.index]
+    Sigma = Sigma[, , Nd.index]
     
-    S.list = vector("list", K)
-    Omega.lg.list = vector("list", K); Omega.rf.list = vector("list", K)
-    edge.list = rep(0, K); cv.list = rep(0, K)
+    registerDoParallel(num.core)
+
+    result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
+      LGGM.local(pos[k], Nd.index, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs, epi.rel)
+    
+    stopImplicitCluster()
+    
+    Omega.list = vector("list", K); Omega.rf.list = vector("list", K)
+    S.list = vector("list", K); edge.list = rep(0, K); cv.list = rep(0, K)
     
     for(k in 1:K){
       
       result.k = result[[k]]
       
-      Omega.lg.list[k] = result.k[[1]]
+      Omega.list[k] = result.k[[1]]
       Omega.rf.list[k] = result.k[[2]]
       edge.list[k] = result.k[[3]]
       S.list[k] = result.k[[4]]
       cv.list[k] = result.k[[5]]
     }
+    
+    cv = sum(cv.list)
   
-  }else{
+  }
+  else{
     
-    result = LGGM.global(pos, Corr, Sigma, lambda, pseudo.fit, pseudo.refit, epi.abs, epi.rel)
+    result = LGGM.global(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, epi.rel)
     
-    Omega.lg.list = result[[1]]
+    Omega.list = result[[1]]
     Omega.rf.list = result[[2]]
     edge.list = result[[3]]
     S.list = result[[4]]
-    cv.list = result[[5]]
+    cv = result[[5]]
   }
   
   result = new.env()
-  result$Omega.lg.list = Omega.lg.list
+  result$Omega.list = Omega.list
   result$Omega.rf.list = Omega.rf.list
   result$edge.list = edge.list
   result$S.list = S.list
-  result$cv.list = cv.list
+  result$cv = cv
   
   result = as.list(result)
   
