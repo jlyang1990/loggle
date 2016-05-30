@@ -16,9 +16,6 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 //local group graphical lasso
 void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
 
-//pseudo-likelihood group lasso (asymmetry)
-void ADMM_pseudo_o_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
-
 //pseudo-likelihood group lasso (symmetry)
 void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
 
@@ -135,12 +132,9 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 				ADMM_local_glasso(&p_n, LL, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_o_glasso(&p_n, LL, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
-			}
-			else if(*pseudo_fit == 2){
 				ADMM_pseudo_glasso(&p_n, LL, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
 			}
-			else if(*pseudo_fit == 3){
+			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
 				for(i=0; i<L; i++){
 					for(j=0; j<p_n; j++){
@@ -339,126 +333,6 @@ void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, dou
 	free(A);
 	free(eig_vec);
 	free(eig_val);
-}
-
-
-
-void ADMM_pseudo_o_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel){
- 
-	int p = *P, L = *LL, p_1 = p-1;
-	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
-	double prd, drd, r, s, epi_pri, epi_dual;
-	int nrhs = 1, info, i, j, k, m, index_ijk;
-	double coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2, alp = 1;
-	double *Omega = (double *) malloc(p_1*L*sizeof(double));
-	double *Chol = (double *) malloc(p*p*L*sizeof(double));
-	double *Chol_j = (double *) malloc(p_1*p_1*L*sizeof(double));
-	double *C = (double *) malloc(p_1*sizeof(double));
-
-	for(i=0; i<L; i++){
-		for(j=0; j<p; j++){
-			for(k=0; k<p_1; k++){
-				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+((k>=j)?(k+1):k)];
-				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+((k>=j)?(k+1):k)];
-			}
-			for(k=j; k<p; k++){
-				Chol[p*p*i+p*j+k] = Sigma[p*p*i+p*j+k];
-			}
-			Chol[p*p*i+p*j+j]+=rho;
-		}
-		F77_CALL(dpotrf)("L", P, (Chol+p*p*i), P, &info);
-	}
-
-	//iteration across p
-	for(j=0; j<p; j++){
-
-		for(i=0; i<L; i++){
-			Givens_rotation((Chol_j+p_1*p_1*i), (Chol+p*p*i), P, &j);
-	    }
-
-	    prd = 1; drd = 1;
-
-	    //ADMM iteration
-	    while(prd>0 || drd>0){
-
-	    	r = 0, s = 0, epi_dual = 0, epi_pri_1 = 0, epi_pri_2 = 0;
-
-	    	for(i=0; i<L; i++){
-	    		for(k=0; k<j; k++){
-					C[k] = rho*(Z[p_1*p*i+p_1*j+k]-U[p_1*p*i+p_1*j+k])+Sigma[p*p*i+p*j+k];
-				}
-				for(k=j; k<p_1; k++){
-					C[k] = rho*(Z[p_1*p*i+p_1*j+k]-U[p_1*p*i+p_1*j+k])+Sigma[p*p*i+p*j+k+1];
-				}
-				F77_CALL(dtrsm)("L", "L", "N", "N", &p_1, &nrhs, &alp, (Chol_j+p_1*p_1*i), &p_1, C, &p_1);
-				F77_CALL(dtrsm)("L", "L", "T", "N", &p_1, &nrhs, &alp, (Chol_j+p_1*p_1*i), &p_1, C, &p_1);
-				for(k=0; k<p_1; k++){
-					index_ijk = p_1*p*i+p_1*j+k;
-					Omega[p_1*i+k] = C[k];
-					U[index_ijk] += alpha*C[k]+(1-alpha)*Z[index_ijk];
-				}
-	    	}
-
-	    	for(k=0; k<p_1; k++){
-				temp_1 = 0, temp_2 = 0;
-				for(i=0; i<L; i++){
-					temp_1 += pow(U[p_1*p*i+p_1*j+k], 2);
-					temp_2 += pow(Omega[p_1*i+k], 2);
-				}
-				coef = 1 - lambda/(rho*sqrt(temp_1));
-				if(coef <= 0){
-					for(i=0; i<L; i++){
-						index_ijk = p_1*p*i+p_1*j+k;
-						s += pow(Z[index_ijk], 2);
-						Z[index_ijk] = 0;
-					}
-					r += temp_2;
-					epi_dual += temp_1;
-				}
-				else{
-					for(i=0; i<L; i++){
-						index_ijk = p_1*p*i+p_1*j+k;
-						temp = Z[index_ijk];
-						Z[index_ijk] = U[index_ijk]*coef;
-						U[index_ijk] -= Z[index_ijk];
-						r += pow((Omega[p_1*i+k] - Z[index_ijk]), 2);
-						s += pow(Z[index_ijk]-temp, 2);
-						epi_pri_2 += pow(Z[index_ijk], 2);
-						epi_dual += pow(U[index_ijk], 2);
-					}
-				}
-				epi_pri_1 += temp_2;	
-			}
-
-			r = sqrt(r);
-			s = rho*sqrt(s);
-			epi_pri = sqrt(L)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
-			epi_dual = sqrt(L)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
-		
-			prd = (r>epi_pri);
-			drd = (s>epi_dual);
-	    }//end ADMM iteration
-	}//end iteration across p
-
-	for(i=L-1; i>=0; i--){
-		for(j=p-1; j>=0; j--){
-			for(k=p_1-1; k>=j; k--){
-				Z[p*p*i+p*j+k+1] = Z[p_1*p*i+p_1*j+k];
-				U[p*p*i+p*j+k+1] = U[p_1*p*i+p_1*j+k];
-			}
-			Z[p*p*i+p*j+j] = 0;
-			U[p*p*i+p*j+j] = 0;
-			for(k=j-1; k>=0; k--){
-				Z[p*p*i+p*j+k] = Z[p_1*p*i+p_1*j+k];
-				U[p*p*i+p*j+k] = U[p_1*p*i+p_1*j+k];
-			}
-		}
-	}
-
-	free(Omega);
-	free(Chol);
-	free(Chol_j);
-	free(C);
 }
 
 
