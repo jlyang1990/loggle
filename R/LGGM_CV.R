@@ -1,23 +1,4 @@
 
-library(MASS); library(Matrix); library(foreach); library(doParallel); library(igraph)
-
-dyn.load("TVGM_ADMM.so")
-
-#list function################################################################################################################################################################################################################################################
-
-list <- structure(NA,class="result")
-"[<-.result" <- function(x,...,value) {
-  args <- as.list(match.call())
-  args <- args[-c(1:2,length(args))]
-  length(value) <- length(args)
-  for(i in seq(along=args)) {
-    a <- args[[i]]
-    if(!missing(a)) eval.parent(substitute(a <- v,list(a=a,v=value[[i]])))
-  }
-  x
-}
-
-
 #Sigma generation function####################################################################################################################################################################################################################################
 
 #Input###
@@ -84,15 +65,11 @@ gene.corr= function(X, pos, h){
 
 LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
   
-  ptm = proc.time()
-  
   p = dim(Sigma)[1]; N = dim(Sigma)[3]; D = length(d.l); L = length(lambda.c)
   
   S.list = matrix(vector("list", 1), L, D)
   Omega.lg.list = matrix(vector("list", 1), L, D); Omega.rf.list = matrix(vector("list", 1), L, D)
   edge = matrix(0, L, D)
-  
-  time.list = rep(0, D); record.list = matrix(0, L, D)
   
   for(j in 1:D){
     
@@ -110,8 +87,6 @@ LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseu
     
     member.index.list = rep(0, p*L); no.list = rep(0, L); csize.index.list = c()
     
-    diff2 = rep(0, L)
-    
     #detect block diagonal structure
     for(l in L:1){
       
@@ -123,8 +98,6 @@ LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseu
       no.list[l] = no
       csize.index.list = c(csize.index.list, csize.index)
     }
-      
-    ptm1 = proc.time()
       
     result = .C("ADMM_lambda", 
                   as.integer(p),
@@ -146,10 +119,7 @@ LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseu
                   as.integer(pseudo.fit),
                   as.integer(pseudo.refit),
                   as.double(thres),
-                  diff2 = as.double(diff2)
     )
-      
-    diff1 = (proc.time() - ptm1)[3]
       
     Z.ini.vec = result$Z.ini.vec
     Z.pos.vec = result$Z.pos.vec
@@ -166,15 +136,11 @@ LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseu
       Omega.rf.list[[l, j]] = Matrix(Omega.rf, sparse = T)
       edge[l, j] = S.L
     }
-      
-    time.list[j] = diff1; record.list[, j] = result$diff2
     
     cat("complete: d =", d, "t =", round((pos-1)/(N-1), 2), "\n")
   }
   
-  time = (proc.time() - ptm)[3]
-  
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge, time, record.list, time.list))
+  return(list(S.list, Omega.lg.list, Omega.rf.list, edge))
 }
 
 
@@ -198,8 +164,6 @@ LGGM.global.cv = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.f
   lambda = sqrt(N)*lambda.c; rho = lambda
   
   member.index.list = rep(0, p*L); no.list = rep(0, L); csize.index.list = c()
-  
-  diff2 = rep(0, L)
   
   for(l in L:1){
     
@@ -232,7 +196,6 @@ LGGM.global.cv = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.f
               as.integer(pseudo.fit),
               as.integer(pseudo.refit),
               as.double(thres),
-              diff2 = as.double(diff2)
   )
   
   Z.ini.vec = result$Z.ini.vec
@@ -304,10 +267,6 @@ LGGM.combine.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, ps
       Omega.lg.list[, -D, k] = result.lg.k[[2]]
       Omega.rf.list[, -D, k] = result.lg.k[[3]]
       edge[, -D, k] = result.lg.k[[4]]
-      time[k] = result.lg.k[[5]]
-      
-      record.list[, , k] = result.lg.k[[6]]
-      time.list[, k] = result.lg.k[[7]]
     }
     
     result.gg = simu.gglasso(pos, Corr, Sigma, lambda.c, epi.abs[D], epi.rel[D], pseudo.fit, pseudo.refit, thres)
@@ -332,14 +291,10 @@ LGGM.combine.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, ps
       Omega.lg.list[, , k] = result.lg.k[[2]]
       Omega.rf.list[, , k] = result.lg.k[[3]]
       edge[, , k] = result.lg.k[[4]]
-      time[k] = result.lg.k[[5]]
-      
-      record.list[, , k] = result.lg.k[[6]]
-      time.list[, k] = result.lg.k[[7]]
     }
   }
   
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge, time, record.list, time.list))  
+  return(list(S.list, Omega.lg.list, Omega.rf.list, edge))  
 }
 
 
