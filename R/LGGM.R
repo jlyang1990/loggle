@@ -210,7 +210,7 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h, d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, num.core = detectCores()-1){
+LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.2, d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, num.core = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos)
   
