@@ -357,21 +357,15 @@ LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote = TRU
   
   lambda.list = as.numeric(colnames(cv.score)); d.list = as.numeric(rownames(cv.score))
   
-  Omega.cv = array(0, c(p, p, K, fold)); Omega.d.cv = array(0, c(p, p, K, fold)); Omega.avg.cv = array(0, c(p, p, K, fold))
+  Omega.cv = array(0, c(p, p, K, fold)); edge.num.cv = rep(0, K); edge.cv = vector("list", K)
   
-  S.cv = vector("list", K); S.d.cv = vector("list", K); S.avg.cv = vector("list", K)
-  
-  lambda_d.cv = matrix(0, 2, K); d.cv = rep(0, K+1); lambda_d.avg.cv = rep(0, 2)
-  
-  cv.score = matrix(0, 3, 2)
-  
-  cv.o = cv[, d.pos, , , drop=F]; cv = apply(cv[, d.pos, , , drop=F], c(1,2,3), sum)
+  cv.score.fold = apply(cv.score, c(1,2,3), sum)
   
   if(select.mode = "all_flexible"){
     
     lambda_d.index = matrix(0, 2, K)
     for(k in 1:K){
-      index = which(matrix(cv[, , k], L, D) == min(cv[, , k]), arr.ind = T)
+      index = which(matrix(cv.score.fold[, , k], L, D) == min(cv.score.fold[, , k]), arr.ind = T)
       if(nrow(index)>1){index = matrix(index[nrow(index), ], c(1, 2))}
       lambda_d.index[, k] = index
       d.cv = d.list[index[2]]
@@ -392,14 +386,15 @@ LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote = TRU
     
     for(k in 1:K){
       
-      S = which(Omega.cv[, , k]!=0, arr.ind=T); S.cv[[k]] = S[(S[, 1] - S[, 2])>0, , drop = F]
-      
+      edge = which(Omega.cv[, , k]!=0, arr.ind=T); edge.cv[[k]] = edge[(edge[, 1] - edge[, 2])>0, , drop = F]
+      edge.num[k] = nrow(edge)
     }
     
     cv.temp = sapply(1:fold, function(i) sum(sapply(1:K, function(k) cv.o[lambda_d.index[1, k], lambda_d.index[2, k], k, i])))
-    cv.score[1, ] = c(sum(cv.temp), sqrt(fold)*sd(cv.temp))
+    cv.score = c(sum(cv.temp), sqrt(fold)*sd(cv.temp))
     
   }
+  
   if(select.mode = "d_fixed"){
     
     d.index = which.min(sapply(1:D, function(d) sum(apply(cv[, d, ], 2, min))))
