@@ -73,7 +73,7 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
     
   Corr.sq = apply(Corr[, , Nd.index]^2, c(1, 2), sum)
     
-  Z.vec = rep(0, p*p*Nd); Z.pos.vec = rep(0, p*p); U.vec = rep(0, p*p*Nd); edge = 0
+  Z.vec = rep(0, p*p*Nd); Z.pos.vec = rep(0, p*p); U.vec = rep(0, p*p*Nd); edge.num = 0
     
   lambda = sqrt(Nd)*lambda; rho = lambda
     
@@ -101,13 +101,13 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
               as.double(epi.rel),
               as.integer(fit.type),
               as.integer(refit.type),
-              edge = as.integer(edge)
+              edge.num = as.integer(edge.num)
   )
       
   Omega = Matrix(result$Z.vec[(p*p*(Nd.pos-1)+1):(p*p*Nd.pos)], p, p, sparse=T)
   Omega.rf = Matrix(result$Z.pos.vec, p, p, sparse=T)
-  edge = result$edge
-  S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]
+  edge.num = result$edge.num
+  edge = which(Omega.rf!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]
   cv = sum(c(t(Sigma[, , pos]))*c(matrix(Omega.rf))) - log(det(Omega.rf))
     
   cat("complete: t =", round((pos-1)/(N-1), 2), "\n")
@@ -115,8 +115,8 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
   result = new.env()
   result$Omega = Omega
   result$Omega.rf = Omega.rf
+  result$edge.num = edge.num
   result$edge = edge
-  result$S = S
   result$cv = cv
   
   result = as.list(result)
@@ -136,7 +136,7 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
   
   Corr.sq = apply(Corr^2, c(1, 2), sum)
   
-  Z.vec = rep(0, p*p*N); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*N); edge = 0
+  Z.vec = rep(0, p*p*N); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*N); edge.num = 0
   
   lambda = sqrt(N)*lambda; rho = lambda
   
@@ -164,21 +164,21 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
               as.double(epi.rel),
               as.integer(fit.type),
               as.integer(refit.type),
-              edge = as.integer(edge)
+              edge.num = as.integer(edge.num)
   )
   
   Z.vec = array(result$Z.vec, c(p, p, N))[, , pos]
   Omega.list = sapply(1:K, function(k) Matrix(Z.vec[, , k], p, p, sparse=T))
   Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
-  edge.list = rep(result$edge, K)
-  S = which(Omega.rf.list[[1]]!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.list = rep(list(S), K)
+  edge.num.list = rep(result$edge.num, K)
+  edge = which(Omega.rf.list[[1]]!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]; edge.list = rep(list(edge), K)
   cv = mean(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(matrix(Omega.rf.list[[k]]))) - log(det(Omega.rf.list[[k]]))))
   
   result = new.env()
   result$Omega.list = Omega.list
   result$Omega.rf.list = Omega.rf.list
+  result$edge.num.list = edge.num.list
   result$edge.list = edge.list
-  result$S.list = S.list
   result$cv = cv
   
   result = as.list(result)
@@ -238,17 +238,29 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
     Corr = Sigma
   }
   
-  if(d<1){
+  if(length(d) == 1 && d>=0.5){
+    
+    result = LGGM.global(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, epi.rel)
+    
+  } else{
+    
+    if(length(d) == 1){
+      d = rep(d, K)
+    }
+    
+    if(length(lambda) == 1){
+      lambda = rep(lambda, K)
+    }
     
     registerDoParallel(num.core)
-
+    
     result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs, epi.rel)
+      LGGM.local(pos[k], Corr, Sigma, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel)
     
     stopImplicitCluster()
     
     Omega.list = vector("list", K); Omega.rf.list = vector("list", K)
-    S.list = vector("list", K); edge.list = rep(0, K); cv.list = rep(0, K)
+    edge.num.list = vector("list", K); edge.list = rep(0, K); cv.list = rep(0, K)
     
     for(k in 1:K){
       
@@ -256,8 +268,8 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
       
       Omega.list[[k]] = result.k$Omega
       Omega.rf.list[[k]] = result.k$Omega.rf
+      edge.num.list[[k]] = result.k$edge.num
       edge.list[[k]] = result.k$edge
-      S.list[[k]] = result.k$S
       cv.list[[k]] = result.k$cv
     }
     
@@ -266,15 +278,11 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
     result = new.env()
     result$Omega.list = Omega.list
     result$Omega.rf.list = Omega.rf.list
+    result$edge.num.list = edge.num.list
     result$edge.list = edge.list
-    result$S.list = S.list
     result$cv = cv
     
     result = as.list(result)
-  }
-  else{
-    
-    result = LGGM.global(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, epi.rel)
   }
   
   return(result)  

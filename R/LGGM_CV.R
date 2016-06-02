@@ -340,15 +340,22 @@ LGGM.cv = function(pos, h, fold, X, corr.ind, d.l, lambda.c, epi.abs, epi.rel, p
     
   }
   
+  rownames(cv) = lambda.c
+  colnames(cv) = d.l
+  
   return(list(result, cv))
 }
 
 
 #cv.real######################################################################################################################################################################################################################################################
 
-cv.real = function(cv, result.cv, p, N, d.l, lambda.c, d.pos, vote.thres){
+LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote = TRUE, vote.thres = 0.8){
   
-  d.l = d.l[d.pos]; L = dim(cv)[1]; D = length(d.pos); K = dim(cv)[3]; fold = length(result.cv)
+  cv.score = cv.result$cv.score; cv.result.list = cv.result$cv.result.list
+  
+  p = dim(result.cv[[1]][[1]][1,1,1])[1]; L = dim(cv)[1]; D = dim(cv)[2]; K = dim(cv)[3]; fold = length(result.cv)
+  
+  lambda.list = as.numeric(colnames(cv.score)); d.list = as.numeric(rownames(cv.score))
   
   Omega.cv = array(0, c(p, p, K, fold)); Omega.d.cv = array(0, c(p, p, K, fold)); Omega.avg.cv = array(0, c(p, p, K, fold))
   
@@ -360,21 +367,54 @@ cv.real = function(cv, result.cv, p, N, d.l, lambda.c, d.pos, vote.thres){
   
   cv.o = cv[, d.pos, , , drop=F]; cv = apply(cv[, d.pos, , , drop=F], c(1,2,3), sum)
   
-  lambda_d.index = matrix(0, 2, K)
-  for(k in 1:K){
-    index = which(matrix(cv[, , k], L, D) == min(cv[, , k]), arr.ind = T)
-    if(nrow(index)>1){index = matrix(index[nrow(index), ], c(1, 2))}
-    lambda_d.index[, k] = index
-    lambda_d.cv[, k] = c(d.l[index[2]], lambda.c[index[1]])
+  if(select.mode = "all_flexible"){
+    
+    lambda_d.index = matrix(0, 2, K)
+    for(k in 1:K){
+      index = which(matrix(cv[, , k], L, D) == min(cv[, , k]), arr.ind = T)
+      if(nrow(index)>1){index = matrix(index[nrow(index), ], c(1, 2))}
+      lambda_d.index[, k] = index
+      d.cv = d.list[index[2]]
+      lambda.cv = lambda.list[index[1]]
+    }
+    
+    for(i in 1:fold){
+      
+      Omega.rf.list = cv.result.list[[i]][[2]]
+      
+      for(k in 1:K){
+        
+        Omega.cv[, , k, i] = as.matrix(Omega.rf.list[[lambda_d.index[1, k], lambda_d.index[2, k], k]])
+      }
+    }
+    
+    Omega.cv = (apply(Omega.cv!=0, c(1,2,3), sum)>=fold*vote.thres)
+    
+    for(k in 1:K){
+      
+      S = which(Omega.cv[, , k]!=0, arr.ind=T); S.cv[[k]] = S[(S[, 1] - S[, 2])>0, , drop = F]
+      
+    }
+    
+    cv.temp = sapply(1:fold, function(i) sum(sapply(1:K, function(k) cv.o[lambda_d.index[1, k], lambda_d.index[2, k], k, i])))
+    cv.score[1, ] = c(sum(cv.temp), sqrt(fold)*sd(cv.temp))
+    
+  }
+  if(select.mode = "d_fixed"){
+    
+    d.index = which.min(sapply(1:D, function(d) sum(apply(cv[, d, ], 2, min))))
+    d.lambda.index = sapply(1:K, function(k) which.min(cv[, d.index, k]))
+    d.cv = rep(d.list[d.index], K)
+    lambda.cv = lambda.list[d.lambda.index]
+  }
+  if(select.mode = "all_fixed"){
+    
+    cv.avg = apply(cv, c(1, 2), mean)
+    lambda_d.avg.index = which(cv.avg == min(cv.avg), arr.ind = T)
+    d.cv = rep(d.list[lambda_d.avg.index[2]], K)
+    lambda_d.cv = rep(lambda.list[lambda_d.avg.index[1]], K)
   }
   
-  d.index = which.min(sapply(1:D, function(d) sum(apply(cv[, d, ], 2, min))))
-  d.lambda.index = sapply(1:K, function(k) which.min(cv[, d.index, k]))
-  d.cv[1] = d.l[d.index]; d.cv[-1] = lambda.c[d.lambda.index]
-  
-  cv.avg = apply(cv, c(1, 2), mean)
-  lambda_d.avg.index = which(cv.avg == min(cv.avg), arr.ind = T)
-  lambda_d.avg.cv = c(d.l[lambda_d.avg.index[2]], lambda.c[lambda_d.avg.index[1]])
   
   for(i in 1:fold){
     
@@ -408,3 +448,7 @@ cv.real = function(cv, result.cv, p, N, d.l, lambda.c, d.pos, vote.thres){
   
   return(list(S.cv, S.d.cv, S.avg.cv, Omega.cv, Omega.d.cv, Omega.avg.cv, lambda_d.cv, d.cv, lambda_d.avg.cv, cv.score))
 }
+
+
+#LGGM.cv.h####################################################################################################################################################################################################################################################
+
