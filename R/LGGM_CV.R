@@ -367,7 +367,7 @@ LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list,
 #result: a list of length=fold containing the results from simu.lglasso
 #cv: L by D by K by fold by 2 cv scores (the last dimension corresponds to whether we use the adjusted bandwidth h or not)
 
-LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.2, d.list, lambda.list, fold = 5, cv.thres = nrow(X), epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.core = 1){
+LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.2, d.list, lambda.list, fold = 5, cv.thres = nrow(X), return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.core = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
   
@@ -402,12 +402,17 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso
   cv.result$cv.result.list = cv.result.list
   cv.result = as.list(cv.result)
   
+  if(return.select == TRUE){
+    
+    cv.select.result = LGGM.cv.select(cv.result, select.mode, cv.vote.thres)
+    cv.result = c(cv.result, cv.select.result)
+  }
   
   return(cv.result)
 }
 
 
-#cv.real######################################################################################################################################################################################################################################################
+#LGGM.cv.select###############################################################################################################################################################################################################################################
 
 LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote.thres = 0.8){
   
