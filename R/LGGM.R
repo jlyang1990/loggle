@@ -63,7 +63,7 @@ gene.corr= function(X, pos, h){
 #record.list: D by L time costs in C
 #time.list: D time costs w.r.t. D d's in R
 
-LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs, epi.rel){
+LGGM.local = function(pos, Corr, Sigma, fit.type, refit.type, d, lambda, epi.abs, epi.rel){
   
   p = dim(Sigma)[1]; N = dim(Sigma)[3]
   
@@ -108,7 +108,7 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
   Omega.rf = Matrix(result$Z.pos.vec, p, p, sparse=T)
   edge.num = result$edge.num
   edge = which(Omega.rf!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]
-  cv = sum(c(t(Sigma[, , pos]))*c(matrix(Omega.rf))) - log(det(Omega.rf))
+  cv.score = sum(c(t(Sigma[, , pos]))*c(matrix(Omega.rf))) - log(det(Omega.rf))
     
   cat("complete: t =", round((pos-1)/(N-1), 2), "\n")
   
@@ -117,8 +117,7 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
   result$Omega.rf = Omega.rf
   result$edge.num = edge.num
   result$edge = edge
-  result$cv = cv
-  
+  result$cv.score = cv.score
   result = as.list(result)
   
   return(result)
@@ -127,7 +126,7 @@ LGGM.local = function(pos, Corr, Sigma, d, lambda, fit.type, refit.type, epi.abs
 
 #simulation study for global group-lasso (d=1)################################################################################################################################################################################################################
 
-LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, epi.rel){
+LGGM.global = function(pos, Corr, Sigma, fit.type, refit.type, lambda, epi.abs, epi.rel){
   
   p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos)
   
@@ -172,15 +171,14 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
   Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
   edge.num.list = rep(result$edge.num, K)
   edge = which(Omega.rf.list[[1]]!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]; edge.list = rep(list(edge), K)
-  cv = mean(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(matrix(Omega.rf.list[[k]]))) - log(det(Omega.rf.list[[k]]))))
+  cv.score = mean(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(matrix(Omega.rf.list[[k]]))) - log(det(Omega.rf.list[[k]]))))
   
   result = new.env()
   result$Omega.list = Omega.list
   result$Omega.rf.list = Omega.rf.list
   result$edge.num.list = edge.num.list
   result$edge.list = edge.list
-  result$cv = cv
-  
+  result$cv.score = cv.score
   result = as.list(result)
   
   return(result)
@@ -210,7 +208,7 @@ LGGM.global = function(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, 
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.2, d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, num.core = 1){
+LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.2, d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.core = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos)
   
@@ -232,7 +230,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
   }
   
   Sigma = gene.Sigma(X, 1:N, h)
-  if(corr == TRUE){
+  if(fit.corr == TRUE){
     Corr = gene.corr(X, 1:N, h)
   }else{
     Corr = Sigma
@@ -240,7 +238,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
   
   if(length(d) == 1 && d>=0.5){
     
-    result = LGGM.global(pos, Corr, Sigma, lambda, fit.type, refit.type, epi.abs, epi.rel)
+    result = LGGM.global(pos, Corr, Sigma, fit.type, refit.type, lambda, epi.abs, epi.rel)
     
   } else{
     
@@ -255,7 +253,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
     registerDoParallel(num.core)
     
     result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, Sigma, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel)
+      LGGM.local(pos[k], Corr, Sigma, fit.type, refit.type, d[k], lambda[k], epi.abs, epi.rel)
     
     stopImplicitCluster()
     
@@ -270,18 +268,17 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
       Omega.rf.list[[k]] = result.k$Omega.rf
       edge.num.list[[k]] = result.k$edge.num
       edge.list[[k]] = result.k$edge
-      cv.list[[k]] = result.k$cv
+      cv.score.list[[k]] = result.k$cv.score
     }
     
-    cv = mean(cv.list)
+    cv.score = mean(cv.score.list)
     
     result = new.env()
     result$Omega.list = Omega.list
     result$Omega.rf.list = Omega.rf.list
     result$edge.num.list = edge.num.list
     result$edge.list = edge.list
-    result$cv = cv
-    
+    result$cv.score = cv.score
     result = as.list(result)
   }
   

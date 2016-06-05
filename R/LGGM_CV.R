@@ -63,27 +63,26 @@ gene.corr= function(X, pos, h){
 #record.list: D by L time costs in C
 #time.list: D time costs w.r.t. D d's in R
 
-LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.local.cv = function(pos, Corr, Sigma, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; D = length(d.l); L = length(lambda.c)
+  p = dim(Sigma)[1]; N = dim(Sigma)[3]; D = length(d.list); L = length(lambda.list)
   
-  S.list = matrix(vector("list", 1), L, D)
-  Omega.lg.list = matrix(vector("list", 1), L, D); Omega.rf.list = matrix(vector("list", 1), L, D)
-  edge = matrix(0, L, D)
+  Omega.list = matrix(vector("list", 1), L, D); Omega.rf.list = matrix(vector("list", 1), L, D)
+  edge.num.list = matrix(0, L, D); edge.list = matrix(vector("list", 1), L, D)
   
   for(j in 1:D){
     
-    d = d.l[j]; epi.abs.d = epi.abs[j]; epi.rel.d = epi.rel[j]
+    d = d.list[j]; epi.abs.d = epi.abs[j]; epi.rel.d = epi.rel[j]
     
     Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
-    Nd.index.c = Nd.index - 1; Nd = length(Nd.index); Nd.pos = which(Nd.index == pos)
-    Nd.pos.c = Nd.pos - 1; Nd.pos.l = 1
+    Nd.index.c = Nd.index - 1; Nd = length(Nd.index)
+    Nd.pos = which(Nd.index == pos); Nd.pos.c = Nd.pos - 1; Nd.pos.l = 1
     
     Corr.sq = apply(Corr[, , Nd.index]^2, c(1, 2), sum)
     
-    Z.ini.vec = rep(0, p*p*L); Z.pos.vec = rep(0, p*p*L)
+    Z.vec = rep(0, p*p*L); Z.pos.vec = rep(0, p*p*L)
     
-    lambda = sqrt(Nd)*lambda.c; rho = lambda
+    lambda = sqrt(Nd)*lambda.list; rho = lambda
     
     member.index.list = rep(0, p*L); no.list = rep(0, L); csize.index.list = c()
     
@@ -109,7 +108,7 @@ LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseu
                   as.integer(Nd.pos.l),
                   as.double(Corr[, , Nd.index]),
                   as.double(Sigma[, , Nd.index]),
-                  Z.ini.vec = as.double(Z.ini.vec),
+                  Z.ini.vec = as.double(Z.vec),
                   Z.pos.vec = as.double(Z.pos.vec),
                   as.integer(L),
                   as.double(lambda),
@@ -121,47 +120,53 @@ LGGM.local.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseu
                   as.double(thres),
     )
       
-    Z.ini.vec = result$Z.ini.vec
+    Z.vec = result$Z.vec
     Z.pos.vec = result$Z.pos.vec
       
     for(l in L:1){
       
-      Omega.lg = matrix(Z.ini.vec[(p*p*(l-1)+1):(p*p*l)], p, p)
+      Omega = matrix(Z.vec[(p*p*(l-1)+1):(p*p*l)], p, p)
       Omega.rf = matrix(Z.pos.vec[(p*p*(l-1)+1):(p*p*l)], p, p)
         
-      S = which(Omega.rf!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.L = nrow(S)
+      edge = which(Omega.rf!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]; edge.num = nrow(edge)
         
-      S.list[[l, j]] = S
-      Omega.lg.list[[l, j]] = Matrix(Omega.lg, sparse = T)
+      Omega.list[[l, j]] = Matrix(Omega, sparse = T)
       Omega.rf.list[[l, j]] = Matrix(Omega.rf, sparse = T)
-      edge[l, j] = S.L
+      edge.num.list[l, j] = edge.num
+      edge.list[[l, j]] = edge
     }
     
     cat("complete: d =", d, "t =", round((pos-1)/(N-1), 2), "\n")
+    
+    result = new.env()
+    result$Omega.list = Omega.list
+    result$Omega.rf.list = Omega.rf.list
+    result$edge.num.list = edge.num.list
+    result$edge.list = edge.list
+    result = as.list(result)
   }
   
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge))
+  return(result)
 }
 
 
 #simulation study for global group-lasso (d=1)################################################################################################################################################################################################################
 
-LGGM.global.cv = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.global.cv = function(pos, Corr, Sigma, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos); L = length(lambda.c)
+  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos); L = length(lambda.list)
   
-  S.list = matrix(vector("list", 1), L, K)
-  Omega.lg.list = matrix(vector("list", 1), L, K); Omega.rf.list = matrix(vector("list", 1), L, K)
-  edge = matrix(0, L, K)
+  Omega.list = array(vector("list", 1), L, 1, K); Omega.rf.list = array(vector("list", 1), L, 1, K)
+  edge.num.list = array(0, c(L, 1, K)); edge.list = array(vector("list", 1), L, 1, K)
   
   N.index.c = 0:(N-1)
   pos.c = pos-1
   
   Corr.sq = apply(Corr^2, c(1, 2), sum)
   
-  Z.ini.vec = rep(0, p*p*K*L); Z.pos.vec = rep(0, p*p*K*L)
+  Z.vec = rep(0, p*p*K*L); Z.pos.vec = rep(0, p*p*K*L)
   
-  lambda = sqrt(N)*lambda.c; rho = lambda
+  lambda = sqrt(N)*lambda.list; rho = lambda
   
   member.index.list = rep(0, p*L); no.list = rep(0, L); csize.index.list = c()
   
@@ -186,7 +191,7 @@ LGGM.global.cv = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.f
               as.integer(K),
               as.double(Corr),
               as.double(Sigma),
-              Z.ini.vec = as.double(Z.ini.vec),
+              Z.ini.vec = as.double(Z.vec),
               Z.pos.vec = as.double(Z.pos.vec),
               as.integer(L),
               as.double(lambda),
@@ -198,29 +203,36 @@ LGGM.global.cv = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.f
               as.double(thres),
   )
   
-  Z.ini.vec = result$Z.ini.vec
+  Z.vec = result$Z.vec
   Z.pos.vec = result$Z.pos.vec
   
   for(l in L:1){
     
-    Omega.gg = array(Z.ini.vec[(p*p*K*(l-1)+1):(p*p*K*l)], c(p, p, K))
+    Omega = array(Z.vec[(p*p*K*(l-1)+1):(p*p*K*l)], c(p, p, K))
     Omega.rf = array(Z.pos.vec[(p*p*K*(l-1)+1):(p*p*K*l)], c(p, p, K))
     
-    S = which(Omega.rf[, , 1]!=0, arr.ind=T); S = S[(S[, 1] - S[, 2])>0, , drop=F]; S.L = nrow(S)
+    edge = which(Omega.rf[, , 1]!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]; edge.num = nrow(edge)
   
-    edge[l, ] = S.L
+    edge.num.list[l, 1, ] = edge.num
     
     for(k in 1:K){
       
-      S.list[[l, k]] = S
-      Omega.lg.list[[l, k]] = Matrix(Omega.gg[, , k], sparse = T)
-      Omega.rf.list[[l, k]] = Matrix(Omega.rf[, , k], sparse = T)
+      Omega.list[[l, 1, k]] = Matrix(Omega[, , k], sparse = T)
+      Omega.rf.list[[l, 1, k]] = Matrix(Omega.rf[, , k], sparse = T)
+      edge.list[[l, 1, k]] = edge
     }
   }
   
   cat("complete: d = 1", "\n")
   
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge))
+  result = new.env()
+  result$Omega.list = Omega.list
+  result$Omega.rf.list = Omega.rf.list
+  result$edge.num.list = edge.num.list
+  result$edge.list = edge.list
+  result = as.list(result)
+  
+  return(result)
 }
 
 
@@ -244,57 +256,104 @@ LGGM.global.cv = function(pos, Corr, Sigma, lambda.c, epi.abs, epi.rel, pseudo.f
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-LGGM.combine.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.core){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos); D = length(d.l); L = length(lambda.c)
+  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
   
-  S.list = array(vector("list", 1), c(L, D, K))
-  Omega.lg.list = array(vector("list", 1), c(L, D, K)); Omega.rf.list = array(vector("list", 1), c(L, D, K))
-  edge = array(0, c(L, D, K)); time = rep(0, K)
-  
-  if(d.l[D]==1){
-    
-    record.list = array(0, c(L, D-1, K)); time.list = matrix(0, D-1, K)
-    
-    result.lg = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("simu.lglasso.pos")) %dopar%
-      simu.lglasso.pos(pos[k], Corr, Sigma, d.l[-D], lambda.c, epi.abs[-D], epi.rel[-D], pseudo.fit, pseudo.refit, thres)
-    
-    for(k in 1:K){
-      
-      result.lg.k = result.lg[[k]]
-      
-      S.list[, -D, k] = result.lg.k[[1]]
-      Omega.lg.list[, -D, k] = result.lg.k[[2]]
-      Omega.rf.list[, -D, k] = result.lg.k[[3]]
-      edge[, -D, k] = result.lg.k[[4]]
-    }
-    
-    result.gg = simu.gglasso(pos, Corr, Sigma, lambda.c, epi.abs[D], epi.rel[D], pseudo.fit, pseudo.refit, thres)
-    
-    S.list[, D, ] = result.gg[[1]]
-    Omega.lg.list[, D, ] = result.gg[[2]]
-    Omega.rf.list[, D, ] = result.gg[[3]]
-    edge[, D, ] = result.gg[[4]]
-  
-  }else{
-    
-    record.list = array(0, c(L, D, K)); time.list = matrix(0, D, K)
-    
-    result.lg = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("simu.lglasso.pos")) %dopar%
-      simu.lglasso.pos(pos[k], Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres)
-    
-    for(k in 1:K){
-      
-      result.lg.k = result.lg[[k]]
-      
-      S.list[, , k] = result.lg.k[[1]]
-      Omega.lg.list[, , k] = result.lg.k[[2]]
-      Omega.rf.list[, , k] = result.lg.k[[3]]
-      edge[, , k] = result.lg.k[[4]]
-    }
+  if(fit.type == "glasso"){
+    fit.type = 0
+  }
+  if(fit.type == "pseudo"){
+    fit.type = 1
+  }
+  if(fit.type == "space"){
+    fit.type = 2
   }
   
-  return(list(S.list, Omega.lg.list, Omega.rf.list, edge))  
+  if(refit.type == "glasso"){
+    refit.type = 0
+  }
+  if(refit.type == "pseudo"){
+    refit.type = 1
+  }
+  
+  Sigma = gene.Sigma(X, 1:N, h)
+  if(fit.corr == TRUE){
+    Corr = gene.corr(X, 1:N, h)
+  }else{
+    Corr = Sigma
+  }
+  
+  if(length(epi.abs) == 1){
+    epi.abs = rep(epi.abs, D)
+  }
+  if(length(epi.rel) == 1){
+    epi.rel = rep(epi.rel, D)
+  }
+  
+  if(d.list == 1){
+
+    result = LGGM.global.cv(pos, Corr, Sigma, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel)
+    
+  } else{
+    
+    Omega.list = array(vector("list", 1), c(L, D, K)); Omega.rf.list = array(vector("list", 1), c(L, D, K))
+    edge.num.list = array(vector("list", 1), c(L, D, K)); edge.list = array(0, c(L, D, K))
+    
+    if(d.list[D] == 1){
+      
+      registerDoParallel(num.core)
+      
+      result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
+        LGGM.local.cv(pos[k], Corr, Sigma, fit.type, refit.type, d.list[-D], lambda.list, cv.thres, epi.abs[-D], epi.rel[-D])
+      
+      stopImplicitCluster()
+      
+      for(k in 1:K){
+        
+        result.k = result[[k]]
+        
+        Omega.list[, -D, k] = result.k$Omega.list
+        Omega.rf.list[, -D, k] = result.k$Omega.rf.list
+        edge.num.list[, -D, k] = result.k$edge.num.list
+        edge.list[, -D, k] = result.k$edge.list
+      }
+      
+      result = LGGM.global.cv(pos, Corr, Sigma, fit.type, refit.type, lambda.list, cv.thres, epi.abs[D], epi.rel[D])
+      
+      Omega.list[, D, ] = result.k$Omega.list
+      Omega.rf.list[, D, ] = result.k$Omega.rf.list
+      edge.num.list[, D, ] = result.k$edge.num.list
+      edge.list[, D, ] = result.k$edge.list
+      
+    } else{
+      
+      registerDoParallel(num.core)
+      
+      result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
+        LGGM.local.cv(pos[k], Corr, Sigma, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel)
+      
+      stopImplicitCluster()
+      
+      for(k in 1:K){
+        
+        result.k = result[[k]]
+        
+        Omega.list[, , k] = result.k$Omega.list
+        Omega.rf.list[, , k] = result.k$Omega.rf.list
+        edge.num.list[, , k] = result.k$edge.num.list
+        edge.list[, , k] = result.k$edge.list
+      }
+      
+      result = new.env()
+      result$Omega.list = Omega.list
+      result$Omega.rf.list = Omega.rf.list
+      result$edge.num.list = edge.num.list
+      result$edge.list = edge.list
+      result = as.list(result)
+  }
+
+  return(result)  
 }
 
 
@@ -308,140 +367,115 @@ LGGM.combine.cv = function(pos, Corr, Sigma, d.l, lambda.c, epi.abs, epi.rel, ps
 #result: a list of length=fold containing the results from simu.lglasso
 #cv: L by D by K by fold by 2 cv scores (the last dimension corresponds to whether we use the adjusted bandwidth h or not)
 
-LGGM.cv = function(pos, h, fold, X, corr.ind, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres){
+LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.2, d.list, lambda.list, fold = 5, cv.thres = nrow(X), epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.core = 1){
   
-  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.l); L = length(lambda.c)
+  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
   
-  result = vector("list", fold); cv = array(0, c(L, D, K, fold, 2))
+  if(h.correct == TRUE){
+    h.test = h*(fold-1)^(1/5)
+  }else{
+    h.test = h
+  }
+  
+  cv.score = array(0, c(L, D, K, fold)); rownames(cv.score) = lambda.list; colnames(cv.score) = d.list
+  cv.result.list = vector("list", fold)
   
   for(i in 1:fold){
     
     pos.test = seq(i, N, fold); pos.train = (1:N)[-pos.test]
     
-    Sigma.train = gene.Sigma(X, pos.train, h)
-    if(corr.ind == 1){
-      Corr.train = gene.corr(X, pos.train, h)
-    }else{
-      Corr.train = Sigma.train
-    }
-    Sigma.test = gene.Sigma(X, pos.test, h)
-    Sigma.test2 = gene.Sigma(X, pos.test, h*(fold-1)^(1/5))
+    Sigma.test = gene.Sigma(X, pos.test, h.test)
     
-    result.i = simu.lglasso(pos, Corr.train, Sigma.train, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres)
-    Omega.rf.list = result.i[[3]]
-    result[[i]] = result.i
+    result.i = LGGM.combine.cv(pos, Corr.train, Sigma.train, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres)
+    cv.result.list[[i]] = result.i
     
-    for(d in 1:D){for(l in L:1){for(k in 1:K){
+    for(d in 1:D){for(l in 1:L){for(k in 1:K){
       
-      Omega.rf = as.matrix(Omega.rf.list[[l, d, k]])
-      cv[l, d, k, i, 1] = sum(c(t(Sigma.test[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
-      cv[l, d, k, i, 2] = sum(c(t(Sigma.test2[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
+      Omega.rf = as.matrix(result.i$Omega.rf.list[[l, d, k]])
+      cv.score[l, d, k, i] = sum(c(t(Sigma.test[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
     }}}
     
   }
   
-  rownames(cv) = lambda.c
-  colnames(cv) = d.l
+  cv.result = new.env()
+  cv.result$cv.score = cv.score
+  cv.result$cv.result.list = cv.result.list
+  cv.result = as.list(cv.result)
   
-  return(list(result, cv))
+  
+  return(cv.result)
 }
 
 
 #cv.real######################################################################################################################################################################################################################################################
 
-LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote = TRUE, vote.thres = 0.8){
+LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote.thres = 0.8){
   
   cv.score = cv.result$cv.score; cv.result.list = cv.result$cv.result.list
   
-  p = dim(result.cv[[1]][[1]][1,1,1])[1]; L = dim(cv)[1]; D = dim(cv)[2]; K = dim(cv)[3]; fold = length(result.cv)
+  p = dim(cv.result.list[[1]]$Omega.rf.list[[1,1,1]])[1]
+  L = dim(cv.score)[1]; D = dim(cv.score)[2]; K = dim(cv.score)[3]; fold = length(cv.result.list)
   
   lambda.list = as.numeric(colnames(cv.score)); d.list = as.numeric(rownames(cv.score))
   
-  Omega.cv = array(0, c(p, p, K, fold)); edge.num.cv = rep(0, K); edge.cv = vector("list", K)
+  Omega.edge.cv = array(0, c(p, p, K, fold)); edge.num.cv = rep(0, K); edge.cv = vector("list", K)
   
   cv.score.fold = apply(cv.score, c(1,2,3), sum)
   
+  lambda.index = rep(0, K); d.index = rep(0, K)
+  
   if(select.mode = "all_flexible"){
     
-    lambda_d.index = matrix(0, 2, K)
     for(k in 1:K){
-      index = which(matrix(cv.score.fold[, , k], L, D) == min(cv.score.fold[, , k]), arr.ind = T)
-      if(nrow(index)>1){index = matrix(index[nrow(index), ], c(1, 2))}
-      lambda_d.index[, k] = index
-      d.cv = d.list[index[2]]
-      lambda.cv = lambda.list[index[1]]
+      index = which(cv.score.fold[, , k] == min(cv.score.fold[, , k]), arr.ind = T)
+      if(nrow(index)>1){index = index[nrow(index), ]}
+      d.index[k] = index[2]
+      lambda.index[k] = index[1]
     }
-    
-    for(i in 1:fold){
-      
-      Omega.rf.list = cv.result.list[[i]][[2]]
-      
-      for(k in 1:K){
-        
-        Omega.cv[, , k, i] = as.matrix(Omega.rf.list[[lambda_d.index[1, k], lambda_d.index[2, k], k]])
-      }
-    }
-    
-    Omega.cv = (apply(Omega.cv!=0, c(1,2,3), sum)>=fold*vote.thres)
-    
-    for(k in 1:K){
-      
-      edge = which(Omega.cv[, , k]!=0, arr.ind=T); edge.cv[[k]] = edge[(edge[, 1] - edge[, 2])>0, , drop = F]
-      edge.num[k] = nrow(edge)
-    }
-    
-    cv.temp = sapply(1:fold, function(i) sum(sapply(1:K, function(k) cv.o[lambda_d.index[1, k], lambda_d.index[2, k], k, i])))
-    cv.score = c(sum(cv.temp), sqrt(fold)*sd(cv.temp))
-    
   }
-  
   if(select.mode = "d_fixed"){
     
-    d.index = which.min(sapply(1:D, function(d) sum(apply(cv[, d, ], 2, min))))
-    d.lambda.index = sapply(1:K, function(k) which.min(cv[, d.index, k]))
-    d.cv = rep(d.list[d.index], K)
-    lambda.cv = lambda.list[d.lambda.index]
+    d.index = rep(which.min(sapply(1:D, function(d) sum(apply(cv[, d, ], 2, min)))), K)
+    lambda.index = sapply(1:K, function(k) which.min(cv[, index.d, k]))
   }
   if(select.mode = "all_fixed"){
     
-    cv.avg = apply(cv, c(1, 2), mean)
-    lambda_d.avg.index = which(cv.avg == min(cv.avg), arr.ind = T)
-    d.cv = rep(d.list[lambda_d.avg.index[2]], K)
-    lambda_d.cv = rep(lambda.list[lambda_d.avg.index[1]], K)
+    cv.score.fold.avg = apply(cv.score.fold, c(1, 2), mean)
+    index = which(cv.score.fold.avg == min(cv.score.fold.avg), arr.ind = T)
+    d.index = rep(index[2], K)
+    lambda.index = rep(index[1], K)
   }
   
-  
+  d.cv = d.list[d.index]
+  lambda.cv = lambda.list[lambda.index]
+    
   for(i in 1:fold){
     
-    Omega.rf.list = result.cv[[i]][[3]][, d.pos, , drop=F]
-    
-    for(k in 1:K){
-      
-      Omega.cv[, , k, i] = as.matrix(Omega.rf.list[[lambda_d.index[1, k], lambda_d.index[2, k], k]])
-      Omega.d.cv[, , k, i] = as.matrix(Omega.rf.list[[d.lambda.index[k], d.index, k]])
-      Omega.avg.cv[, , k, i] = as.matrix(Omega.rf.list[[lambda_d.avg.index[1], lambda_d.avg.index[2], k]])  
-    }
+    Omega.rf.list = cv.result.list[[i]]$Omega.rf.list
+    for(k in 1:K){Omega.edge.cv[, , k, i] = as.matrix(Omega.rf.list[[lambda.index[k], d.index[k], k]])}
   }
   
-  Omega.cv = (apply(Omega.cv!=0, c(1,2,3), sum)>=fold*vote.thres) 
-  Omega.d.cv = (apply(Omega.d.cv!=0, c(1,2,3), sum)>=fold*vote.thres)
-  Omega.avg.cv = (apply(Omega.avg.cv!=0, c(1,2,3), sum)>=fold*vote.thres)
+  Omega.edge.cv = (apply(Omega.edge.cv!=0, c(1,2,3), sum)>=fold*cv.vote.thres)
   
   for(k in 1:K){
     
-    S = which(Omega.cv[, , k]!=0, arr.ind=T); S.cv[[k]] = S[(S[, 1] - S[, 2])>0, , drop = F]
-    S = which(Omega.d.cv[, , k]!=0, arr.ind=T); S.d.cv[[k]] = S[(S[, 1] - S[, 2])>0, , drop = F]
-    S = which(Omega.avg.cv[, , k]!=0, arr.ind=T); S.avg.cv[[k]] = S[(S[, 1] - S[, 2])>0, , drop = F]
+    edge = which(Omega.edge.cv[, , k]!=0, arr.ind=T); edge.cv[[k]] = edge[(edge[, 1] - edge[, 2])>0, , drop = F]
+    edge.num.cv[k] = nrow(edge)
   }
   
-  cv.temp = sapply(1:fold, function(i) sum(sapply(1:K, function(k) cv.o[lambda_d.index[1, k], lambda_d.index[2, k], k, i])))
-  cv.score[1, ] = c(sum(cv.temp), sqrt(fold)*sd(cv.temp))
-  cv.temp = sapply(1:fold, function(i) sum(sapply(1:K, function(k) cv.o[d.lambda.index[k], d.index, k, i])))
-  cv.score[2, ] = c(sum(cv.temp), sqrt(fold)*sd(cv.temp))
-  cv.temp = sapply(1:fold, function(i) sum(sapply(1:K, function(k) cv.o[lambda_d.avg.index[1], lambda_d.avg.index[2], k, i])))
-  cv.score[3, ] = c(sum(cv.temp), sqrt(fold)*sd(cv.temp))
+  cv.temp = sapply(1:fold, function(i) mean(sapply(1:K, function(k) cv.score.fold[lambda_d.index[1, k], lambda_d.index[2, k], k, i])))
+  cv.score = mean(cv.temp)
+  cv.score.sd = sd(cv.temp)/sqrt(fold)
   
-  return(list(S.cv, S.d.cv, S.avg.cv, Omega.cv, Omega.d.cv, Omega.avg.cv, lambda_d.cv, d.cv, lambda_d.avg.cv, cv.score))
+  result = new.env()
+  result$d.cv = d.cv
+  result$lambda.cv = lambda.cv
+  result$Omega.edge.list.cv = Omega.edge.list.cv
+  result$edge.num.list.cv = edge.num.list.cv
+  result$edge.list.cv = edge.list.cv
+  result = as.list(result)
+  
+  return(result)
 }
 
 
