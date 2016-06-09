@@ -270,7 +270,7 @@ LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list,
     fit.type = 2
   }
   
-  if(refit.type == "glasso"){
+  if(refit.type == "likelihood"){
     refit.type = 0
   }
   if(refit.type == "pseudo"){
@@ -442,7 +442,7 @@ LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote.thres
 #result: a list of length=fold containing the results from simu.lglasso
 #cv: L by D by K by fold by 2 cv scores (the last dimension corresponds to whether we use the adjusted bandwidth h or not)
 
-LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, fold = 5, cv.thres = nrow(X), return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.core = 1){
+LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, fold = 5, cv.thres = nrow(X), return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.core = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
   
@@ -489,7 +489,7 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso
 
 #LGGM.cv.h####################################################################################################################################################################################################################################################
 
-LGGM.cv.h = function(X, pos.prop = 0.01, fit.type = "glasso", refit.type = "glasso", h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), fold = 5, cv.thres = 1, return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-4, epi.rel = 1e-2, corr = TRUE, h.correct = TRUE, num.core = 1){
+LGGM.cv.h = function(X, pos.prop = 0.01, fit.type = "glasso", refit.type = "likelihood", h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), fold = 5, cv.thres = 1, return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-4, epi.rel = 1e-2, corr = TRUE, h.correct = TRUE, num.core = 1){
   
   N = dim(X)[2]; pos = round(seq(0.02, 0.98, length=round(pos.prop*(N-1)+1))*(N-1)+1); H = length(h.list)
   

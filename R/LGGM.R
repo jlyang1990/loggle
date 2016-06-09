@@ -208,7 +208,7 @@ LGGM.global = function(pos, Corr, Sigma, fit.type, refit.type, lambda, epi.abs, 
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.core = 1){
+LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.core = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos)
   
@@ -222,7 +222,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "glasso", 
     fit.type = 2
   }
   
-  if(refit.type == "glasso"){
+  if(refit.type == "likelihood"){
     refit.type = 0
   }
   if(refit.type == "pseudo"){
