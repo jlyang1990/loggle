@@ -16,6 +16,8 @@ makeSigma <- function(X, pos, h) {
   N <- ncol(X)
   L <- length(pos)
   
+  for(i in 1:p){X[i, ] = scale(X[i, ], scale = FALSE)}
+  
   Sigma <- array(0, c(p, p, N))
   
   for(i in 1:N) {
@@ -217,7 +219,7 @@ LGGM.global = function(pos, Corr, Sigma, fit.type, refit.type, lambda, epi.abs, 
 #record.list: D by L by K time costs in C
 #time.list: D by K time costs in R
 
-LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.core = 1){
+LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.thread = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos)
   
@@ -259,7 +261,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
       lambda = rep(lambda, K)
     }
     
-    registerDoParallel(num.core)
+    registerDoParallel(num.thread)
     
     result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
       LGGM.local(pos[k], Corr, Sigma, fit.type, refit.type, d[k], lambda[k], epi.abs, epi.rel)
@@ -267,7 +269,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
     stopImplicitCluster()
     
     Omega.list = vector("list", K); Omega.rf.list = vector("list", K)
-    edge.num.list = vector("list", K); edge.list = rep(0, K); cv.list = rep(0, K)
+    edge.num.list = rep(0, K); edge.list = vector("list", K); cv.score.list = rep(0, K)
     
     for(k in 1:K){
       
