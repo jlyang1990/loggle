@@ -16,7 +16,12 @@ makeSigma <- function(X, pos, h) {
   N <- ncol(X)
   L <- length(pos)
   
-  for(i in 1:p){X[i, ] = scale(X[i, ], scale = FALSE)}
+  sd.X <- rep(NA, p)
+  
+  for(i in 1:p) {
+    X[i, ] <- scale(X[i, ], scale = FALSE)
+    sd.X[i] <- sd(X[i, ])
+  }
   
   Sigma <- array(0, c(p, p, N))
   
@@ -27,27 +32,46 @@ makeSigma <- function(X, pos, h) {
     Sigma[, , i] <- X[, pos[index]] %*% diag(omega[index]) %*% t(X[, pos[index]])
   }
   
-  return(Sigma)
+  result <- new.env()
+  result$Sigma <- Sigma
+  result$sd.X <- sd.X
+  result = as.list(result)
+  
+  return(result)
 }
 
 
 #Correlation matrix generation function########################################################################################
 ###############################################################################################################################
 
-gene.corr= function(X, pos, h){
+makeCorr <- function(X, pos, h) {
   
-  p = nrow(X); N = ncol(X); L = length(pos)
+  p <- nrow(X)
+  N <- ncol(X)
+  L <- length(pos)
   
-  for(i in 1:p){X[i, ] = scale(X[i, ])}
+  sd.X <- rep(NA, p)
   
-  Corr = array(0, c(p, p, N))
-  
-  for(i in 1:N){
-    Kh = pmax(3/4*(1-((pos-i)/((N-1)*h))^2), 0); omega = Kh/sum(Kh); index = which(omega!=0)
-    Corr[, , i] = X[, pos[index]]%*%diag(omega[index])%*%t(X[, pos[index]])
+  for(i in 1:p) {
+    X[i, ] <- scale(X[i, ])
+    sd.X[i] <- sd(X[i, ])
   }
   
-  return(Corr)
+  Corr <- array(0, c(p, p, N))
+  
+  for(i in 1:N) {
+    Kh <- pmax(3/4 * (1 - ((pos - i) / ((N - 1) * h)) ^ 2), 0)
+    omega <- Kh / sum(Kh)
+    index <- which(omega != 0)
+    Corr[, , i] <- X[, pos[index]] %*% diag(omega[index]) %*% t(X[, pos[index]])
+  }
+  
+  result <- new.env()
+  result$Corr <- Corr
+  result$sd.X <- sd.X
+  result = as.list(result)
+  
+  return(result)
 }
 
 
@@ -72,9 +96,9 @@ gene.corr= function(X, pos, h){
 #record.list: D by L time costs in C
 #time.list: D time costs w.r.t. D d's in R
 
-LGGM.local = function(pos, Corr, Sigma, fit.type, refit.type, d, lambda, epi.abs, epi.rel){
+LGGM.local = function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]
+  p = dim(Corr)[1]; N = dim(Corr)[3]
   
   Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
   Nd.index.c = Nd.index-1; Nd = length(Nd.index)
@@ -100,7 +124,7 @@ LGGM.local = function(pos, Corr, Sigma, fit.type, refit.type, d, lambda, epi.abs
               as.integer(Nd.pos.c),
               as.integer(Nd.pos.l),
               as.double(Corr[, , Nd.index]),
-              as.double(Sigma[, , Nd.index]),
+              as.double(sd.X),
               Z.vec = as.double(Z.vec),
               Z.pos.vec = as.double(Z.pos.vec),
               as.double(U.vec),
@@ -240,12 +264,14 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
     refit.type = 1
   }
   
-  Sigma = gene.Sigma(X, 1:N, h)
+  result.Corr = makeCorr(X, 1:N, h)
+  Corr <- result.Corr$Corr
   if(fit.corr == TRUE){
-    Corr = gene.corr(X, 1:N, h)
+    sd.X <- result.Corr$sd.X
   }else{
-    Corr = Sigma
+    sd.X <- rep(1, p)
   }
+  rm(result.Corr)
   
   if(length(d) == 1 && d>=0.5){
     
@@ -264,7 +290,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
     registerDoParallel(num.thread)
     
     result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, Sigma, fit.type, refit.type, d[k], lambda[k], epi.abs, epi.rel)
+      LGGM.local(pos[k], Corr, sd.X, fit.type, refit.type, d[k], lambda[k], epi.abs, epi.rel)
     
     stopImplicitCluster()
     
