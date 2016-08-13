@@ -32,7 +32,6 @@ epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.core = 1)
   \item{Omega.rf.list}{a list of estimated precision matrices via model refitting at positions of time points specified by "pos"}
   \item{edge.num.list}{a vector of numbers of graph edges at positions of time points specified by "pos"}
   \item{edge.list}{a list of graph edges at positions of time points specified by "pos"}
-  \item{cv.score}{?}
 }
 \references{
 Yang, J. and Peng, J. (2016). Estimating Time-Varying Graphical Models through a Local Group-Lasso Type Penalty. arXiv:

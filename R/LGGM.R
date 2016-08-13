@@ -53,8 +53,8 @@ makeCorr <- function(X, pos, h) {
   sd.X <- rep(NA, p)
   
   for(i in 1:p) {
-    X[i, ] <- scale(X[i, ])
     sd.X[i] <- sd(X[i, ])
+    X[i, ] <- scale(X[i, ])
   }
   
   Corr <- array(0, c(p, p, N))
@@ -141,7 +141,6 @@ LGGM.local = function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs,
   Omega.rf = Matrix(result$Z.pos.vec, p, p, sparse=T)
   edge.num = result$edge.num
   edge = which(Omega.rf!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]
-  cv.score = sum(c(t(Sigma[, , pos]))*c(matrix(Omega.rf))) - log(det(Omega.rf))
     
   cat("complete: t =", round((pos-1)/(N-1), 2), "\n")
   
@@ -150,7 +149,6 @@ LGGM.local = function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs,
   result$Omega.rf = Omega.rf
   result$edge.num = edge.num
   result$edge = edge
-  result$cv.score = cv.score
   result = as.list(result)
   
   return(result)
@@ -305,17 +303,13 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
       Omega.rf.list[[k]] = result.k$Omega.rf
       edge.num.list[[k]] = result.k$edge.num
       edge.list[[k]] = result.k$edge
-      cv.score.list[[k]] = result.k$cv.score
     }
-    
-    cv.score = mean(cv.score.list)
     
     result = new.env()
     result$Omega.list = Omega.list
     result$Omega.rf.list = Omega.rf.list
     result$edge.num.list = edge.num.list
     result$edge.list = edge.list
-    result$cv.score = cv.score
     result = as.list(result)
   }
   
