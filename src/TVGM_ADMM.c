@@ -11,7 +11,7 @@
 void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres);
 
 //apply ADMM to fixed h, d and lambda
-void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len);
+void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len);
 
 //local group graphical lasso
 void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
@@ -84,7 +84,7 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 
-void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len){
+void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len){
 
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k, pos, S_L;
 	int *member_ind_n;
@@ -106,7 +106,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 				}
 			}
 			for(i=0; i<Pos_L; i++){
-				Z_pos[p*p*i+p*(*member_ind_n)+(*member_ind_n)] = 1/Sigma[p*p*Pos[i]+p*(*member_ind_n)+(*member_ind_n)];
+				Z_pos[p*p*i+p*(*member_ind_n)+(*member_ind_n)] = 1/(Corr[p*p*Pos[i]+p*(*member_ind_n)+(*member_ind_n)]*sd[*member_ind_n]*sd[*member_ind_n]);
 			}
 		}
 		//block diagonal with dimension larger than one
@@ -155,7 +155,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 					for(k=0; k<p_n; k++){
 						Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*i+p_n*j+k];
 						U[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = U_n[p_n*p_n*i+p_n*j+k];
-						Sigma_n[p_n*p_n*i+p_n*j+k] = Sigma[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
+						Sigma_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))]*sd[*(member_ind_n+j)]*sd[*(member_ind_n+k)];
 					}
 				}
 			}
