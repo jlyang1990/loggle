@@ -1,48 +1,15 @@
 
-#Sigma generation function#####################################################################################################
+#Correlation matrix generation function########################################################################################
 ###############################################################################################################################
 
 #Input###
 #X: list of observations
-#pos: position of observations used to generate Sigma
+#pos: position of observations used to generate correlation matrix
 #h: bandwidth in kernel function
 
 #Output###
-#Sigma: list of kernel estimators of covariance matrices
-
-makeSigma <- function(X, pos, h) {
-  
-  p <- nrow(X)
-  N <- ncol(X)
-  L <- length(pos)
-  
-  sd.X <- rep(NA, p)
-  
-  for(i in 1:p) {
-    X[i, ] <- scale(X[i, ], scale = FALSE)
-    sd.X[i] <- sd(X[i, ])
-  }
-  
-  Sigma <- array(0, c(p, p, N))
-  
-  for(i in 1:N) {
-    Kh <- pmax(3/4 * (1 - ((pos - i) / ((N - 1) * h)) ^ 2), 0)
-    omega <- Kh / sum(Kh)
-    index <- which(omega != 0)
-    Sigma[, , i] <- X[, pos[index]] %*% diag(omega[index]) %*% t(X[, pos[index]])
-  }
-  
-  result <- new.env()
-  result$Sigma <- Sigma
-  result$sd.X <- sd.X
-  result = as.list(result)
-  
-  return(result)
-}
-
-
-#Correlation matrix generation function########################################################################################
-###############################################################################################################################
+#Corr: list of kernel estimators of correlation matrices
+#sd.X: list of standard deviations of variables
 
 makeCorr <- function(X, pos, h) {
   
@@ -158,9 +125,9 @@ LGGM.local = function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs,
 #simulation study for global group-lasso (d=1)#################################################################################
 ###############################################################################################################################
 
-LGGM.global = function(pos, Corr, Sigma, fit.type, refit.type, lambda, epi.abs, epi.rel){
+LGGM.global = function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos)
+  p = dim(Corr)[1]; N = dim(Corr)[3]; K = length(pos)
   
   N.index.c = 0:(N-1)
   pos.c = pos-1
@@ -203,14 +170,12 @@ LGGM.global = function(pos, Corr, Sigma, fit.type, refit.type, lambda, epi.abs, 
   Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
   edge.num.list = rep(result$edge.num, K)
   edge = which(Omega.rf.list[[1]]!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]; edge.list = rep(list(edge), K)
-  cv.score = mean(sapply(1:K, function(k) sum(c(t(Sigma[, , pos[k]]))*c(matrix(Omega.rf.list[[k]]))) - log(det(Omega.rf.list[[k]]))))
   
   result = new.env()
   result$Omega.list = Omega.list
   result$Omega.rf.list = Omega.rf.list
   result$edge.num.list = edge.num.list
   result$edge.list = edge.list
-  result$cv.score = cv.score
   result = as.list(result)
   
   return(result)
