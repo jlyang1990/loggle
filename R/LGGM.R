@@ -74,8 +74,8 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
   Nd.pos.l <- 1
     
   Corr.sq <- apply(Corr[, , Nd.index] ^ 2, c(1, 2), sum)
-    
-  Z.vec <- rep(0, p*p*Nd)
+  
+  Z.vec <- rep(0, p*p)
   Z.pos.vec <- rep(0, p*p)
   edge.num <- 0
     
@@ -113,8 +113,8 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
                as.integer(refit.type),
                edge.num = as.integer(edge.num)
                )
-      
-  Omega <- Matrix(result$Z.vec[(p*p*(Nd.pos-1) + 1) : (p*p*Nd.pos)], p, p, sparse = T)
+  
+  Omega <- Matrix(result$Z.vec, p, p, sparse = T)
   Omega.rf <- Matrix(result$Z.pos.vec, p, p, sparse = T)
   edge.num <- result$edge.num
   edge <- which(Omega.rf != 0, arr.ind = T)
