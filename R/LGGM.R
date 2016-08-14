@@ -77,7 +77,6 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
     
   Z.vec <- rep(0, p*p*Nd)
   Z.pos.vec <- rep(0, p*p)
-  U.vec <- rep(0, p*p*Nd)
   edge.num <- 0
     
   lambda <- sqrt(Nd) * lambda
@@ -94,7 +93,7 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
   member.index <- sort(member, index.return = T)$ix - 1
   csize.index <- c(0, cumsum(csize))
     
-  result <- .C("ADMM_cluster",
+  result <- .C("ADMM_simple",
                as.integer(p),
                as.integer(member.index),
                as.integer(csize.index),
@@ -106,7 +105,6 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
                as.double(sd.X),
                Z.vec = as.double(Z.vec),
                Z.pos.vec = as.double(Z.pos.vec),
-               as.double(U.vec),
                as.double(lambda),
                as.double(rho),
                as.double(epi.abs),
@@ -114,7 +112,7 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
                as.integer(fit.type),
                as.integer(refit.type),
                edge.num = as.integer(edge.num)
-  )
+               )
       
   Omega <- Matrix(result$Z.vec[(p*p*(Nd.pos-1) + 1) : (p*p*Nd.pos)], p, p, sparse = T)
   Omega.rf <- Matrix(result$Z.pos.vec, p, p, sparse = T)
