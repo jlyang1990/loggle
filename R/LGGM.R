@@ -221,29 +221,25 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 }
 
 
-#simulation study for local group-lasso (main function)########################################################################
+# Graph estimation function for LGGM ##########################################################################################
 ###############################################################################################################################
 
-#Input###
-#pos: list of positions of time points where graphs are estimated
-#h: bandwidth in kernel function
-#X: list of observations
-#corr.ind: 0: use Sigma in model fitting, 1: use Corr in model fitting
-#d.l: list of d's
-#lambda.c: list of lambda's
-#epi.abs, epi.rel: constants in ADMM stopping criterion
-#pseudo.fit: 0: local group graphical lasso, 1: pseudo-likelihood group lasso (asymmetry), 2: pseudo-likelihood group lasso (symmetry), 3: SPACE
-#pseudo.refit: 0: likelihood refit, 1: pseudo-likelihood refit
-#thres: grid search stops when number of detected edges larger than thres*p
+# Input ###
+# pos: position of time points where graphs are estimated
+# Corr: list of kernel estimators of correlation matrices
+# sd.X: list of standard deviations of variables
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# d: width of neighborhood
+# lambda: tuning parameter of Lasso penalty
+# epi.abs: absolute tolerance in ADMM stopping criterion
+# epi.rel: relative tolerance in ADMM stopping criterion
 
-#Output###
-#S.list: D (number of d's) by L (number of lambda's) by K (number of time points) lists of edges
-#Omega.lg.list: D by L by K lists of estimated precision matrices
-#Omega.rf.list: D by L by K lists of refitted precision matrices
-#edge: D by L by K numbers of edges
-#time: K time costs w.r.t. K time points in R
-#record.list: D by L by K time costs in C
-#time.list: D by K time costs in R
+# Output ###
+# Omega: D (number of d's) by L (number of lambda's) by K (number of time points) list of estimated precision matrices
+# Omega.rf: D by L by K list of refitted precision matrices
+# edge.num: D by L by K list of edge numbers
+# edge: D by L by K list of edges
 
 LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.thread = 1){
   
@@ -275,9 +271,41 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
   }
   rm(result.Corr)
   
-  if(length(d) == 1 && d>=0.5){
+  Omega.list = vector("list", K); Omega.rf.list = vector("list", K)
+  edge.num.list = rep(0, K); edge.list = vector("list", K)
+  
+  if(length(d) == 1 && d>=0.5) {
     
-    result = LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel)
+    if(length(lambda) == 1) {
+      
+      result = LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel)
+      
+      cat("complete all", "\n")
+      
+    } else {
+      
+      lambda.list <- unique(lambda)
+      
+      for(lambda.l in lambda.list) {
+        result.l = LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda.l, epi.abs, epi.rel)
+        idx <- which(lambda == lambda.l)
+        for(i in idx) {
+          Omega.list[[i]] <- result.l$Omega.list[[i]]
+          Omega.rf.list[[i]] <- result.l$Omega.rf.list[[i]]
+          edge.num.list[i] <- result.l$edge.num.list[i]
+          edge.list[[i]] <- result.l$edge.list[[i]]
+        }
+        
+        cat("complete: t =", round((pos[idx]-1) / (N-1), 2), "\n")
+      }
+      
+      result = new.env()
+      result$Omega.list = Omega.list
+      result$Omega.rf.list = Omega.rf.list
+      result$edge.num.list = edge.num.list
+      result$edge.list = edge.list
+      result = as.list(result)
+    }
     
   } else{
     
@@ -295,9 +323,6 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
       LGGM.local(pos[k], Corr, sd.X, fit.type, refit.type, d[k], lambda[k], epi.abs, epi.rel)
     
     stopImplicitCluster()
-    
-    Omega.list = vector("list", K); Omega.rf.list = vector("list", K)
-    edge.num.list = rep(0, K); edge.list = vector("list", K); cv.score.list = rep(0, K)
     
     for(k in 1:K){
       
