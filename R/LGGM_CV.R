@@ -1,45 +1,44 @@
 
-#Sigma generation function####################################################################################################################################################################################################################################
+# Correlation matrix generation function ######################################################################################
+###############################################################################################################################
 
-#Input###
-#X: list of observations
-#pos: position of observations used to generate Sigma
-#h: bandwidth in kernel function
+# Input ###
+# X: a p by N matrix containing list of observations
+# pos: position of observations used to generate correlation matrices
+# h: bandwidth in kernel function used to generate correlation matrices
 
-#Output###
-#Sigma: list of kernel estimators of covariance matrices
+# Output ###
+# Corr: list of kernel estimators of correlation matrices
+# sd.X: list of standard deviations of variables
 
-gene.Sigma = function(X, pos, h){
+makeCorr <- function(X, pos, h) {
   
-  p = nrow(X); N = ncol(X); L = length(pos)
+  p <- nrow(X)
+  N <- ncol(X)
+  L <- length(pos)
   
-  Sigma = array(0, c(p, p, N))
+  sd.X <- rep(NA, p)
   
-  for(i in 1:N){
-    Kh = pmax(3/4*(1-((pos-i)/((N-1)*h))^2), 0); omega = Kh/sum(Kh); index = which(omega!=0)
-    Sigma[, , i] = X[, pos[index]]%*%diag(omega[index])%*%t(X[, pos[index]])
+  for(i in 1:p) {
+    sd.X[i] <- sd(X[i, ])
+    X[i, ] <- scale(X[i, ])
   }
   
-  return(Sigma)
-}
-
-
-#Correlation matrix generation function#######################################################################################################################################################################################################################
-
-gene.corr= function(X, pos, h){
+  Corr <- array(0, c(p, p, N))
   
-  p = nrow(X); N = ncol(X); L = length(pos)
-  
-  for(i in 1:p){X[i, ] = scale(X[i, ])}
-  
-  Corr = array(0, c(p, p, N))
-  
-  for(i in 1:N){
-    Kh = pmax(3/4*(1-((pos-i)/((N-1)*h))^2), 0); omega = Kh/sum(Kh); index = which(omega!=0)
-    Corr[, , i] = X[, pos[index]]%*%diag(omega[index])%*%t(X[, pos[index]])
+  for(i in 1:N) {
+    Kh <- pmax(3/4 * (1 - ((pos - i) / ((N - 1) * h)) ^ 2), 0)
+    omega <- Kh / sum(Kh)
+    index <- which(omega != 0)
+    Corr[, , i] <- X[, pos[index]] %*% diag(omega[index]) %*% t(X[, pos[index]])
   }
   
-  return(Corr)
+  result <- new.env()
+  result$Corr <- Corr
+  result$sd.X <- sd.X
+  result = as.list(result)
+  
+  return(result)
 }
 
 
@@ -117,7 +116,7 @@ LGGM.local.cv = function(pos, Corr, Sigma, fit.type, refit.type, d.list, lambda.
                   as.double(epi.rel.d),
                   as.integer(pseudo.fit),
                   as.integer(pseudo.refit),
-                  as.double(thres),
+                  as.double(thres)
     )
       
     Z.vec = result$Z.vec
@@ -200,7 +199,7 @@ LGGM.global.cv = function(pos, Corr, Sigma, fit.type, refit.type, lambda.list, c
               as.double(epi.rel),
               as.integer(pseudo.fit),
               as.integer(pseudo.refit),
-              as.double(thres),
+              as.double(thres)
   )
   
   Z.vec = result$Z.vec
