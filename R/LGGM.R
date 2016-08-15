@@ -267,7 +267,7 @@ LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeliho
     stop("refit.type must be 'likelihood' or 'pseudo'!")
   }
   
-  if(pos %in% 1:N) {
+  if(any(!pos %in% 1:N)) {
     stop("pos must be a subset of 1, 2, ..., N!")
   }
   if(length(h) != 1) {
