@@ -46,13 +46,13 @@ makeCorr <- function(X, pos, h) {
 ###############################################################################################################################
 
 # Input ###
-# pos: position of time points where graphs are estimated
+# pos: position of time point where graph is estimated
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
 # fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
 # refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
-# d: list of d's
-# lambda: list of lambda's
+# d: width of neighborhood
+# lambda: tuning parameter of Lasso penalty
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 
@@ -62,7 +62,7 @@ makeCorr <- function(X, pos, h) {
 # edge.num: D by L list of edge numbers
 # edge: D by L list of edges
 
-LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs, epi.rel){
+LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs, epi.rel) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -133,61 +133,89 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
 }
 
 
-#simulation study for global group-lasso (d=1)#################################################################################
+# Graph estimation function for global LGGM ###################################################################################
 ###############################################################################################################################
 
-LGGM.global = function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel){
+# Input ###
+# pos: position of time points where graphs are estimated
+# Corr: list of kernel estimators of correlation matrices
+# sd.X: list of standard deviations of variables
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# d: width of neighborhood
+# lambda: tuning parameter of Lasso penalty
+# epi.abs: absolute tolerance in ADMM stopping criterion
+# epi.rel: relative tolerance in ADMM stopping criterion
+
+# Output ###
+# Omega: D (number of d's) by L (number of lambda's) by K (number of time points) list of estimated precision matrices
+# Omega.rf: D by L by K list of refitted precision matrices
+# edge.num: D by L by K list of edge numbers
+# edge: D by L by K list of edges
+
+LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel) {
   
-  p = dim(Corr)[1]; N = dim(Corr)[3]; K = length(pos)
+  p <- dim(Corr)[1]
+  N <- dim(Corr)[3]
+  K <- length(pos)
   
-  N.index.c = 0:(N-1)
-  pos.c = pos-1
+  N.index.c <- 0:(N-1)
+  pos.c <- pos - 1
   
-  Corr.sq = apply(Corr^2, c(1, 2), sum)
+  Corr.sq <- apply(Corr ^ 2, c(1, 2), sum)
   
-  Z.vec = rep(0, p*p*N); Z.pos.vec = rep(0, p*p*K); U.vec = rep(0, p*p*N); edge.num = 0
+  Z.vec <- rep(0, p*p*K)
+  Z.pos.vec <- rep(0, p*p*K)
+  edge.num <- 0
   
-  lambda = sqrt(N)*lambda; rho = lambda
+  lambda <- sqrt(N) * lambda
+  rho <- lambda
   
   #detect block diagonal structure
-  adj.mat = (Corr.sq>lambda^2); diag(adj.mat) = 1; graph = graph.adjacency(adj.mat)
-  cluster = clusters(graph); member = cluster$membership; csize = cluster$csize; no = cluster$no
-  member.index = sort(member, index.return=T)$ix-1; csize.index = c(0, cumsum(csize))
+  adj.mat <- (Corr.sq > lambda ^ 2)
+  diag(adj.mat) <- 1
+  graph <- graph.adjacency(adj.mat)
+  cluster <- clusters(graph)
+  member <- cluster$membership
+  csize <- cluster$csize
+  no <- cluster$no
+  member.index <- sort(member, index.return = T)$ix - 1
+  csize.index <- c(0, cumsum(csize))
   
-  result = .C("ADMM_cluster", 
-              as.integer(p),
-              as.integer(member.index),
-              as.integer(csize.index),
-              as.integer(no),
-              as.integer(N),
-              as.integer(pos.c),
-              as.integer(K),
-              as.double(Corr),
-              as.double(Sigma),
-              Z.vec = as.double(Z.vec),
-              Z.pos.vec = as.double(Z.pos.vec),
-              as.double(U.vec),
-              as.double(lambda),
-              as.double(rho),
-              as.double(epi.abs),
-              as.double(epi.rel),
-              as.integer(fit.type),
-              as.integer(refit.type),
-              edge.num = as.integer(edge.num)
+  result <- .C("ADMM_simple",
+               as.integer(p),
+               as.integer(member.index),
+               as.integer(csize.index),
+               as.integer(no),
+               as.integer(N),
+               as.integer(pos.c),
+               as.integer(K),
+               as.double(Corr),
+               as.double(sd.X),
+               Z.vec = as.double(Z.vec),
+               Z.pos.vec = as.double(Z.pos.vec),
+               as.double(lambda),
+               as.double(rho),
+               as.double(epi.abs),
+               as.double(epi.rel),
+               as.integer(fit.type),
+               as.integer(refit.type),
+               edge.num = as.integer(edge.num)
   )
   
-  Z.vec = array(result$Z.vec, c(p, p, N))[, , pos]
-  Omega.list = sapply(1:K, function(k) Matrix(Z.vec[, , k], p, p, sparse=T))
-  Omega.rf.list = sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1)+1):(p*p*k)], p, p, sparse=T))
-  edge.num.list = rep(result$edge.num, K)
-  edge = which(Omega.rf.list[[1]]!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]; edge.list = rep(list(edge), K)
+  Omega.list <- sapply(1:K, function(k) Matrix(result$Z.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = T))
+  Omega.rf.list <- sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = T))
+  edge.num.list <- rep(result$edge.num, K)
+  edge <- which(Omega.rf.list[[1]] != 0, arr.ind = T)
+  edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+  edge.list <- rep(list(edge), K)
   
-  result = new.env()
-  result$Omega.list = Omega.list
-  result$Omega.rf.list = Omega.rf.list
-  result$edge.num.list = edge.num.list
-  result$edge.list = edge.list
-  result = as.list(result)
+  result <- new.env()
+  result$Omega.list <- Omega.list
+  result$Omega.rf.list <- Omega.rf.list
+  result$edge.num.list <- edge.num.list
+  result$edge.list <- edge.list
+  result <- as.list(result)
   
   return(result)
 }
@@ -249,7 +277,7 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
   
   if(length(d) == 1 && d>=0.5){
     
-    result = LGGM.global(pos, Corr, Sigma, fit.type, refit.type, lambda, epi.abs, epi.rel)
+    result = LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel)
     
   } else{
     
