@@ -225,15 +225,17 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 ###############################################################################################################################
 
 # Input ###
+# X: a p by N matrix containing list of observations
 # pos: position of time points where graphs are estimated
-# Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables
 # fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
 # refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
-# d: width of neighborhood
-# lambda: tuning parameter of Lasso penalty
+# h: bandwidth in kernel function used to generate correlation matrices
+# d: list of widths of neighborhood
+# lambda: list of tuning parameters of Lasso penalty
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
+#num.thread: number of threads
 
 # Output ###
 # Omega: D (number of d's) by L (number of lambda's) by K (number of time points) list of estimated precision matrices
@@ -241,54 +243,79 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 # edge.num: D by L by K list of edge numbers
 # edge: D by L by K list of edges
 
-LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.thread = 1){
+LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.thread = 1) {
   
-  p = dim(X)[1]; N = dim(X)[2]; K = length(pos)
+  p <- dim(X)[1]
+  N <- dim(X)[2]
+  K <- length(pos)
   
-  if(fit.type == "glasso"){
-    fit.type = 0
-  }
-  if(fit.type == "pseudo"){
-    fit.type = 1
-  }
-  if(fit.type == "space"){
-    fit.type = 2
-  }
-  
-  if(refit.type == "likelihood"){
-    refit.type = 0
-  }
-  if(refit.type == "pseudo"){
-    refit.type = 1
+  if(fit.type == "glasso") {
+    fit.type <- 0
+  } else if(fit.type == "pseudo") {
+    fit.type <- 1
+  } else if(fit.type == "space") {
+    fit.type <- 2
+  } else {
+    stop("fit.type must be 'glasso', 'pseudo' or 'space'!")
   }
   
-  result.Corr = makeCorr(X, 1:N, h)
+  if(refit.type == "likelihood") {
+    refit.type <- 0
+  } else if(refit.type == "pseudo") {
+    refit.type <- 1
+  } else {
+    stop("refit.type must be 'likelihood' or 'pseudo'!")
+  }
+  
+  if(pos %in% 1:N) {
+    stop("pos must be a subset of 1, 2, ..., N!")
+  }
+  if(length(h) != 1) {
+    stop("h must be a scalar!")
+  }
+  if(!length(d) %in% c(1, K)) {
+    stop("d must be a scalar or a vector of the same length as 'pos'!")
+  }
+  if(!length(lambda) %in% c(1, K)) {
+    stop("lambda must be a scalar or a vector of the same length as 'pos'!")
+  }
+  
+  cat("Generating sample covariance/correlation matrices...\n")
+  result.Corr <- makeCorr(X, 1:N, h)
   Corr <- result.Corr$Corr
-  if(fit.corr == TRUE){
+  if(fit.corr == TRUE) {
     sd.X <- result.Corr$sd.X
-  }else{
+    cat("Use sample correlation matrices in model fitting\n")
+  } else {
     sd.X <- rep(1, p)
+    cat("Use sample covariance matrices in model fitting\n")
   }
   rm(result.Corr)
   
-  Omega.list = vector("list", K); Omega.rf.list = vector("list", K)
-  edge.num.list = rep(0, K); edge.list = vector("list", K)
+  cat("Estimating graphs...\n")
   
-  if(length(d) == 1 && d>=0.5) {
+  Omega.list <- vector("list", K)
+  Omega.rf.list <- vector("list", K)
+  edge.num.list <- rep(0, K)
+  edge.list <- vector("list", K)
+  
+  if(length(d) == 1 && d >= 0.5) {
     
     if(length(lambda) == 1) {
       
-      result = LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel)
+      result <- LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel)
       
-      cat("complete all", "\n")
+      cat("Complete all!\n")
       
     } else {
       
       lambda.list <- unique(lambda)
       
       for(lambda.l in lambda.list) {
-        result.l = LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda.l, epi.abs, epi.rel)
+        
+        result.l <- LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda.l, epi.abs, epi.rel)
         idx <- which(lambda == lambda.l)
+        
         for(i in idx) {
           Omega.list[[i]] <- result.l$Omega.list[[i]]
           Omega.rf.list[[i]] <- result.l$Omega.rf.list[[i]]
@@ -296,50 +323,48 @@ LGGM = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihoo
           edge.list[[i]] <- result.l$edge.list[[i]]
         }
         
-        cat("complete: t =", round((pos[idx]-1) / (N-1), 2), "\n")
+        cat("Complete: t =", round((pos[idx]-1) / (N-1), 2), "\n")
       }
       
-      result = new.env()
-      result$Omega.list = Omega.list
-      result$Omega.rf.list = Omega.rf.list
-      result$edge.num.list = edge.num.list
-      result$edge.list = edge.list
-      result = as.list(result)
+      result <- new.env()
+      result$Omega.list <- Omega.list
+      result$Omega.rf.list <- Omega.rf.list
+      result$edge.num.list <- edge.num.list
+      result$edge.list <- edge.list
+      result <- as.list(result)
     }
     
   } else{
     
-    if(length(d) == 1){
-      d = rep(d, K)
+    if(length(d) == 1) {
+      d <- rep(d, K)
     }
     
-    if(length(lambda) == 1){
-      lambda = rep(lambda, K)
+    if(length(lambda) == 1) {
+      lambda <- rep(lambda, K)
     }
     
     registerDoParallel(num.thread)
     
-    result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
+    result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
       LGGM.local(pos[k], Corr, sd.X, fit.type, refit.type, d[k], lambda[k], epi.abs, epi.rel)
     
-    stopImplicitCluster()
-    
-    for(k in 1:K){
+    for(k in 1:K) {
       
-      result.k = result[[k]]
+      result.k <- result[[k]]
       
-      Omega.list[[k]] = result.k$Omega
-      Omega.rf.list[[k]] = result.k$Omega.rf
-      edge.num.list[[k]] = result.k$edge.num
-      edge.list[[k]] = result.k$edge
+      Omega.list[[k]] <- result.k$Omega
+      Omega.rf.list[[k]] <- result.k$Omega.rf
+      edge.num.list[[k]] <- result.k$edge.num
+      edge.list[[k]] <- result.k$edge
     }
     
-    result = new.env()
-    result$Omega.list = Omega.list
-    result$Omega.rf.list = Omega.rf.list
-    result$edge.num.list = edge.num.list
-    result$edge.list = edge.list
-    result = as.list(result)
+    result <- new.env()
+    result$Omega.list <- Omega.list
+    result$Omega.rf.list <- Omega.rf.list
+    result$edge.num.list <- edge.num.list
+    result$edge.list <- edge.list
+    result <- as.list(result)
   }
   
   return(result)  

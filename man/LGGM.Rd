@@ -11,8 +11,8 @@ epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.core = 1)
 }
 
 \arguments{
-  \item{X}{a p by N data matrix: p -- number of variables, n -- number of time points (sample size)}
-  \item{pos}{a vector which is a subset of 1 to N: positions of time points where graphs are estimated}
+  \item{X}{a p by N data matrix: p -- number of variables, N -- number of time points (sample size)}
+  \item{pos}{a vector which is a subset of 1, 2, ..., N: positions of time points where graphs are estimated}
   \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "glasso"}
   \item{refit.type}{a string: "likelihood" -- likelihood estimation, or "pseudo" -- pseudo likelihood estimation, default = "likelihood"}
   \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix}
