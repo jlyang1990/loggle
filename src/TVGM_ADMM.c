@@ -8,7 +8,7 @@
 //apply ADMM across lambda's when h and d are fixed
 //member_ind, csize_ind, No: identify block diagonal structure
 //LL: number of time points within neighborhood
-void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres);
+void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres);
 
 //apply ADMM to fixed h, d and lambda
 void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len);
@@ -41,7 +41,7 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J);
 
 
 
-void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Sigma, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres){
+void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres) {
 
 	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0;
 
@@ -67,7 +67,7 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 			break;
 		}
 
-		ADMM_cluster(P, (member_ind+p*i), (csize_ind+no_sum), (No+i), LL, Pos, Pos_Len, Corr, Sigma, Z_i, (Z_pos+p*p*Pos_L*i), U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, pseudo_refit, S_L);
+		ADMM_cluster(P, (member_ind+p*i), (csize_ind+no_sum), (No+i), LL, Pos, Pos_Len, Corr, sd, Z_i, (Z_pos+p*p*Pos_L*i), U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, pseudo_refit, S_L);
 
 		for(m=0; m<Pos_L; m++){
 			for(j=0; j<p; j++){
@@ -114,7 +114,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 		}
 		//block diagonal with dimension larger than one
 		else{
-			double *Sigma_n = (double *) malloc(p_n*p_n*L*sizeof(double));
+			double *Corr_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *Z_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *U_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *Z_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
@@ -123,7 +123,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 			for(i=0; i<L; i++){
 				for(j=0; j<p_n; j++){
 					for(k=0; k<p_n; k++){
-						Sigma_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
+						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
 						Z_n[p_n*p_n*i+p_n*j+k] = Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
 						U_n[p_n*p_n*i+p_n*j+k] = U[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
 					}
@@ -132,22 +132,22 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 			//model fitting
 			if(*pseudo_fit == 0){
-				ADMM_local_glasso(&p_n, LL, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+				ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_glasso(&p_n, LL, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+				ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
 			}
 			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
 				for(i=0; i<L; i++){
 					for(j=0; j<p_n; j++){
-						d_n[p_n*i+j] = Sigma_n[p_n*p_n*i+p_n*j+j];
+						d_n[p_n*i+j] = Corr_n[p_n*p_n*i+p_n*j+j];
 					}
 				}
 				for(i=0; i<3; i++){
-					ADMM_SPACE_rho(&p_n, LL, d_n, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+					ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
 					if(i<2){
-						ADMM_SPACE_d(&p_n, LL, d_n, Sigma_n, Z_n);
+						ADMM_SPACE_d(&p_n, LL, d_n, Corr_n, Z_n);
 					}
 				}
 				free(d_n);
@@ -158,7 +158,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 					for(k=0; k<p_n; k++){
 						Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*i+p_n*j+k];
 						U[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = U_n[p_n*p_n*i+p_n*j+k];
-						Sigma_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))]*sd[*(member_ind_n+j)]*sd[*(member_ind_n+k)];
+						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))]*sd[*(member_ind_n+j)]*sd[*(member_ind_n+k)];
 					}
 				}
 			}
@@ -186,7 +186,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 						}
 					}
 
-					ADMM_refit(&p_n, &pos, Sigma_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel);
+					ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel);
 
 					for(j=0; j<p_n; j++){
 						for(k=j; k<p_n; k++){
@@ -204,7 +204,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 	
 					pos = Pos[i];
 
-					ADMM_pseudo_refit(&p_n, &pos, Sigma_n, Z_n, Z_pos_n, S_Len);
+					ADMM_pseudo_refit(&p_n, &pos, Corr_n, Z_n, Z_pos_n, S_Len);
 
 					for(j=0; j<p_n; j++){
 						for(k=0; k<p_n; k++){
@@ -214,7 +214,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 				}
 			}
 			
-			free(Sigma_n);
+			free(Corr_n);
 			free(Z_n);
 			free(U_n);
 			free(Z_pos_n);
@@ -254,7 +254,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
     }
     //block diagonal with dimension larger than one
     else{
-      double *Sigma_n = (double *) malloc(p_n*p_n*L*sizeof(double));
+      double *Corr_n = (double *) malloc(p_n*p_n*L*sizeof(double));
       double *Z_n = (double *) malloc(p_n*p_n*L*sizeof(double));
       double *U_n = (double *) malloc(p_n*p_n*L*sizeof(double));
       double *Z_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
@@ -263,7 +263,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       for(i=0; i<L; i++){
         for(j=0; j<p_n; j++){
           for(k=0; k<p_n; k++){
-            Sigma_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
+            Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
             Z_n[p_n*p_n*i+p_n*j+k] = 0;
             U_n[p_n*p_n*i+p_n*j+k] = 0;
           }
@@ -272,22 +272,22 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       
       //model fitting
       if(*pseudo_fit == 0){
-        ADMM_local_glasso(&p_n, LL, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+        ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
       }
       else if(*pseudo_fit == 1){
-        ADMM_pseudo_glasso(&p_n, LL, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+        ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
       }
       else if(*pseudo_fit == 2){
         double *d_n = (double *) malloc(p_n*L*sizeof(double));
         for(i=0; i<L; i++){
           for(j=0; j<p_n; j++){
-            d_n[p_n*i+j] = Sigma_n[p_n*p_n*i+p_n*j+j];
+            d_n[p_n*i+j] = Corr_n[p_n*p_n*i+p_n*j+j];
           }
         }
         for(i=0; i<3; i++){
-          ADMM_SPACE_rho(&p_n, LL, d_n, Sigma_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+          ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
           if(i<2){
-            ADMM_SPACE_d(&p_n, LL, d_n, Sigma_n, Z_n);
+            ADMM_SPACE_d(&p_n, LL, d_n, Corr_n, Z_n);
           }
         }
         free(d_n);
@@ -296,7 +296,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       for(j=0; j<p_n; j++){
         for(k=0; k<p_n; k++){
           for(i=0; i<L; i++){
-            Sigma_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))]*sd[*(member_ind_n+j)]*sd[*(member_ind_n+k)];
+            Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))]*sd[*(member_ind_n+j)]*sd[*(member_ind_n+k)];
           }
           for(i=0; i<Pos_L; i++){
             Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*Pos[i]+p_n*j+k];
@@ -327,7 +327,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
             }
           }
           
-          ADMM_refit(&p_n, &pos, Sigma_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel);
+          ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel);
           
           for(j=0; j<p_n; j++){
             for(k=j; k<p_n; k++){
@@ -345,7 +345,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
           
           pos = Pos[i];
           
-          ADMM_pseudo_refit(&p_n, &pos, Sigma_n, Z_n, Z_pos_n, S_Len);
+          ADMM_pseudo_refit(&p_n, &pos, Corr_n, Z_n, Z_pos_n, S_Len);
           
           for(j=0; j<p_n; j++){
             for(k=0; k<p_n; k++){
@@ -355,7 +355,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
         }
       }
       
-      free(Sigma_n);
+      free(Corr_n);
       free(Z_n);
       free(U_n);
       free(Z_pos_n);
