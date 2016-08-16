@@ -1,17 +1,18 @@
 
-# Correlation matrix generation function ######################################################################################
+# Covariance/Correlation matrix generation function ###########################################################################
 ###############################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
 # pos: position of observations used to generate correlation matrices
 # h: bandwidth in kernel function used to generate correlation matrices
+# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 
 # Output ###
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
 
-makeCorr <- function(X, pos, h) {
+makeCorr <- function(X, pos, h, fit.corr) {
   
   p <- nrow(X)
   N <- ncol(X)
@@ -19,9 +20,16 @@ makeCorr <- function(X, pos, h) {
   
   sd.X <- rep(NA, p)
   
-  for(i in 1:p) {
-    sd.X[i] <- sd(X[i, ])
-    X[i, ] <- scale(X[i, ])
+  if(fit.corr) {
+    for(i in 1:p) {
+      sd.X[i] <- sd(X[i, ])
+      X[i, ] <- scale(X[i, ])
+    }
+  } else {
+    for(i in 1:p) {
+      sd.X[i] <- 1
+      X[i, ] <- scale(X[i, ], scale = FALSE)
+    }
   }
   
   Corr <- array(0, c(p, p, N))
@@ -62,9 +70,9 @@ makeCorr <- function(X, pos, h) {
 #record.list: D by L time costs in C
 #time.list: D time costs w.r.t. D d's in R
 
-LGGM.local.cv = function(pos, Corr, Sigma, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel){
+LGGM.local.cv = function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; D = length(d.list); L = length(lambda.list)
+  p = dim(Corr)[1]; N = dim(Corr)[3]; D = length(d.list); L = length(lambda.list)
   
   Omega.list = matrix(vector("list", 1), L, D); Omega.rf.list = matrix(vector("list", 1), L, D)
   edge.num.list = matrix(0, L, D); edge.list = matrix(vector("list", 1), L, D)
@@ -106,7 +114,7 @@ LGGM.local.cv = function(pos, Corr, Sigma, fit.type, refit.type, d.list, lambda.
                   as.integer(Nd.pos.c),
                   as.integer(Nd.pos.l),
                   as.double(Corr[, , Nd.index]),
-                  as.double(Sigma[, , Nd.index]),
+                  as.double(sd.X),
                   Z.ini.vec = as.double(Z.vec),
                   Z.pos.vec = as.double(Z.pos.vec),
                   as.integer(L),
@@ -151,9 +159,9 @@ LGGM.local.cv = function(pos, Corr, Sigma, fit.type, refit.type, d.list, lambda.
 
 #simulation study for global group-lasso (d=1)################################################################################################################################################################################################################
 
-LGGM.global.cv = function(pos, Corr, Sigma, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel){
+LGGM.global.cv = function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel){
   
-  p = dim(Sigma)[1]; N = dim(Sigma)[3]; K = length(pos); L = length(lambda.list)
+  p = dim(Corr)[1]; N = dim(Corr)[3]; K = length(pos); L = length(lambda.list)
   
   Omega.list = array(vector("list", 1), L, 1, K); Omega.rf.list = array(vector("list", 1), L, 1, K)
   edge.num.list = array(0, c(L, 1, K)); edge.list = array(vector("list", 1), L, 1, K)
@@ -189,7 +197,7 @@ LGGM.global.cv = function(pos, Corr, Sigma, fit.type, refit.type, lambda.list, c
               as.integer(pos.c),
               as.integer(K),
               as.double(Corr),
-              as.double(Sigma),
+              as.double(sd.X),
               Z.ini.vec = as.double(Z.vec),
               Z.pos.vec = as.double(Z.pos.vec),
               as.integer(L),
@@ -276,12 +284,11 @@ LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list,
     refit.type = 1
   }
   
-  Sigma = gene.Sigma(X, 1:N, h)
-  if(fit.corr == TRUE){
-    Corr = gene.corr(X, 1:N, h)
-  }else{
-    Corr = Sigma
-  }
+  cat("Generating sample covariance/correlation matrices...\n")
+  result.Corr <- makeCorr(X, 1:N, h, fit.corr)
+  Corr <- result.Corr$Corr
+  sd.X <- result.Corr$sd.X
+  rm(result.Corr)
   
   if(length(epi.abs) == 1){
     epi.abs = rep(epi.abs, D)
@@ -292,7 +299,7 @@ LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list,
   
   if(d.list == 1){
 
-    result = LGGM.global.cv(pos, Corr, Sigma, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel)
+    result = LGGM.global.cv(pos, Corr, sd.X, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel)
     
   } else{
     
@@ -304,7 +311,7 @@ LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list,
       registerDoParallel(num.core)
       
       result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-        LGGM.local.cv(pos[k], Corr, Sigma, fit.type, refit.type, d.list[-D], lambda.list, cv.thres, epi.abs[-D], epi.rel[-D])
+        LGGM.local.cv(pos[k], Corr, sd.X, fit.type, refit.type, d.list[-D], lambda.list, cv.thres, epi.abs[-D], epi.rel[-D])
       
       stopImplicitCluster()
       
@@ -330,7 +337,7 @@ LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list,
       registerDoParallel(num.core)
       
       result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-        LGGM.local.cv(pos[k], Corr, Sigma, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel)
+        LGGM.local.cv(pos[k], Corr, sd.X, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel)
       
       stopImplicitCluster()
       
@@ -458,7 +465,7 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeli
     
     pos.test = seq(i, N, fold); pos.train = (1:N)[-pos.test]
     
-    Sigma.test = gene.Sigma(X, pos.test, h.test)
+    Sigma.test = makeCorr(X, pos.test, h.test, fit.corr = FALSE)$Corr
     
     result.i = LGGM.combine.cv(pos, Corr.train, Sigma.train, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres)
     cv.result.list[[i]] = result.i

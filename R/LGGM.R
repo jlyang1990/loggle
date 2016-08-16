@@ -1,17 +1,18 @@
 
-# Correlation matrix generation function ######################################################################################
+# Covariance/Correlation matrix generation function ###########################################################################
 ###############################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
 # pos: position of observations used to generate correlation matrices
 # h: bandwidth in kernel function used to generate correlation matrices
+# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 
 # Output ###
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
 
-makeCorr <- function(X, pos, h) {
+makeCorr <- function(X, pos, h, fit.corr) {
   
   p <- nrow(X)
   N <- ncol(X)
@@ -19,9 +20,16 @@ makeCorr <- function(X, pos, h) {
   
   sd.X <- rep(NA, p)
   
-  for(i in 1:p) {
-    sd.X[i] <- sd(X[i, ])
-    X[i, ] <- scale(X[i, ])
+  if(fit.corr) {
+    for(i in 1:p) {
+      sd.X[i] <- sd(X[i, ])
+      X[i, ] <- scale(X[i, ])
+    }
+  } else {
+    for(i in 1:p) {
+      sd.X[i] <- 1
+      X[i, ] <- scale(X[i, ], scale = FALSE)
+    }
   }
   
   Corr <- array(0, c(p, p, N))
@@ -281,15 +289,9 @@ LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeliho
   }
   
   cat("Generating sample covariance/correlation matrices...\n")
-  result.Corr <- makeCorr(X, 1:N, h)
+  result.Corr <- makeCorr(X, 1:N, h, fit.corr)
   Corr <- result.Corr$Corr
-  if(fit.corr == TRUE) {
-    sd.X <- result.Corr$sd.X
-    cat("Use sample correlation matrices in model fitting\n")
-  } else {
-    sd.X <- rep(1, p)
-    cat("Use sample covariance matrices in model fitting\n")
-  }
+  sd.X <- result.Corr$sd.X
   rm(result.Corr)
   
   cat("Estimating graphs...\n")
