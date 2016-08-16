@@ -50,29 +50,33 @@ makeCorr <- function(X, pos, h, fit.corr) {
 }
 
 
-#simulation study for local group-lasso at time point pos#####################################################################################################################################################################################################
+# Cross validation function for local LGGM ####################################################################################
+###############################################################################################################################
 
-#Input###
-#pos: position of time point where graph is estimated
-#d.l: list of d's
-#lambda.c: list of lambda's
-#epi.abs, epi.rel: constants in ADMM stopping criterion
-#pseudo.fit: 0: local group graphical lasso, 1: pseudo-likelihood group lasso (asymmetry), 2: pseudo-likelihood group lasso (symmetry), 3: SPACE
-#pseudo.refit: 0: likelihood refit, 1: pseudo-likelihood refit
-#thres: grid search stops when number of detected edges larger than thres*p
+# Input ###
+# pos: position of time point where graph is estimated
+# Corr: list of kernel estimators of correlation matrices
+# sd.X: list of standard deviations of variables
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# d.list: list of widths of neighborhood
+# lambda.list: list of tuning parameters of Lasso penalty
+# cv.thres: grid search stops when number of detected edges larger than cv.thres times number of nodes
+# epi.abs: list of absolute tolerances in ADMM stopping criterion
+# epi.rel: list of relative tolerances in ADMM stopping criterion
 
-#Output###
-#S.list: D (number of d's) by L (number of lambda's) lists of edges
-#Omega.lg.list: D by L lists of estimated precision matrices
-#Omega.rf.list: D by L lists of refitted precision matrices
-#edge: D by L numbers of edges
-#time: the total time cost
-#record.list: D by L time costs in C
-#time.list: D time costs w.r.t. D d's in R
+# Output ###
+# Omega: D (number of d's) by L (number of lambda's) list of estimated precision matrices
+# Omega.rf: D by L list of refitted precision matrices
+# edge.num: D by L list of edge numbers
+# edge: D by L list of edges
 
-LGGM.local.cv = function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel){
+LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel) {
   
-  p = dim(Corr)[1]; N = dim(Corr)[3]; D = length(d.list); L = length(lambda.list)
+  p <- dim(Corr)[1]
+  N <- dim(Corr)[3]
+  D <- length(d.list)
+  L <- length(lambda.list)
   
   Omega.list = matrix(vector("list", 1), L, D); Omega.rf.list = matrix(vector("list", 1), L, D)
   edge.num.list = matrix(0, L, D); edge.list = matrix(vector("list", 1), L, D)
@@ -255,13 +259,10 @@ LGGM.global.cv = function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, cv
 #thres: grid search stops when number of detected edges larger than thres*p
 
 #Output###
-#S.list: D (number of d's) by L (number of lambda's) by K (number of time points) lists of edges
-#Omega.lg.list: D by L by K lists of estimated precision matrices
-#Omega.rf.list: D by L by K lists of refitted precision matrices
-#edge: D by L by K numbers of edges
-#time: K time costs w.r.t. K time points in R
-#record.list: D by L by K time costs in C
-#time.list: D by K time costs in R
+# Omega: D (number of d's) by L (number of lambda's) by K (number of time points) list of estimated precision matrices
+# Omega.rf: D by L by K list of refitted precision matrices
+# edge.num: D by L by K list of edge numbers
+# edge: D by L by K list of edges
 
 LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.core){
   
@@ -467,7 +468,7 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeli
     
     Sigma.test = makeCorr(X, pos.test, h.test, fit.corr = FALSE)$Corr
     
-    result.i = LGGM.combine.cv(pos, Corr.train, Sigma.train, d.l, lambda.c, epi.abs, epi.rel, pseudo.fit, pseudo.refit, thres)
+    result.i = LGGM.combine.cv(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.core)
     cv.result.list[[i]] = result.i
     
     for(d in 1:D){for(l in 1:L){for(k in 1:K){

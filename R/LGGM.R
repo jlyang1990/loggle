@@ -65,10 +65,10 @@ makeCorr <- function(X, pos, h, fit.corr) {
 # epi.rel: relative tolerance in ADMM stopping criterion
 
 # Output ###
-# Omega: D (number of d's) by L (number of lambda's) list of estimated precision matrices
-# Omega.rf: D by L list of refitted precision matrices
-# edge.num: D by L list of edge numbers
-# edge: D by L list of edges
+# Omega: estimated precision matrix
+# Omega.rf: refitted precision matrix
+# edge.num: detected edge number
+# edge: detected edges
 
 LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs, epi.rel) {
   
@@ -156,10 +156,10 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
 # epi.rel: relative tolerance in ADMM stopping criterion
 
 # Output ###
-# Omega: D (number of d's) by L (number of lambda's) by K (number of time points) list of estimated precision matrices
-# Omega.rf: D by L by K list of refitted precision matrices
-# edge.num: D by L by K list of edge numbers
-# edge: D by L by K list of edges
+# Omega: list of estimated precision matrices of length K (number of time points)
+# Omega.rf: list of refitted precision matrices of length K
+# edge.num: list of detected edge numbers of length K
+# edge: list of detected edges of length K
 
 LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel) {
   
@@ -246,10 +246,10 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 #num.thread: number of threads
 
 # Output ###
-# Omega: D (number of d's) by L (number of lambda's) by K (number of time points) list of estimated precision matrices
-# Omega.rf: D by L by K list of refitted precision matrices
-# edge.num: D by L by K list of edge numbers
-# edge: D by L by K list of edges
+# Omega: list of estimated precision matrices of length K (number of time points)
+# Omega.rf: list of refitted precision matrices of length K
+# edge.num: list of detected edge numbers of length K
+# edge: list of detected edges of length K
 
 LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d, lambda, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.thread = 1) {
   
