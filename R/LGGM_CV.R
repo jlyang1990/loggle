@@ -78,38 +78,54 @@ LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.
   D <- length(d.list)
   L <- length(lambda.list)
   
-  Omega.list = matrix(vector("list", 1), L, D); Omega.rf.list = matrix(vector("list", 1), L, D)
-  edge.num.list = matrix(0, L, D); edge.list = matrix(vector("list", 1), L, D)
+  Omega.list <- matrix(vector("list", 1), L, D)
+  Omega.rf.list <- matrix(vector("list", 1), L, D)
+  edge.num.list <- matrix(0, L, D)
+  edge.list <- matrix(vector("list", 1), L, D)
   
-  for(j in 1:D){
+  for(j in 1:D) {
     
-    d = d.list[j]; epi.abs.d = epi.abs[j]; epi.rel.d = epi.rel[j]
+    d <- d.list[j]
+    epi.abs.d <- epi.abs[j]
+    epi.rel.d <- epi.rel[j]
     
-    Nd.index = max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1):min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
-    Nd.index.c = Nd.index - 1; Nd = length(Nd.index)
-    Nd.pos = which(Nd.index == pos); Nd.pos.c = Nd.pos - 1; Nd.pos.l = 1
+    Nd.index <- max(1, ceiling(((pos-1)/(N-1) - d) * (N-1) - 1e-5) + 1) : min(N, floor(((pos-1)/(N-1) + d) * (N-1) + 1e-5) + 1)
+    Nd <- length(Nd.index)
+    Nd.pos <- which(Nd.index == pos)
+    Nd.pos.c <- Nd.pos - 1
+    Nd.pos.l <- 1
     
-    Corr.sq = apply(Corr[, , Nd.index]^2, c(1, 2), sum)
+    Corr.sq <- apply(Corr[, , Nd.index] ^ 2, c(1, 2), sum)
     
-    Z.vec = rep(0, p*p*L); Z.pos.vec = rep(0, p*p*L)
+    Z.vec <- rep(0, p*p*L)
+    Z.pos.vec <- rep(0, p*p*L)
     
-    lambda = sqrt(Nd)*lambda.list; rho = lambda
-    
-    member.index.list = rep(0, p*L); no.list = rep(0, L); csize.index.list = c()
+    lambda <- sqrt(Nd) * lambda.list
+    rho <- lambda
     
     #detect block diagonal structure
-    for(l in L:1){
+    member.index.list <- rep(0, p*L)
+    no.list <- rep(0, L)
+    csize.index.list <- c()
+    
+    for(l in L:1) {
       
-      adj.mat = (Corr.sq>lambda[l]^2); diag(adj.mat) = 1; graph = graph.adjacency(adj.mat)
-      cluster = clusters(graph); member = cluster$membership; csize = cluster$csize; no = cluster$no
-      member.index = sort(member, index.return=T)$ix-1; csize.index = c(0, cumsum(csize))
+      adj.mat <- (Corr.sq > lambda[l] ^ 2)
+      diag(adj.mat) <- 1
+      graph <- graph.adjacency(adj.mat)
+      cluster <- clusters(graph)
+      member <- cluster$membership
+      csize <- cluster$csize
+      no <- cluster$no
+      member.index <- sort(member, index.return=T)$ix - 1
+      csize.index <- c(0, cumsum(csize))
       
-      member.index.list[(p*(l-1)+1):(p*l)] = member.index
-      no.list[l] = no
-      csize.index.list = c(csize.index.list, csize.index)
+      member.index.list[(p*(l-1)+1) : (p*l)] <- member.index
+      no.list[l] <- no
+      csize.index.list <- c(csize.index.list, csize.index)
     }
       
-    result = .C("ADMM_lambda", 
+    result <- .C("ADMM_lambda", 
                   as.integer(p),
                   as.integer(member.index.list),
                   as.integer(csize.index.list),
@@ -131,30 +147,32 @@ LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.
                   as.double(thres)
     )
       
-    Z.vec = result$Z.vec
-    Z.pos.vec = result$Z.pos.vec
+    Z.vec <- result$Z.vec
+    Z.pos.vec <- result$Z.pos.vec
       
     for(l in L:1){
       
-      Omega = matrix(Z.vec[(p*p*(l-1)+1):(p*p*l)], p, p)
-      Omega.rf = matrix(Z.pos.vec[(p*p*(l-1)+1):(p*p*l)], p, p)
+      Omega <- matrix(Z.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
+      Omega.rf <- matrix(Z.pos.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
         
-      edge = which(Omega.rf!=0, arr.ind=T); edge = edge[(edge[, 1] - edge[, 2])>0, , drop=F]; edge.num = nrow(edge)
+      edge <- which(Omega.rf != 0, arr.ind = T)
+      edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+      edge.num <- nrow(edge)
         
-      Omega.list[[l, j]] = Matrix(Omega, sparse = T)
-      Omega.rf.list[[l, j]] = Matrix(Omega.rf, sparse = T)
-      edge.num.list[l, j] = edge.num
-      edge.list[[l, j]] = edge
+      Omega.list[[l, j]] <- Matrix(Omega, sparse = T)
+      Omega.rf.list[[l, j]] <- Matrix(Omega.rf, sparse = T)
+      edge.num.list[l, j] <- edge.num
+      edge.list[[l, j]] <- edge
     }
     
-    cat("complete: d =", d, "t =", round((pos-1)/(N-1), 2), "\n")
+    cat("Complete: d =", d, "t =", round((pos-1)/(N-1), 2), "\n")
     
-    result = new.env()
-    result$Omega.list = Omega.list
-    result$Omega.rf.list = Omega.rf.list
-    result$edge.num.list = edge.num.list
-    result$edge.list = edge.list
-    result = as.list(result)
+    result <- new.env()
+    result$Omega.list <- Omega.list
+    result$Omega.rf.list <- Omega.rf.list
+    result$edge.num.list <- edge.num.list
+    result$edge.list <- edge.list
+    result <- as.list(result)
   }
   
   return(result)
