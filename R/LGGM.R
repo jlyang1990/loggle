@@ -128,7 +128,7 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
   edge <- which(Omega.rf != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
     
-  cat("complete: t =", round((pos-1) / (N-1), 2), "\n")
+  cat("Complete: t =", round((pos-1) / (N-1), 2), "\n")
   
   result <- new.env()
   result$Omega <- Omega
