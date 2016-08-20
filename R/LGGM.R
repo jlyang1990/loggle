@@ -44,7 +44,7 @@ makeCorr <- function(X, pos, h, fit.corr) {
   result <- new.env()
   result$Corr <- Corr
   result$sd.X <- sd.X
-  result = as.list(result)
+  result <- as.list(result)
   
   return(result)
 }
