@@ -513,17 +513,37 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # Cross validation function for LGGM ##########################################################################################
 ###############################################################################################################################
 
-#Input###
-#fold: number of folds in cross validation
-#corr.ind: 0: use Sigma in model fitting, 1: use Corr in model fitting
+# Input ###
+# X: a p by N matrix containing list of observations
+# pos: position of time points where graphs are estimated
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# h: bandwidth in kernel function used to generate correlation matrices
+# d.list: list of widths of neighborhood
+# lambda.list: list of tuning parameters of Lasso penalty
+# num.fold: number of cv folds
+# cv.thres: grid search stops when number of detected edges exceeds cv.thres times number of nodes
+# return.select: whether to return results from LGGM.cv.select
+# select.type: "all_flexible": d and lambda can vary across time points, "d_fixed": d is fixed and lambda can vary across time points, "all_fixed": d and lambda are fixed across time points
+# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
+# epi.abs: list of absolute tolerances in ADMM stopping criterion
+# epi.rel: list of relative tolerances in ADMM stopping criterion
+# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
+# h.correct: whether to apply h correction based on kernel smoothing theorem
+# num.thread: number of threads
 
-#Output###
-#result: a list of length=fold containing the results from simu.lglasso
-#cv: L by D by K by fold by 2 cv scores (the last dimension corresponds to whether we use the adjusted bandwidth h or not)
+# Output ###
+# cv.score: L (number of lambda's) by D (number of d's) by K (number of time points) by num.fold array of cv scores 
+# cv.result.list: list of results from LGGM.combine.cv of length num.fold
+# cv.select.result: results from LGGM.cv.select if return.select is TRUE
 
-LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, num.fold = 5, cv.thres = nrow(X), return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.thread = 1){
+LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, num.fold = 5, cv.thres = nrow(X), return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
   
-  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
+  p <- dim(X)[1]
+  N <- dim(X)[2]
+  K <- length(pos)
+  D <- length(d.list)
+  L <- length(lambda.list)
   
   if(fit.type == "glasso") {
     fit.type <- 0
@@ -549,15 +569,9 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeli
   if(length(h) != 1) {
     stop("h must be a scalar!")
   }
-  if(!length(d) %in% c(1, K)) {
-    stop("d must be a scalar or a vector of the same length as 'pos'!")
-  }
-  if(!length(lambda) %in% c(1, K)) {
-    stop("lambda must be a scalar or a vector of the same length as 'pos'!")
-  }
   
   d.list.global <- d.list >= 0.5
-  if(sum(d.list.global) > 0) {
+  if(any(d.list.global)) {
     d.list.prev <- d.list
     d.list <- c(d.list[!d.list.global], 1)
     cat("Convert d.list:", d.list.prev, "to:", d.list, "\n")
@@ -566,55 +580,62 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeli
   
   lambda.list <- sort(lambda.list)
   
-  
-  if(length(epi.abs) == 1){
-    epi.abs = rep(epi.abs, D)
-  }
-  if(length(epi.rel) == 1){
-    epi.rel = rep(epi.rel, D)
-  }
-  
-  if(h.correct == TRUE){
-    h.test = h*(fold-1)^(1/5)
-  }else{
-    h.test = h
-  }
-  
-  if(!select.type %in% c("all_flexible", "d_fixed", "all_fixed")) {
+  if(return.select && !select.type %in% c("all_flexible", "d_fixed", "all_fixed")) {
     stop("select.type must be 'all_flexible', 'd_fixed' or 'all_fixed'!")
   }
   
-  cv.score = array(0, c(L, D, K, fold)); rownames(cv.score) = lambda.list; colnames(cv.score) = d.list
-  cv.result.list = vector("list", fold)
+  if(length(epi.abs) == 1) {
+    epi.abs <- rep(epi.abs, D)
+  }
+  if(length(epi.rel) == 1) {
+    epi.rel <- rep(epi.rel, D)
+  }
   
-  for(i in 1:num.fold){
+  if(h.correct) {
+    h.test <- h * (num.fold-1) ^ (1/5)
+  } else {
+    h.test <- h
+  }
+  
+  cv.score <- array(NA, c(L, D, K, num.fold))
+  rownames(cv.score) <- lambda.list
+  colnames(cv.score) <- d.list
+  cv.result.list <- vector("list", num.fold)
+  
+  for(i in 1:num.fold) {
     
-    cat("\nRunning fold", i, "out of", num.fold, "fold...\n")
+    cat("\nRunning fold", i, "out of", num.fold, "folds...\n")
     
-    pos.test = seq(i, N, fold); pos.train = (1:N)[-pos.test]
+    pos.test <- seq(i, N, num.fold)
+    pos.train <- (1:N)[-pos.test]
     
-    Sigma.test = makeCorr(X, pos.test, h.test, fit.corr = FALSE)$Corr
+    result.i <- LGGM.combine.cv(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread)
+    cv.result.list[[i]] <- result.i
     
-    result.i = LGGM.combine.cv(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread)
-    cv.result.list[[i]] = result.i
+    Sigma.test <- makeCorr(X, pos.test, h.test, fit.corr = FALSE)$Corr
     
-    for(d in 1:D){for(l in 1:L){for(k in 1:K){
-      
-      Omega.rf = as.matrix(result.i$Omega.rf.list[[l, d, k]])
-      cv.score[l, d, k, i] = sum(c(t(Sigma.test[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
-    }}}
+    for(d in 1:D) {
+      for(l in 1:L) {
+        for(k in 1:K) {
+          Omega.rf <- as.matrix(result.i$Omega.rf.list[[l, d, k]])
+          cv.score[l, d, k, i] <- sum(c(t(Sigma.test[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
+        }
+      }
+    }
+    
+    rm(Sigma.test)
     
   }
   
-  cv.result = new.env()
-  cv.result$cv.score = cv.score
-  cv.result$cv.result.list = cv.result.list
-  cv.result = as.list(cv.result)
+  cv.result <- new.env()
+  cv.result$cv.score <- cv.score
+  cv.result$cv.result.list <- cv.result.list
+  cv.result <- as.list(cv.result)
   
-  if(return.select == TRUE){
+  if(return.select) {
     
-    cv.select.result = LGGM.cv.select(cv.result, select.type, cv.vote.thres)
-    cv.result = c(cv.result, cv.select.result)
+    cv.select.result <- LGGM.cv.select(cv.result, select.type, cv.vote.thres)
+    cv.result$cv.select.result <- cv.select.result
   }
   
   return(cv.result)
