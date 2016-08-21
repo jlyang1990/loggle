@@ -414,17 +414,17 @@ LGGM.combine.cv <- function(X, pos, fit.type, refit.type, h, d.list, lambda.list
 
 # Input ###
 # cv.result: results of cross validation for LGGM 
-# select.type: 
-# cv.vote.thres:
+# select.type: "all_flexible": d and lambda can vary across time points, "d_fixed": d is fixed and lambda can vary across time points, "all_fixed": d and lambda are fixed across time points
+# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
 
 # Output ###
-# d.min:
-# lambda.min:
-# cv.score.min:
-# cv.score.min.sd:
-# Omega.edge.list.min:
-# edge.num.list.min:
-# edge.list.min:
+# d.min: optimal values of d across time points
+# lambda.min: optimal values of lambda across time points
+# cv.score.min: optimal cv score (averaged over time points and cv folds)
+# cv.score.min.sd: standard deviation of optimal cv scores across cv folds
+# Omega.edge.list.min: optimal graph structures across time points
+# edge.num.list.min: optimal edge numbers across time points
+# edge.list.min: optimal list of edges across time points
 
 LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
