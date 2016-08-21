@@ -409,75 +409,102 @@ LGGM.combine.cv <- function(X, pos, fit.type, refit.type, h, d.list, lambda.list
 }
 
 
-#LGGM.cv.select###############################################################################################################################################################################################################################################
+# Selection function for cross validation result ##############################################################################
+###############################################################################################################################
 
-LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote.thres = 0.8){
+# Input ###
+# cv.result:
+# select.type:
+# cv.vote.thres:
+
+# Output ###
+# d.min:
+# lambda.min:
+# cv.score.min:
+# cv.score.min.sd:
+# Omega.edge.list.min:
+# edge.num.list.min:
+# edge.list.min:
+
+LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
-  cv.score = cv.result$cv.score; cv.result.list = cv.result$cv.result.list
+  cv.score <- cv.result$cv.score
+  cv.result.list <- cv.result$cv.result.list
   
-  p = dim(cv.result.list[[1]]$Omega.rf.list[[1,1,1]])[1]
-  L = dim(cv.score)[1]; D = dim(cv.score)[2]; K = dim(cv.score)[3]; fold = length(cv.result.list)
+  L <- dim(cv.score)[1]
+  D <- dim(cv.score)[2]
+  K <- dim(cv.score)[3]
+  num.fold <- dim(cv.score)[4]
+  p <- dim(cv.result.list[[1]]$Omega.rf.list[[L, D, K]])[1]
   
-  lambda.list = as.numeric(colnames(cv.score)); d.list = as.numeric(rownames(cv.score))
+  lambda.list <- as.numeric(colnames(cv.score))
+  d.list <- as.numeric(rownames(cv.score))
   
-  Omega.edge.list.min = array(0, c(p, p, K, fold)); edge.num.list.min = rep(0, K); edge.list.min = vector("list", K)
+  Omega.edge.list.min <- array(0, c(p, p, K, fold))
+  edge.num.list.min <- rep(0, K)
+  edge.list.min <- vector("list", K)
   
-  cv.score.fold = apply(cv.score, c(1,2,3), sum)
+  cv.score.fold <- apply(cv.score, c(1, 2, 3), mean)
   
-  lambda.index = rep(0, K); d.index = rep(0, K)
+  d.index <- rep(0, K)
+  lambda.index <- rep(0, K)
   
-  if(select.mode = "all_flexible"){
+  if(select.type == "all_flexible") {
     
-    for(k in 1:K){
-      index = which(cv.score.fold[, , k] == min(cv.score.fold[, , k]), arr.ind = T)
-      if(nrow(index)>1){index = index[nrow(index), ]}
-      d.index[k] = index[2]
-      lambda.index[k] = index[1]
+    for(k in 1:K) {
+      index <- which(cv.score.fold[, , k] == min(cv.score.fold[, , k]), arr.ind = T)
+      index <- index[nrow(index), ]
+      d.index[k] <- index[2]
+      lambda.index[k] <- index[1]
     }
-  }
-  if(select.mode = "d_fixed"){
     
-    d.index = rep(which.min(sapply(1:D, function(d) sum(apply(cv[, d, ], 2, min)))), K)
-    lambda.index = sapply(1:K, function(k) which.min(cv[, index.d, k]))
-  }
-  if(select.mode = "all_fixed"){
+  } else if(select.type == "d_fixed") {
     
-    cv.score.fold.avg = apply(cv.score.fold, c(1, 2), mean)
-    index = which(cv.score.fold.avg == min(cv.score.fold.avg), arr.ind = T)
-    d.index = rep(index[2], K)
-    lambda.index = rep(index[1], K)
-  }
-  
-  d.min = d.list[d.index]
-  lambda.min = lambda.list[lambda.index]
-  
-  cv.temp = sapply(1:fold, function(i) mean(sapply(1:K, function(k) cv.score.fold[lambda.index[k], d.index[k], k, i])))
-  cv.score.min = mean(cv.temp)
-  cv.score.min.sd = sd(cv.temp)/sqrt(fold)
-  
-  for(i in 1:fold){
+    d.index <- rep(which.min(sapply(1:D, function(d) sum(apply(cv.score.fold[, d, ], 2, min)))), K)
+    lambda.index <- sapply(1:K, function(k) which.min(cv[, d.index, k]))
     
-    Omega.rf.list = cv.result.list[[i]]$Omega.rf.list
-    for(k in 1:K){Omega.edge.list.min[, , k, i] = as.matrix(Omega.rf.list[[lambda.index[k], d.index[k], k]])}
-  }
-  
-  Omega.edge.list.min = (apply(Omega.edge.list.min!=0, c(1,2,3), sum)>=fold*cv.vote.thres)
-  
-  for(k in 1:K){
+  } else if(select.type == "all_fixed") {
     
-    edge = which(Omega.edge.list.min[, , k]!=0, arr.ind=T); edge.list.min[[k]] = edge[(edge[, 1] - edge[, 2])>0, , drop = F]
-    edge.num.list.min[k] = nrow(edge)
+    cv.score.fold.avg <- apply(cv.score.fold, c(1, 2), mean)
+    index <- which(cv.score.fold.avg == min(cv.score.fold.avg), arr.ind = T)
+    index <- index[nrow(index), ]
+    d.index <- rep(index[2], K)
+    lambda.index <- rep(index[1], K)
   }
   
-  result = new.env()
-  result$d.min = d.min
-  result$lambda.min = lambda.min
-  result$cv.score.min = cv.score.min
-  result$cv.score.min.sd = cv.score.min.sd
-  result$Omega.edge.list.min = Omega.edge.list.min
-  result$edge.num.list.min = edge.num.list.min
-  result$edge.list.min = edge.list.min
-  result = as.list(result)
+  d.min <- d.list[d.index]
+  lambda.min <- lambda.list[lambda.index]
+  
+  cv.temp <- sapply(1:num.fold, function(i) mean(sapply(1:K, function(k) cv.score[lambda.index[k], d.index[k], k, i])))
+  cv.score.min <- mean(cv.temp)
+  cv.score.min.sd <- sd(cv.temp)
+  
+  for(i in 1:num.fold) {
+    
+    Omega.rf.list <- cv.result.list[[i]]$Omega.rf.list
+    for(k in 1:K) {
+      Omega.edge.list.min[, , k, i] <- as.matrix(Omega.rf.list[[lambda.index[k], d.index[k], k]])
+      }
+  }
+  
+  Omega.edge.list.min <- (apply(Omega.edge.list.min != 0, c(1, 2, 3), sum) >= num.fold * cv.vote.thres)
+  
+  for(k in 1:K) {
+    
+    edge <- which(Omega.edge.list.min[, , k] != 0, arr.ind = T)
+    edge.list.min[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+    edge.num.list.min[k] <- nrow(edge.list.min[[k]])
+  }
+  
+  result <- new.env()
+  result$d.min <- d.min
+  result$lambda.min <- lambda.min
+  result$cv.score.min <- cv.score.min
+  result$cv.score.min.sd <- cv.score.min.sd
+  result$Omega.edge.list.min <- Omega.edge.list.min
+  result$edge.num.list.min <- edge.num.list.min
+  result$edge.list.min <- edge.list.min
+  result <- as.list(result)
   
   return(result)
 }
@@ -493,7 +520,7 @@ LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote.thres
 #result: a list of length=fold containing the results from simu.lglasso
 #cv: L by D by K by fold by 2 cv scores (the last dimension corresponds to whether we use the adjusted bandwidth h or not)
 
-LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, num.fold = 5, cv.thres = nrow(X), return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.thread = 1){
+LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, num.fold = 5, cv.thres = nrow(X), return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.thread = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
   
@@ -552,6 +579,10 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeli
     h.test = h
   }
   
+  if(!select.type %in% c("all_flexible", "d_fixed", "all_fixed")) {
+    stop("select.type must be 'all_flexible', 'd_fixed' or 'all_fixed'!")
+  }
+  
   cv.score = array(0, c(L, D, K, fold)); rownames(cv.score) = lambda.list; colnames(cv.score) = d.list
   cv.result.list = vector("list", fold)
   
@@ -581,7 +612,7 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeli
   
   if(return.select == TRUE){
     
-    cv.select.result = LGGM.cv.select(cv.result, select.mode, cv.vote.thres)
+    cv.select.result = LGGM.cv.select(cv.result, select.type, cv.vote.thres)
     cv.result = c(cv.result, cv.select.result)
   }
   
