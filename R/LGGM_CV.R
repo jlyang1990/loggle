@@ -57,7 +57,7 @@ makeCorr <- function(X, pos, h, fit.corr) {
 # pos: position of time point where graph is estimated
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
 # refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # d.list: list of widths of neighborhood
 # lambda.list: list of tuning parameters of Lasso penalty
@@ -186,7 +186,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.
 # pos: position of time points where graphs are estimated
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
 # refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # lambda.list: list of tuning parameters of Lasso penalty
 # cv.thres: grid search stops when number of detected edges exceeds cv.thres times number of nodes
@@ -307,7 +307,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
 # Input ###
 # X: a p by N matrix containing list of observations
 # pos: position of time points where graphs are estimated
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
 # refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # h: bandwidth in kernel function used to generate correlation matrices
 # d.list: list of widths of neighborhood
@@ -413,8 +413,8 @@ LGGM.combine.cv <- function(X, pos, fit.type, refit.type, h, d.list, lambda.list
 ###############################################################################################################################
 
 # Input ###
-# cv.result:
-# select.type:
+# cv.result: results of cross validation for LGGM 
+# select.type: 
 # cv.vote.thres:
 
 # Output ###
@@ -510,7 +510,8 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 }
 
 
-#cross validation selection###################################################################################################################################################################################################################################
+# Cross validation function for LGGM ##########################################################################################
+###############################################################################################################################
 
 #Input###
 #fold: number of folds in cross validation
