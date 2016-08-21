@@ -142,8 +142,8 @@ LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.
                   as.double(rho),
                   as.double(epi.abs.d),
                   as.double(epi.rel.d),
-                  as.integer(pseudo.fit),
-                  as.integer(pseudo.refit),
+                  as.integer(fit.type),
+                  as.integer(refit.type),
                   as.double(cv.thres)
     )
       
@@ -261,8 +261,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
               as.double(rho),
               as.double(epi.abs),
               as.double(epi.rel),
-              as.integer(pseudo.fit),
-              as.integer(pseudo.refit),
+              as.integer(fit.type),
+              as.integer(refit.type),
               as.double(cv.thres)
   )
   
@@ -340,7 +340,7 @@ LGGM.combine.cv <- function(X, pos, fit.type, refit.type, h, d.list, lambda.list
   
   cat("Estimating graphs...\n")
   
-  if(length(d.list) == 1 & d.list == 1) {
+  if(d.list[1] == 1) {
 
     result <- LGGM.global.cv(pos, Corr, sd.X, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel)
     
