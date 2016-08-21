@@ -642,21 +642,56 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
 }
 
 
-#LGGM.cv.h####################################################################################################################################################################################################################################################
+# Cross validation function for LGGM (including h selection) ##################################################################
+###############################################################################################################################
 
-LGGM.cv.h = function(X, pos.prop = 0.01, fit.type = "glasso", refit.type = "likelihood", h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), fold = 5, cv.thres = 1, return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-4, epi.rel = 1e-2, corr = TRUE, h.correct = TRUE, num.core = 1){
+# Input ###
+# X: a p by N matrix containing list of observations
+# pos: position of time points where graphs are estimated
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# h.list: list of bandwidths in kernel function used to generate correlation matrices
+# d.list: list of widths of neighborhood
+# lambda.list: list of tuning parameters of Lasso penalty
+# num.fold: number of cv folds
+# cv.thres: grid search stops when number of detected edges exceeds cv.thres times number of nodes
+# return.select: whether to return results from LGGM.cv.select
+# select.type: "all_flexible": d and lambda can vary across time points, "d_fixed": d is fixed and lambda can vary across time points, "all_fixed": d and lambda are fixed across time points
+# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
+# epi.abs: list of absolute tolerances in ADMM stopping criterion
+# epi.rel: list of relative tolerances in ADMM stopping criterion
+# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
+# h.correct: whether to apply h correction based on kernel smoothing theorem
+# num.thread: number of threads
+
+# Output ###
+# h.min: optimal h
+# cv.score.min.h: optimal cv scores across h's
+# cv.result.list: list of results from LGGM.cv of length H (number of h's)
+
+LGGM.cv.h <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), num.fold = 5, cv.thres = nrow(X), return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-4, epi.rel = 1e-2, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
   
-  N = dim(X)[2]; pos = round(seq(0.02, 0.98, length=round(pos.prop*(N-1)+1))*(N-1)+1); H = length(h.list)
+  N <- dim(X)[2]
+  H <- length(h.list)
   
-  cv.score.min.h = rep(0, H)
+  cv.result.list <- vector("list", H)
+  cv.score.min.h <- rep(NA, H)
+  names(cv.score.min.h) <- h.list
   
-  for(h in 1:H){
+  for(h in 1:H) {
     
-    cv.result.h = LGGM.cv(X, pos, fit.type, refit.type, h.list[h], d.list, lambda.list, fold, cv.thres, return.select, select.mode, cv.vote.thres, epi.abs, epi.rel, corr, h.correct, num.core)
-    cv.score.min.h[h] = cv.result.h$cv.score.min
+    cv.result.h <- LGGM.cv(X, pos, fit.type, refit.type, h.list[h], d.list, lambda.list, num.fold, cv.thres, return.select, select.type, cv.vote.thres, epi.abs, epi.rel, fit.corr, h.correct, num.thread)
+    cv.result.list[[h]] <- cv.result.h
+    cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
   
-  h.min = h.list[which.min(cv.score.min.h)]
+  h.min <- h.list[which.min(cv.score.min.h)]
   
-  return(h.min)
+  cv.result <- new.env()
+  cv.result$h.min <- h.min
+  cv.result$cv.score.min.h <- cv.score.min.h
+  cv.result$cv.result.list <- cv.result.list
+  cv.result <- as.list(cv.result)
+  
+  return(cv.result)
 }
