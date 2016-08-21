@@ -243,7 +243,7 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
-#num.thread: number of threads
+# num.thread: number of threads
 
 # Output ###
 # Omega: list of estimated precision matrices of length K (number of time points)

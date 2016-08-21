@@ -66,10 +66,10 @@ makeCorr <- function(X, pos, h, fit.corr) {
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 
 # Output ###
-# Omega: D (number of d's) by L (number of lambda's) list of estimated precision matrices
-# Omega.rf: D by L list of refitted precision matrices
-# edge.num: D by L list of edge numbers
-# edge: D by L list of edges
+# Omega: L (number of lambda's) by D (number of d's) list of estimated precision matrices
+# Omega.rf: L by D list of refitted precision matrices
+# edge.num: L by D list of edge numbers
+# edge: L by D list of edges
 
 LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel) {
   
@@ -301,43 +301,36 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
 }
 
 
-#simulation study for local group-lasso (main function)#######################################################################################################################################################################################################
+# Cross validation function for local&global LGGM #############################################################################
+###############################################################################################################################
 
-#Input###
-#pos: list of positions of time points where graphs are estimated
-#d.l: list of d's
-#lambda.c: list of lambda's
-#epi.abs, epi.rel: constants in ADMM stopping criterion
-#pseudo.fit: 0: local group graphical lasso, 1: pseudo-likelihood group lasso (asymmetry), 2: pseudo-likelihood group lasso (symmetry), 3: SPACE
-#pseudo.refit: 0: likelihood refit, 1: pseudo-likelihood refit
-#thres: grid search stops when number of detected edges larger than thres*p
+# Input ###
+# X: a p by N matrix containing list of observations
+# pos: position of time points where graphs are estimated
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 3: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# h: bandwidth in kernel function used to generate correlation matrices
+# d.list: list of widths of neighborhood
+# lambda.list: list of tuning parameters of Lasso penalty
+# cv.thres: grid search stops when number of detected edges exceeds cv.thres times number of nodes
+# epi.abs: list of absolute tolerances in ADMM stopping criterion
+# epi.rel: list of relative tolerances in ADMM stopping criterion
+# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
+# num.thread: number of threads
 
-#Output###
-# Omega: D (number of d's) by L (number of lambda's) by K (number of time points) list of estimated precision matrices
-# Omega.rf: D by L by K list of refitted precision matrices
-# edge.num: D by L by K list of edge numbers
-# edge: D by L by K list of edges
+# Output ###
+# Omega: L (number of lambda's) by D (number of d's) by K (number of time points) list of estimated precision matrices
+# Omega.rf: L by D by K list of refitted precision matrices
+# edge.num: L by D by K list of edge numbers
+# edge: L by D by K list of edges
 
-LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.core){
+LGGM.combine.cv <- function(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread) {
   
-  p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
-  
-  if(fit.type == "glasso"){
-    fit.type = 0
-  }
-  if(fit.type == "pseudo"){
-    fit.type = 1
-  }
-  if(fit.type == "space"){
-    fit.type = 2
-  }
-  
-  if(refit.type == "likelihood"){
-    refit.type = 0
-  }
-  if(refit.type == "pseudo"){
-    refit.type = 1
-  }
+  p <- dim(X)[1]
+  N <- dim(X)[2]
+  K <- length(pos)
+  D <- length(d.list)
+  L <- length(lambda.list)
   
   cat("Generating sample covariance/correlation matrices...\n")
   result.Corr <- makeCorr(X, 1:N, h, fit.corr)
@@ -345,73 +338,70 @@ LGGM.combine.cv = function(X, pos, fit.type, refit.type, h, d.list, lambda.list,
   sd.X <- result.Corr$sd.X
   rm(result.Corr)
   
-  if(length(epi.abs) == 1){
-    epi.abs = rep(epi.abs, D)
-  }
-  if(length(epi.rel) == 1){
-    epi.rel = rep(epi.rel, D)
-  }
+  cat("Estimating graphs...\n")
   
-  if(d.list == 1){
+  if(length(d.list) == 1 & d.list == 1) {
 
-    result = LGGM.global.cv(pos, Corr, sd.X, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel)
+    result <- LGGM.global.cv(pos, Corr, sd.X, fit.type, refit.type, lambda.list, cv.thres, epi.abs, epi.rel)
     
-  } else{
+  } else {
     
-    Omega.list = array(vector("list", 1), c(L, D, K)); Omega.rf.list = array(vector("list", 1), c(L, D, K))
-    edge.num.list = array(vector("list", 1), c(L, D, K)); edge.list = array(0, c(L, D, K))
+    Omega.list <- array(vector("list", 1), c(L, D, K))
+    Omega.rf.list <- array(vector("list", 1), c(L, D, K))
+    edge.num.list <- array(vector("list", 1), c(L, D, K))
+    edge.list <- array(0, c(L, D, K))
     
-    if(d.list[D] == 1){
+    if(d.list[D] == 1) {
       
-      registerDoParallel(num.core)
+      registerDoParallel(num.thread)
       
-      result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
+      result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, fit.type, refit.type, d.list[-D], lambda.list, cv.thres, epi.abs[-D], epi.rel[-D])
       
       stopImplicitCluster()
       
-      for(k in 1:K){
+      for(k in 1:K) {
         
-        result.k = result[[k]]
+        result.k <- result[[k]]
         
-        Omega.list[, -D, k] = result.k$Omega.list
-        Omega.rf.list[, -D, k] = result.k$Omega.rf.list
-        edge.num.list[, -D, k] = result.k$edge.num.list
-        edge.list[, -D, k] = result.k$edge.list
+        Omega.list[, -D, k] <- result.k$Omega.list
+        Omega.rf.list[, -D, k] <- result.k$Omega.rf.list
+        edge.num.list[, -D, k] <- result.k$edge.num.list
+        edge.list[, -D, k] <- result.k$edge.list
       }
       
-      result = LGGM.global.cv(pos, Corr, Sigma, fit.type, refit.type, lambda.list, cv.thres, epi.abs[D], epi.rel[D])
+      result <- LGGM.global.cv(pos, Corr, Sigma, fit.type, refit.type, lambda.list, cv.thres, epi.abs[D], epi.rel[D])
       
-      Omega.list[, D, ] = result.k$Omega.list
-      Omega.rf.list[, D, ] = result.k$Omega.rf.list
-      edge.num.list[, D, ] = result.k$edge.num.list
-      edge.list[, D, ] = result.k$edge.list
+      Omega.list[, D, ] <- result.k$Omega.list
+      Omega.rf.list[, D, ] <- result.k$Omega.rf.list
+      edge.num.list[, D, ] <- result.k$edge.num.list
+      edge.list[, D, ] <- result.k$edge.list
       
-    } else{
+    } else {
       
-      registerDoParallel(num.core)
+      registerDoParallel(num.thread)
       
-      result = foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
+      result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, fit.type, refit.type, d.list, lambda.list, cv.thres, epi.abs, epi.rel)
       
       stopImplicitCluster()
       
-      for(k in 1:K){
+      for(k in 1:K) {
         
-        result.k = result[[k]]
+        result.k <- result[[k]]
         
-        Omega.list[, , k] = result.k$Omega.list
-        Omega.rf.list[, , k] = result.k$Omega.rf.list
-        edge.num.list[, , k] = result.k$edge.num.list
-        edge.list[, , k] = result.k$edge.list
+        Omega.list[, , k] <- result.k$Omega.list
+        Omega.rf.list[, , k] <- result.k$Omega.rf.list
+        edge.num.list[, , k] <- result.k$edge.num.list
+        edge.list[, , k] <- result.k$edge.list
       }
       
-      result = new.env()
-      result$Omega.list = Omega.list
-      result$Omega.rf.list = Omega.rf.list
-      result$edge.num.list = edge.num.list
-      result$edge.list = edge.list
-      result = as.list(result)
+      result <- new.env()
+      result$Omega.list <- Omega.list
+      result$Omega.rf.list <- Omega.rf.list
+      result$edge.num.list <- edge.num.list
+      result$edge.list <- edge.list
+      result <- as.list(result)
     }
   }
 
@@ -503,9 +493,58 @@ LGGM.cv.select = function(cv.result, select.mode = "all_flexible", cv.vote.thres
 #result: a list of length=fold containing the results from simu.lglasso
 #cv: L by D by K by fold by 2 cv scores (the last dimension corresponds to whether we use the adjusted bandwidth h or not)
 
-LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, fold = 5, cv.thres = nrow(X), return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.core = 1){
+LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, num.fold = 5, cv.thres = nrow(X), return.select = TRUE, select.mode = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, corr = TRUE, h.correct = TRUE, num.thread = 1){
   
   p = dim(X)[1]; N = dim(X)[2]; K = length(pos); D = length(d.list); L = length(lambda.list)
+  
+  if(fit.type == "glasso") {
+    fit.type <- 0
+  } else if(fit.type == "pseudo") {
+    fit.type <- 1
+  } else if(fit.type == "space") {
+    fit.type <- 2
+  } else {
+    stop("fit.type must be 'glasso', 'pseudo' or 'space'!")
+  }
+  
+  if(refit.type == "likelihood") {
+    refit.type <- 0
+  } else if(refit.type == "pseudo") {
+    refit.type <- 1
+  } else {
+    stop("refit.type must be 'likelihood' or 'pseudo'!")
+  }
+  
+  if(any(!pos %in% 1:N)) {
+    stop("pos must be a subset of 1, 2, ..., N!")
+  }
+  if(length(h) != 1) {
+    stop("h must be a scalar!")
+  }
+  if(!length(d) %in% c(1, K)) {
+    stop("d must be a scalar or a vector of the same length as 'pos'!")
+  }
+  if(!length(lambda) %in% c(1, K)) {
+    stop("lambda must be a scalar or a vector of the same length as 'pos'!")
+  }
+  
+  d.list.global <- d.list >= 0.5
+  if(sum(d.list.global) > 0) {
+    d.list.prev <- d.list
+    d.list <- c(d.list[!d.list.global], 1)
+    cat("Convert d.list:", d.list.prev, "to:", d.list, "\n")
+  }
+  d.list <- sort(d.list)
+  
+  lambda.list <- sort(lambda.list)
+  
+  
+  if(length(epi.abs) == 1){
+    epi.abs = rep(epi.abs, D)
+  }
+  if(length(epi.rel) == 1){
+    epi.rel = rep(epi.rel, D)
+  }
   
   if(h.correct == TRUE){
     h.test = h*(fold-1)^(1/5)
@@ -516,13 +555,15 @@ LGGM.cv = function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeli
   cv.score = array(0, c(L, D, K, fold)); rownames(cv.score) = lambda.list; colnames(cv.score) = d.list
   cv.result.list = vector("list", fold)
   
-  for(i in 1:fold){
+  for(i in 1:num.fold){
+    
+    cat("\nRunning fold", i, "out of", num.fold, "fold...\n")
     
     pos.test = seq(i, N, fold); pos.train = (1:N)[-pos.test]
     
     Sigma.test = makeCorr(X, pos.test, h.test, fit.corr = FALSE)$Corr
     
-    result.i = LGGM.combine.cv(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.core)
+    result.i = LGGM.combine.cv(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread)
     cv.result.list[[i]] = result.i
     
     for(d in 1:D){for(l in 1:L){for(k in 1:K){
