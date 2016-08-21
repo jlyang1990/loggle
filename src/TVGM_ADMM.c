@@ -6,8 +6,6 @@
 #include <R_ext/Lapack.h>
 
 //apply ADMM across lambda's when h and d are fixed
-//member_ind, csize_ind, No: identify block diagonal structure
-//LL: number of time points within neighborhood
 void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
                  int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres);
 
@@ -22,7 +20,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 //local group graphical lasso
 void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
 
-//pseudo-likelihood group lasso (symmetry)
+//pseudo-likelihood group lasso
 void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
 
 //SPACE (rho step)
@@ -37,11 +35,11 @@ void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, i
 //pseudo-likelihood refit
 void ADMM_pseudo_refit(int *P, int *Pos, double *Sigma, double *Z, double *Z_pos, int *S_Len);
 
+//Givens rotation
 void Givens_rotation(double *U, double *Chol, int *P, int *J);
 
 
-/////////////////////////////////////////////////
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
