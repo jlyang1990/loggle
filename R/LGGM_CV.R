@@ -333,13 +333,13 @@ LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, 
   D <- length(d.list)
   L <- length(lambda.list)
   
-  cat("Generating sample covariance/correlation matrices...\n")
+  cat("Generating sample covariance/correlation matrices for training dataset...\n")
   result.Corr <- makeCorr(X, pos.train, h, fit.corr)
   Corr <- result.Corr$Corr
   sd.X <- result.Corr$sd.X
   rm(result.Corr)
   
-  cat("Estimating graphs...\n")
+  cat("Estimating graphs for training dataset...\n")
   
   if(d.list[1] == 1) {
 
@@ -612,6 +612,8 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
     
     result.i <- LGGM.combine.cv(X, pos.train, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread)
     cv.result.list[[i]] <- result.i
+    
+    cat("Calculating cross-validation scores for testing dataset...\n")
     
     Sigma.test <- makeCorr(X, pos.test, h.test, fit.corr = FALSE)$Corr
     
