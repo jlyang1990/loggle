@@ -306,6 +306,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
 
 # Input ###
 # X: a p by N matrix containing list of observations
+# pos.train: position of observations in training used to generate correlation matrices
 # pos: position of time points where graphs are estimated
 # fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
 # refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
@@ -324,7 +325,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
 # edge.num: L by D by K list of edge numbers
 # edge: L by D by K list of edges
 
-LGGM.combine.cv <- function(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread) {
+LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -333,7 +334,7 @@ LGGM.combine.cv <- function(X, pos, fit.type, refit.type, h, d.list, lambda.list
   L <- length(lambda.list)
   
   cat("Generating sample covariance/correlation matrices...\n")
-  result.Corr <- makeCorr(X, 1:N, h, fit.corr)
+  result.Corr <- makeCorr(X, pos.train, h, fit.corr)
   Corr <- result.Corr$Corr
   sd.X <- result.Corr$sd.X
   rm(result.Corr)
@@ -609,7 +610,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
     pos.test <- seq(i, N, num.fold)
     pos.train <- (1:N)[-pos.test]
     
-    result.i <- LGGM.combine.cv(X, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread)
+    result.i <- LGGM.combine.cv(X, pos.train, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread)
     cv.result.list[[i]] <- result.i
     
     Sigma.test <- makeCorr(X, pos.test, h.test, fit.corr = FALSE)$Corr
