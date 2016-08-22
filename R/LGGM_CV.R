@@ -22,13 +22,13 @@ makeCorr <- function(X, pos, h, fit.corr) {
   
   if(fit.corr) {
     for(i in 1:p) {
-      sd.X[i] <- sd(X[i, ])
-      X[i, ] <- scale(X[i, ])
+      sd.X[i] <- sd(X[i, pos])
+      X[i, pos] <- scale(X[i, pos])
     }
   } else {
     for(i in 1:p) {
       sd.X[i] <- 1
-      X[i, ] <- scale(X[i, ], scale = FALSE)
+      X[i, pos] <- scale(X[i, pos], scale = FALSE)
     }
   }
   
