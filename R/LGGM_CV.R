@@ -349,8 +349,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, 
     
     Omega.list <- array(vector("list", 1), c(L, D, K))
     Omega.rf.list <- array(vector("list", 1), c(L, D, K))
-    edge.num.list <- array(vector("list", 1), c(L, D, K))
-    edge.list <- array(0, c(L, D, K))
+    edge.num.list <- array(NA, c(L, D, K))
+    edge.list <- array(vector("list", 1), c(L, D, K))
     
     if(d.list[D] == 1) {
       
@@ -441,7 +441,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   lambda.list <- as.numeric(colnames(cv.score))
   d.list <- as.numeric(rownames(cv.score))
   
-  Omega.edge.list.min <- array(0, c(p, p, K, fold))
+  Omega.edge.list.min <- array(0, c(p, p, K, num.fold))
   edge.num.list.min <- rep(0, K)
   edge.list.min <- vector("list", K)
   
