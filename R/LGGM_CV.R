@@ -396,14 +396,14 @@ LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, 
         edge.num.list[, , k] <- result.k$edge.num.list
         edge.list[, , k] <- result.k$edge.list
       }
-      
-      result <- new.env()
-      result$Omega.list <- Omega.list
-      result$Omega.rf.list <- Omega.rf.list
-      result$edge.num.list <- edge.num.list
-      result$edge.list <- edge.list
-      result <- as.list(result)
     }
+    
+    result <- new.env()
+    result$Omega.list <- Omega.list
+    result$Omega.rf.list <- Omega.rf.list
+    result$edge.num.list <- edge.num.list
+    result$edge.list <- edge.list
+    result <- as.list(result)
   }
 
   return(result)  
@@ -635,7 +635,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
   
   if(return.select) {
     
-    cat(sprintf("Selecting models based on %d-fold cross-validation results...", num.fold))
+    cat(sprintf("Selecting models based on %d-fold cross-validation results...\n", num.fold))
     cv.select.result <- LGGM.cv.select(cv.result, select.type, cv.vote.thres)
     cv.result$cv.select.result <- cv.select.result
   }
