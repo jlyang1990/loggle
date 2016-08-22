@@ -635,6 +635,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
   
   if(return.select) {
     
+    cat(sprintf("Selecting models based on %d-fold cross-validation results...", num.fold))
     cv.select.result <- LGGM.cv.select(cv.result, select.type, cv.vote.thres)
     cv.result$cv.select.result <- cv.select.result
   }
