@@ -373,10 +373,10 @@ LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, 
       
       result <- LGGM.global.cv(pos, Corr, sd.X, fit.type, refit.type, lambda.list, cv.thres, epi.abs[D], epi.rel[D])
       
-      Omega.list[, D, ] <- result.k$Omega.list
-      Omega.rf.list[, D, ] <- result.k$Omega.rf.list
-      edge.num.list[, D, ] <- result.k$edge.num.list
-      edge.list[, D, ] <- result.k$edge.list
+      Omega.list[, D, ] <- result$Omega.list
+      Omega.rf.list[, D, ] <- result$Omega.rf.list
+      edge.num.list[, D, ] <- result$edge.num.list
+      edge.list[, D, ] <- result$edge.list
       
     } else {
       
