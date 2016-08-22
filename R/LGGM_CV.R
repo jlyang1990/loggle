@@ -206,10 +206,10 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
   K <- length(pos)
   L <- length(lambda.list)
   
-  Omega.list <- array(vector("list", 1), L, 1, K)
-  Omega.rf.list <- array(vector("list", 1), L, 1, K)
+  Omega.list <- array(vector("list", 1), c(L, 1, K))
+  Omega.rf.list <- array(vector("list", 1), c(L, 1, K))
   edge.num.list <- array(0, c(L, 1, K))
-  edge.list <- array(vector("list", 1), L, 1, K)
+  edge.list <- array(vector("list", 1), c(L, 1, K))
   
   N.index.c <- 0 : (N-1)
   pos.c <- pos - 1
