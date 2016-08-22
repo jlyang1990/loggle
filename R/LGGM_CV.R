@@ -438,11 +438,11 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   num.fold <- dim(cv.score)[4]
   p <- dim(cv.result.list[[1]]$Omega.rf.list[[L, D, K]])[1]
   
-  lambda.list <- as.numeric(colnames(cv.score))
-  d.list <- as.numeric(rownames(cv.score))
+  lambda.list <- as.numeric(rownames(cv.score))
+  d.list <- as.numeric(colnames(cv.score))
   
-  Omega.edge.list.min <- array(0, c(p, p, K, num.fold))
-  edge.num.list.min <- rep(0, K)
+  Omega.edge.list.min <- array(NA, c(p, p, K, num.fold))
+  edge.num.list.min <- rep(NA, K)
   edge.list.min <- vector("list", K)
   
   cv.score.fold <- apply(cv.score, c(1, 2, 3), mean)
@@ -461,8 +461,8 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
     
   } else if(select.type == "d_fixed") {
     
-    d.index <- rep(which.min(sapply(1:D, function(d) sum(apply(cv.score.fold[, d, ], 2, min)))), K)
-    lambda.index <- sapply(1:K, function(k) which.min(cv[, d.index, k]))
+    d.index <- rep(which.min(sapply(1:D, function(d) mean(apply(cv.score.fold[, d, ], 2, min)))), K)
+    lambda.index <- sapply(1:K, function(k) which.min(cv.score.fold[, d.index[1], k]))
     
   } else if(select.type == "all_fixed") {
     
