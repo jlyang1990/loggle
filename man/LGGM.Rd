@@ -28,7 +28,8 @@ fit.corr = TRUE, num.thread = 1)
 }
   
 \details{
-The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance. The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is also computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
+The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance.
+The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is also computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
 }
 
 \value{
