@@ -1,126 +1,59 @@
-\name{score_shd}
-\alias{score_shd}
-\title{A function to use structural hamming distance to aggregate DAGs}
-\description{This function uses a family of gSHD (generalized structural hamming distance) 
-to aggregate an ensemble of DAGs  (e.g., learned on bootstrap resamples)}
+\name{LGGM.cv}
+\alias{LGGM.cv}
+\title{A function to learn time-varying graphical models with structure smoothness based on cross validation}
+
+\description{
+This function is to efficiently implement the ADMM (alternating directions method of multipliers) algorithm for learning time-varying graphical models through a local group-Lasso type penalty. The objective function to be optimized is based on negative log-likelihood or pseudo log-likelihood. The parameter estimation in time-varying graphical models can be improved through model refitting.
+}
+
 \usage{
-score_shd(boot.adj, alpha = 1, threshold=0, max.step = 500, 
-blacklist = NULL, whitelist = NULL, print = FALSE)
+LGGM(X, pos = 1:ncol(X), fit.type = c("glasso", "pseudo", "space"),
+refit.type = c("likelihood", "pseudo"), h = 0.8*ncol(X)^(-1/5), 
+d = 0.2, lambda = 0.25, epi.abs = 1e-5, epi.rel = 1e-3, 
+fit.corr = TRUE, num.thread = 1)
 }
+
 \arguments{
-  \item{boot.adj}{A p by p by B array, where B is the number of DAGs to be aggregated. 
-  It records the adjacency matrices. It may be  the output of the "score" function.}
-  \item{alpha}{a positive scalar: 
-  alpha defines which member of the gSHD family should be used to aggregate the DAGs. 
-  In general, the larger the alpha, the more aggressive of the aggregation, 
-  in that less edges are retained leading to smaller FDR and less power, default  = 1}
-  \item{threshold}{a scalar: it defines the frequency cut-off value, default =0, 
-  meaning not to include any edge with (generalized) bootstrap selection frequency <0.5.}
-    \item{max.step}{an integer: the maximum number of search steps, default = 500}
-   \item{blacklist}{a p by p 0-1 matrix: if the (i,j)th-entry is "1", 
-   then the edge i-->j will be excluded from the DAG during the search, default=NULL}
-  \item{whitelist}{a p by p 0-1 matrix: if the (i,j)th-entry is "1", 
-  then the edge i-->j will always be included in the DAG during the search, default=NULL}
- \item{print}{logic: whether print the step information, default= FALSE}
+  \item{X}{a p by N data matrix: p -- number of variables, N -- number of time points (sample size)}
+  \item{pos}{a vector which is a subset of 1, 2, ..., N: positions of time points where graphs are estimated}
+  \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "glasso"}
+  \item{refit.type}{a string: "likelihood" -- likelihood estimation, or "pseudo" -- pseudo likelihood estimation, default = "likelihood"}
+  \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix}
+  \item{d}{a scalar or a vector of the same length as "pos": width of neighborhood centered at each position where graph is estimated. When it is a scalar, widths of neighborhoods are the same across all positions}
+  \item{lambda}{a scalar or a vector of the same length as "pos": tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
+  \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
+  \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
+  \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, corresponding to sample correlation matrix}
+  \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
 }
+  
 \details{
-    score_shd aggregates an ensemble of DAGs to get a DAG 
-    that minimizes the overall distance  to the ensemble. 
-    A (generalized) structural hamming distance is 
-    used as the distance metric on the space of DAGs of a given set of nodes. 
+The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance. The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is also computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
 }
+
 \value{
-    A list with three components
-    \item{adj.matrix}{adjacency matrix of the  aggregated DAG}
-     \item{final.step}{a number recording how many search steps 
-     are conducted before the procedure stops}
-    \item{movement}{a matrix recording the selected operation, 
-    addition, deletion or reversal of an edge, at each search step} 
+  \item{Omega.list}{a list of estimated precision matrices via model fitting at positions of time points specified by "pos"}
+  \item{Omega.rf.list}{a list of estimated precision matrices via model refitting at positions of time points specified by "pos"}
+  \item{edge.num.list}{a vector of numbers of graph edges at positions of time points specified by "pos"}
+  \item{edge.list}{a list of graph edges at positions of time points specified by "pos"}
 }
+
 \references{
-Wang, R. and Peng, J. (2013) Learning directed acyclic graphs via bootstrap aggregating. arXiv:1406.2098
+Peng, J., Wang, P., Zhou, N., & Zhu, J. (2012). Partial correlation estimation by joint sparse regression models. Journal of the American Statistical Association.
 }
+
 \author{
-Wang, R and Peng, J.
+Yang, J. and Peng, J.
 }
+
 \examples{
-# read in data and true network
-data(example)
-Y.n=example$Y # data matrix 
-true.dir=example$true.dir  #adjacency matrix of the data generating DAG
-true.ske=example$true.ske  # skeleton graph of the data generating DAG
-  
+data(example)  # load data matrix
+dim(X)  # dimension of data matrix
 
-## (i) DAG learning  by hill climbing: no aggregation
+# positions of time points to estimate graphs
+pos.example <- round(seq(0.02, 0.98, length=25)*(ncol(X)-1)+1, 0)
+# estimate time-varying graphs
+result <- LGGM(X, pos = pos.example, fit.type = "pseudo", 
+refit.type = "pseudo", h = 0.25, d = 0.25, lambda = 0.25, num.thread = 7)
 
-# learn DAG using "BIC" score
-temp=score(Y=Y.n, n.boot=0, score.type="BIC") 
-adj=temp$adj.matrix
-
-# Find the total number of skeleton edges 
-# and the number of correct skeleton edges of the estimated DAG     
-    tt=adj+t(adj) ##symmetrization
-    correct.c=sum((tt>0)&(true.ske>0))/2    
-    total.c=sum(tt>0)/2
-    total.true=sum(true.ske>0)/2
-    c(total.c, correct.c, total.true) ##326, 96, 109
-    
-## (ii) DAG learning by bagging   
-set.seed(1)
-
-# get the ensemble of DAGs from bootstrap resamples
-temp.boot=score(Y.n, n.boot=10, score.type="BIC") 
-boot.adj=temp.boot$adj.matrix
-
-temp.bag=score_shd(boot.adj, alpha = 1) ##aggregating 
-adj.bag=temp.bag$adj.matrix
-
-# Find the total number of skeleton edges and the number of 
-# correct skeleton edges of the estimated DAG     
- tt=adj.bag+t(adj.bag) ##symmetrization
-  correct.c=sum((tt>0)&(true.ske>0))/2    
-  total.c=sum(tt>0)/2
-  total.true=sum(true.ske>0)/2
-  c(total.c, correct.c, total.true) ##121, 89, 109 
- #Note: much less number of false edges and slightly less number of correct edges 
- #compared with the non-bagging result
-
-
-## try different aggregation parameter alpha
-#(i) alpha=0.5: less aggressive, more edges retained 
-temp.bag=score_shd(boot.adj, alpha = 0.5) ##aggregating 
-adj.bag05=temp.bag$adj.matrix
-
- # Find the total number of skeleton edges 
- # and the number of correct skeleton edges of the estimated DAG     
- tt=adj.bag05+t(adj.bag05) ##symmetrization
-  correct.c=sum((tt>0)&(true.ske>0))/2    
-  total.c=sum(tt>0)/2
-  total.true=sum(true.ske>0)/2
-  c(total.c, correct.c, total.true) ##132, 91, 109
-
-#(ii) alpha=1.5: more aggressive, less edges retained 
-temp.bag=score_shd(boot.adj, alpha = 1.5) ##aggregating 
-adj.bag15=temp.bag$adj.matrix
-
- # Find the total number of skeleton edges 
- # and the number of correct skeleton edges of the estimated DAG     
- tt=adj.bag15+t(adj.bag15) ##symmetrization
-  correct.c=sum((tt>0)&(true.ske>0))/2    
-  total.c=sum(tt>0)/2
-  total.true=sum(true.ske>0)/2
-  c(total.c, correct.c, total.true) ##115, 87, 109
-  
-  #(iii) alpha=2: more aggressive, less edges retained 
-  temp.bag=score_shd(boot.adj, alpha = 2) ##aggregating 
-  adj.bag2=temp.bag$adj.matrix
-  
-   # Find the total number of skeleton edges 
-   # and the number of correct skeleton edges of the estimated DAG     
-   tt=adj.bag2+t(adj.bag2) ##symmetrization
-    correct.c=sum((tt>0)&(true.ske>0))/2    
-    total.c=sum(tt>0)/2
-    total.true=sum(true.ske>0)/2
-  c(total.c, correct.c, total.true) ##86, 67, 109
-
-}
+print(result$edge.num.list)  # numbers of edges at time point positions
