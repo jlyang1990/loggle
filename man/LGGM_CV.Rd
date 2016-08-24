@@ -3,7 +3,7 @@
 \title{A function to learn time-varying graphical models with structure smoothness based on cross validation}
 
 \description{
-This function is to efficiently conduct model selection based on cross validation for learning time-varying graphical models through a local group-Lasso type penalty.
+This function is to efficiently conduct model selection based on cross validation for learning time-varying graphical models through a local group-Lasso type penalty. In model selection, the bandwidth in kernel estimated sample covariance/correlation matrix is fixed.
 }
 
 \usage{
@@ -23,23 +23,28 @@ fit.corr = TRUE, h.correct = TRUE, num.thread = 1)
   \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "glasso"}
   \item{refit.type}{a string: "likelihood" -- likelihood estimation, or "pseudo" -- pseudo likelihood estimation, default = "likelihood"}
   \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix}
-  \item{d}{a scalar or a vector of the same length as "pos": width of neighborhood centered at each position where graph is estimated. When it is a scalar, widths of neighborhoods are the same across all positions}
-  \item{lambda}{a scalar or a vector of the same length as "pos": tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
-  \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
-  \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
+  \item{d.list}{a vector: a grid of widths of neighborhood centered at each position where graph is estimated}
+  \item{lambda.list}{a vector: a grid of tuning parameters of Lasso penalty at each position where graph is estimated}
+  \item{num.fold}
+  \item{cv.thres}
+  \item{return.select}
+  \item{select.type}
+  \item{cv.vote.thres}
+  \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4 if p >= 400 or 1e-5 otherwise. When it is a scalar, absolute tolerances are the same for all elements in \code{d.list}}
+  \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2 if p >= 400 or 1e-3 otherwise. When it is a scalar, relative tolerances are the same for all elements in \code{d.list}}
   \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, corresponding to sample correlation matrix}
+  \item{h.correct}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
 }
   
 \details{
-The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance. The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is also computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
+This function conducts grid search for optimal \code{d} and \code{lambda}, while \code{h} is fixed. To figure out the optimal \code{h} as well, one can apply this function to different \code{h}'s or use the function \link{LGGM.cv.h}.
 }
 
 \value{
-  \item{Omega.list}{a list of estimated precision matrices via model fitting at positions of time points specified by "pos"}
-  \item{Omega.rf.list}{a list of estimated precision matrices via model refitting at positions of time points specified by "pos"}
-  \item{edge.num.list}{a vector of numbers of graph edges at positions of time points specified by "pos"}
-  \item{edge.list}{a list of graph edges at positions of time points specified by "pos"}
+  \item{cv.score}
+  \item{cv.result.list}
+  \item{cv.select.result}
 }
 
 \references{

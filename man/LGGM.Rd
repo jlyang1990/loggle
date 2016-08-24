@@ -19,8 +19,8 @@ fit.corr = TRUE, num.thread = 1)
   \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "glasso"}
   \item{refit.type}{a string: "likelihood" -- likelihood estimation, or "pseudo" -- pseudo likelihood estimation, default = "likelihood"}
   \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix}
-  \item{d}{a scalar or a vector of the same length as "pos": width of neighborhood centered at each position where graph is estimated. When it is a scalar, widths of neighborhoods are the same across all positions}
-  \item{lambda}{a scalar or a vector of the same length as "pos": tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
+  \item{d}{a scalar or a vector of the same length as \code{pos}: width of neighborhood centered at each position where graph is estimated. When it is a scalar, widths of neighborhoods are the same across all positions}
+  \item{lambda}{a scalar or a vector of the same length as \code{pos}: tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
   \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, corresponding to sample correlation matrix}
@@ -36,10 +36,10 @@ The model refitting method based on pseudo log-likelihood (\code{refit.type = "p
 }
 
 \value{
-  \item{Omega.list}{a list of estimated precision matrices via model fitting at positions of time points specified by "pos"}
-  \item{Omega.rf.list}{a list of estimated precision matrices via model refitting at positions of time points specified by "pos"}
-  \item{edge.num.list}{a vector of numbers of graph edges at positions of time points specified by "pos"}
-  \item{edge.list}{a list of graph edges at positions of time points specified by "pos"}
+  \item{Omega.list}{a list of estimated precision matrices via model fitting at positions of time points specified by \code{pos}}
+  \item{Omega.rf.list}{a list of estimated precision matrices via model refitting at positions of time points specified by \code{pos}}
+  \item{edge.num.list}{a vector of numbers of graph edges at positions of time points specified by \code{pos}}
+  \item{edge.list}{a list of graph edges at positions of time points specified by \code{pos}}
 }
 
 \references{
