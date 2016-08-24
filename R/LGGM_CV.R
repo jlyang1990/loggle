@@ -538,7 +538,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # cv.result.list: list of results from LGGM.combine.cv of length num.fold
 # cv.select.result: results from LGGM.cv.select if return.select is TRUE
 
-LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list, lambda.list, num.fold = 5, cv.thres = 5, return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
+LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), lambda.list = seq(0.15, 0.35, length = 11), num.fold = 5, cv.thres = 5, return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
