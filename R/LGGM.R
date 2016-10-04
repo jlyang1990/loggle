@@ -10,7 +10,7 @@
 
 # Output ###
 # Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables
+# sd.X: list of standard deviations of variables when fit.corr = TRUE, list of 1's when fit.corr = FALSE
 
 makeCorr <- function(X, pos, h, fit.corr) {
   

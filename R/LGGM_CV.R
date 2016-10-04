@@ -10,7 +10,7 @@
 
 # Output ###
 # Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables
+# sd.X: list of standard deviations of variables when fit.corr = TRUE, list of 1's when fit.corr = FALSE
 
 makeCorr <- function(X, pos, h, fit.corr) {
   
@@ -211,7 +211,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
   edge.num.list <- array(0, c(L, 1, K))
   edge.list <- array(vector("list", 1), c(L, 1, K))
   
-  N.index.c <- 0 : (N-1)
+  N.index.c <- 0:(N-1)
   pos.c <- pos - 1
   
   Corr.sq <- apply(Corr ^ 2, c(1, 2), sum)
