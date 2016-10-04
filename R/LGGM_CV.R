@@ -165,7 +165,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.
       edge.list[[l, j]] <- edge
     }
     
-    cat("Complete: d =", d, "t =", round((pos-1)/(N-1), 2), "\n")
+    cat("Complete: d =", d, ", t =", round((pos-1)/(N-1), 2), "\n")
     
     result <- new.env()
     result$Omega.list <- Omega.list
@@ -573,13 +573,13 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
   
   d.list.global <- d.list >= 0.5
   if(any(d.list.global)) {
-    d.list.prev <- d.list
     d.list <- c(d.list[!d.list.global], 1)
-    cat("Convert d.list:", d.list.prev, "to:", d.list, "\n")
   }
   d.list <- sort(d.list)
+  cat("Using d.list:", d.list)
   
   lambda.list <- sort(lambda.list)
+  cat("Using lambda.list:", lambda.list)
   
   if(return.select && !select.type %in% c("all_flexible", "d_fixed", "all_fixed")) {
     stop("select.type must be 'all_flexible', 'd_fixed' or 'all_fixed'!")
