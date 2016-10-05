@@ -576,10 +576,10 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
     d.list <- c(d.list[!d.list.global], 1)
   }
   d.list <- sort(d.list)
-  cat("Using d.list:", d.list)
+  cat("Using d.list:", d.list, "\n")
   
   lambda.list <- sort(lambda.list)
-  cat("Using lambda.list:", lambda.list)
+  cat("Using lambda.list:", lambda.list, "\n")
   
   if(return.select && !select.type %in% c("all_flexible", "d_fixed", "all_fixed")) {
     stop("select.type must be 'all_flexible', 'd_fixed' or 'all_fixed'!")
