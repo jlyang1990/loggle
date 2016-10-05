@@ -165,7 +165,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, fit.type, refit.type, d.list, lambda.
       edge.list[[l, j]] <- edge
     }
     
-    cat("Complete: d =", d, ", t =", round((pos-1)/(N-1), 2), "\n")
+    cat(sprintf("Complete: d = %f, t = %f\n", d, round((pos-1)/(N-1), 2)))
     
     result <- new.env()
     result$Omega.list <- Omega.list
