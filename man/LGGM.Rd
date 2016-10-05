@@ -3,7 +3,7 @@
 \title{A function to learn time-varying graphical models with structure smoothness}
 
 \description{
-This function is to efficiently implement the ADMM (alternating directions method of multipliers) algorithm for learning time-varying graphical models through a local group-Lasso type penalty. The objective function to be optimized is based on negative log-likelihood or pseudo log-likelihood. The parameter estimation in time-varying graphical models can be improved through model refitting.
+This function is to efficiently implement the ADMM (alternating directions method of multipliers) algorithm for learning time-varying graphical models through a local group-Lasso type penalty. The objective function to be optimized is based on negative log-likelihood or pseudo log-likelihood. The parameters in time-varying graphical models can be estimated via model refitting.
 }
 
 \usage{
@@ -23,16 +23,16 @@ fit.corr = TRUE, num.thread = 1)
   \item{lambda}{a scalar or a vector of the same length as \code{pos}: tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
-  \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, corresponding to sample correlation matrix}
+  \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
 }
   
 \details{
 The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance.
 
-The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is also computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
+The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is usually computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
 
-\code{fit.corr = TRUE} is recommended in model fitting since the Lasso-type penalty can be applied appropriately when all the variables are of similar scales.
+\code{fit.corr = TRUE} is suggested in model fitting since the Lasso-type penalty can be applied appropriately when all the variables are of similar scales.
 }
 
 \value{
@@ -58,6 +58,6 @@ dim(X)  # dimension of data matrix
 pos.example <- round(seq(0.02, 0.98, length=25)*(ncol(X)-1)+1, 0)
 # estimate time-varying graphs
 result <- LGGM(X, pos = pos.example, fit.type = "pseudo", 
-refit.type = "pseudo", h = 0.25, d = 0.25, lambda = 0.25, num.thread = 7)
+refit.type = "pseudo", h = 0.25, d = 0.25, lambda = 0.25, num.thread = 2)
 
 print(result$edge.num.list)  # numbers of edges at time point positions
