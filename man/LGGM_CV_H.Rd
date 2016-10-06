@@ -1,5 +1,5 @@
-\name{LGGM.cv}
-\alias{LGGM.cv}
+\name{LGGM.cv.h}
+\alias{LGGM.cv.h}
 \title{A function to learn time-varying graphical models with structure smoothness based on cross validation}
 
 \description{

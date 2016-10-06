@@ -526,7 +526,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # cv.thres: grid search stops when number of detected edges exceeds cv.thres times number of nodes
 # return.select: whether to return results from LGGM.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, "d_fixed": d is fixed and lambda can vary across time points, "all_fixed": d and lambda are fixed across time points
-# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
+# cv.vote.thres: only the edges existing in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
@@ -538,7 +538,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # cv.result.list: list of results from LGGM.combine.cv of length num.fold
 # cv.select.result: results from LGGM.cv.select if return.select is TRUE
 
-LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), lambda.list = seq(0.15, 0.35, length = 11), num.fold = 5, cv.thres = 5, return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
+LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), lambda.list = seq(0.15, 0.35, length = 11), num.fold = 5, cv.thres = 5, return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
