@@ -61,3 +61,4 @@ result <- LGGM(X, pos = pos.example, fit.type = "pseudo",
 refit.type = "pseudo", h = 0.25, d = 0.25, lambda = 0.25, num.thread = 2)
 
 print(result$edge.num.list)  # numbers of edges at time point positions
+}

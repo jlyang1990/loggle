@@ -423,7 +423,6 @@ LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, 
 # lambda.min: optimal values of lambda across time points
 # cv.score.min: optimal cv score (averaged over time points and cv folds)
 # cv.score.min.sd: standard deviation of optimal cv scores across cv folds
-# Omega.edge.list.min: optimal graph structures across time points
 # edge.num.list.min: optimal edge numbers across time points
 # edge.list.min: optimal list of edges across time points
 
