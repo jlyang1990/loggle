@@ -430,6 +430,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, 
 LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
   cv.score <- cv.result$cv.score
+  cv.score[is.na(cv.score)] <- Inf
   cv.result.list <- cv.result$cv.result.list
   
   L <- dim(cv.score)[1]
@@ -502,7 +503,6 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   result$lambda.min <- lambda.min
   result$cv.score.min <- cv.score.min
   result$cv.score.min.sd <- cv.score.min.sd
-  result$Omega.edge.list.min <- Omega.edge.list.min
   result$edge.num.list.min <- edge.num.list.min
   result$edge.list.min <- edge.list.min
   result <- as.list(result)
