@@ -1,9 +1,9 @@
 \name{LGGM.cv.select}
 \alias{LGGM.cv.select}
-\title{A function to learn time-varying graphical models with structure smoothness based on cross validation}
+\title{A function to conduct model selection based on cross validation results}
 
 \description{
-This function is to efficiently conduct model selection based on cross validation for learning time-varying graphical models through a local group-Lasso type penalty.
+This function is to conduct model selection based on cross validation results for learning time-varying graphical models.
 }
 
 \usage{
@@ -12,22 +12,24 @@ select.type = "all_flexible", cv.vote.thres = 0.8)
 }
 
 \arguments{
-  \item{cv.result}{}
-  \item{select.type}{}
-  \item{cv.vote.thres}{}
+  \item{cv.result}{a list: results from the function \link{LGGM.cv}}
+  \item{select.type}{a string: "all_flexible" -- optimal d and lambda can vary at each position where graph is estimated, "d_fixed" -- optimal d is fixed and optimal lambda can vary at each position where graph is estimated, "all_fixed" -- optimal d and lambda are fixed at each position where graph is estimated, default = "all_flexible"}
+  \item{cv.vote.thres}{a scalar (between 0 and 1): an edge is retained in cv vote if and only if it exists in no less than \code{cv.vote.thres}*\code{num.fold} cv folds}
 }
   
 \details{
+\code{select.type = "all_flexible"} is chosen in model selection if we believe both the extent of smoothness (controlled by \code{d}) and sparsity (controlled by \code{lambda}) vary across time points. If only the extent of sparsity varies across time points, we choose \code{select.type = "d_fix"}. If both of them are consistent across time points, we choose \code{select.type = "all_fix"}.
 
+\code{cv.vote.thres} controls the tradeoff between false discovery rate and power in model selection. A large value of \code{cv.vote.thres} would decrease false discovery rate but also hurt power.
 }
 
 \value{
-  \item{d.min}
-  \item{lambda.min}
-  \item{cv.score.min}
-  \item{cv.score.min.sd}
-  \item{edge.num.list.min}
-  \item{edge.list.min}
+  \item{d.min}{a vector of optimal values of d at each position of time point}
+  \item{lambda.min}{a vector of optimal values of lambda at each position of time point}
+  \item{cv.score.min}{optimal cv score (averaged over positions of time points and cv folds)}
+  \item{cv.score.min.sd}{standard deviation of optimal cv scores across cv folds}
+  \item{edge.num.list.min}{a vector of numbers of graph edges in selected model at each position of time point}
+  \item{edge.list.min}{a list of graph edges in selected model at each position of time point}
 }
 
 \references{
@@ -44,11 +46,15 @@ dim(X)  # dimension of data matrix
 
 # positions of time points to estimate graphs
 pos.example <- round(seq(0.02, 0.98, length=25)*(ncol(X)-1)+1, 0)
-# estimate time-varying graphs and conduct model selection via cross-validation
+# estimate time-varying graphs via cross-validation
 result <- LGGM.cv(X, pos = pos.example, fit.type = "pseudo", refit.type = "pseudo", 
 h = 0.25, d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
-lambda.list = c(0.15, 0.2, 0.25, 0.3), num.thread = 2)
+lambda.list = c(0.15, 0.2, 0.25, 0.3), return.select = FALSE, num.thread = 2)
 
-# numbers of edges at time point positions in selected model
-print(result$cv.select.result$edge.num.list.min)
+# conduct model selection using cross-validation results
+cv.select.result <- LGGM.cv.select(cv.result = result, 
+select.type = "all_flexible", cv.vote.thres = 0.6)
+
+# numbers of edges at positions of time points in selected model
+print(cv.select.result$edge.num.list.min)
 }

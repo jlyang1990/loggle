@@ -50,9 +50,9 @@ When underlying graphs are sparse, there is usually no need to conduct the compl
 }
 
 \value{
-  \item{cv.score}{an array of cv scores for each combination of d, lambda, time point position and cv fold}
+  \item{cv.score}{an array of cv scores for each combination of d, lambda, position of time point and cv fold}
   \item{cv.result.list}{a list of model fitting results (of the same format as the results from the function \link{LGGM}) for each cv fold}
-  \item{cv.select.result}{results from the function \code{LGGM.cv.select} if \code{return.select = TRUE}}
+  \item{cv.select.result}{results from the function \link{LGGM.cv.select} if \code{return.select = TRUE}}
 }
 
 \references{
@@ -74,6 +74,6 @@ result <- LGGM.cv(X, pos = pos.example, fit.type = "pseudo", refit.type = "pseud
 h = 0.25, d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), num.thread = 2)
 
-# numbers of edges at time point positions in selected model
+# numbers of edges at positions of time points in selected model
 print(result$cv.select.result$edge.num.list.min)
 }
