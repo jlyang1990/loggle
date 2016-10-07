@@ -1,11 +1,12 @@
 # LGGM, a R package for learning time-varying graphical models with structure smoothness
 
-# Description
+## Description
 
-# Dependencies
+## Dependencies
 
-# Installation
+## Installation
 
-# Main functions
+## Main functions
 
-# Contact
+## Contact
+Please report any bugs to jlyang@ucdavis.edu.
