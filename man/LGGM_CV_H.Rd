@@ -69,7 +69,7 @@ dim(X)  # dimension of data matrix
 # positions of time points to estimate graphs
 pos.example <- round(seq(0.02, 0.98, length=25)*(ncol(X)-1)+1, 0)
 # list of candidate values of h
-h.list = c(0.2, 0.25, 0.3)
+h.list <- c(0.2, 0.25, 0.3)
 # estimate time-varying graphs and conduct model selection via cross-validation
 result <- LGGM.cv.h(X, pos = pos.example, fit.type = "pseudo", refit.type = "pseudo", 
 h.list = h.list, d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
@@ -77,6 +77,11 @@ lambda.list = c(0.15, 0.2, 0.25, 0.3), num.thread = 2)
 
 # optimal value of h
 print(result$h.min)
-# numbers of edges at positions of time points in selected model
-print(result$cv.result.list[[which(h.list == h.min)]]$cv.select.result$edge.num.list.min)
+# optimal values of d at each position of time point
+h.min.index <- which(h.list == result$h.min)
+print(result$cv.result.list[[h.min.index]]$cv.select.result$d.min)
+# optimal values of lambda at each position of time point
+print(result$cv.result.list[[h.min.index]]$cv.select.result$lambda.min)
+# numbers of edges at each position of time point in selected model
+print(result$cv.result.list[[h.min.index]]$cv.select.result$edge.num.list.min)
 }

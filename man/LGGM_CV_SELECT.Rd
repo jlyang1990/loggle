@@ -55,6 +55,10 @@ lambda.list = c(0.15, 0.2, 0.25, 0.3), return.select = FALSE, num.thread = 2)
 cv.select.result <- LGGM.cv.select(cv.result = result, 
 select.type = "all_flexible", cv.vote.thres = 0.6)
 
-# numbers of edges at positions of time points in selected model
+# optimal values of d at each position of time point
+print(result$cv.select.result$d.min)
+# optimal values of lambda at each position of time point
+print(result$cv.select.result$lambda.min)
+# numbers of edges at each position of time point in selected model
 print(cv.select.result$edge.num.list.min)
 }

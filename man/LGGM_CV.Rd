@@ -74,6 +74,10 @@ result <- LGGM.cv(X, pos = pos.example, fit.type = "pseudo", refit.type = "pseud
 h = 0.25, d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), num.thread = 2)
 
-# numbers of edges at positions of time points in selected model
+# optimal values of d at each position of time point
+print(result$cv.select.result$d.min)
+# optimal values of lambda at each position of time point
+print(result$cv.select.result$lambda.min)
+# numbers of edges at each position of time point in selected model
 print(result$cv.select.result$edge.num.list.min)
 }
