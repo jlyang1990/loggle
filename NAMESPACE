@@ -1,2 +1,2 @@
-useDynLib(dagbag)
-export(score, score_shd)
+useDynLib(LGGM)
+export(LGGM, LGGM_CV)
