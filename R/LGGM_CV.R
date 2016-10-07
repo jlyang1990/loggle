@@ -672,7 +672,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
 # cv.score.min.h: optimal cv scores across h's
 # cv.result.list: list of results from LGGM.cv of length H (number of h's)
 
-LGGM.cv.h <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), num.fold = 5, cv.thres = 5, return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = 1e-4, epi.rel = 1e-2, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
+LGGM.cv.h <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), num.fold = 5, cv.thres = 5, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
   
   N <- dim(X)[2]
   H <- length(h.list)
@@ -683,7 +683,8 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "lik
   
   for(h in 1:H) {
     
-    cv.result.h <- LGGM.cv(X, pos, fit.type, refit.type, h.list[h], d.list, lambda.list, num.fold, cv.thres, return.select, select.type, cv.vote.thres, epi.abs, epi.rel, fit.corr, h.correct, num.thread)
+    cat("\nRunning h =", h.list[h], "...\n")
+    cv.result.h <- LGGM.cv(X, pos, fit.type, refit.type, h.list[h], d.list, lambda.list, num.fold, cv.thres, return.select = TRUE, select.type, cv.vote.thres, epi.abs, epi.rel, fit.corr, h.correct, num.thread)
     cv.result.list[[h]] <- cv.result.h
     cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
