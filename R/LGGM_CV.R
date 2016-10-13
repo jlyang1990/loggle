@@ -365,7 +365,9 @@ LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, 
 
 # Input ###
 # cv.result: results of cross validation for LGGM 
-# select.type: "all_flexible": d and lambda can vary across time points, "d_fixed": d is fixed and lambda can vary across time points, "all_fixed": d and lambda are fixed across time points
+# select.type: "all_flexible": d and lambda can vary across time points, 
+#              "d_fixed": d is fixed and lambda can vary across time points, 
+#              "all_fixed": d and lambda are fixed across time points
 # cv.vote.thres: only the edges exsting in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
 
 # Output ###
