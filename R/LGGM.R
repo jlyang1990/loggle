@@ -74,10 +74,10 @@ makeCorr <- function(X, pos, h, fit.corr) {
 # pos: position of time point where graph is estimated
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # d: width of neighborhood
 # lambda: tuning parameter of Lasso penalty
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 
@@ -87,7 +87,7 @@ makeCorr <- function(X, pos, h, fit.corr) {
 # edge.num: detected edge number
 # edge: detected edges
 
-LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs, epi.rel) {
+LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs, epi.rel) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -165,10 +165,10 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
 # pos: position of time points where graphs are estimated
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # d: width of neighborhood
 # lambda: tuning parameter of Lasso penalty
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 
@@ -178,7 +178,7 @@ LGGM.local <- function(pos, Corr, sd.X, fit.type, refit.type, d, lambda, epi.abs
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
-LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel) {
+LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -252,11 +252,11 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 # Input ###
 # X: a p by N matrix containing list of observations
 # pos: position of time points where graphs are estimated
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # h: bandwidth in kernel function used to generate correlation matrices
 # d: list of widths of neighborhood
 # lambda: list of tuning parameters of Lasso penalty
+# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
@@ -269,8 +269,8 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
-LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d = 0.2, 
-                 lambda = 0.25, epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, num.thread = 1) {
+LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "glasso", 
+                 refit.type = "likelihood", epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, num.thread = 1) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -329,7 +329,7 @@ LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeliho
     
     if(length(lambda) == 1) {
       
-      result <- LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, epi.rel)
+      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel)
       
       cat("Complete all!\n")
       
@@ -339,7 +339,7 @@ LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeliho
       
       for(lambda.l in lambda.list) {
         
-        result.l <- LGGM.global(pos, Corr, sd.X, fit.type, refit.type, lambda.l, epi.abs, epi.rel)
+        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit.type, epi.abs, epi.rel)
         idx <- which(lambda == lambda.l)
         
         for(i in idx) {
@@ -373,7 +373,7 @@ LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeliho
     registerDoParallel(num.thread)
     
     result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, sd.X, fit.type, refit.type, d[k], lambda[k], epi.abs, epi.rel)
+      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel)
     
     for(k in 1:K) {
       
