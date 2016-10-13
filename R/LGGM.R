@@ -269,7 +269,8 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
-LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, num.thread = 1) {
+LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, 
+epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, num.thread = 1) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
