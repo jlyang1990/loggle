@@ -1,4 +1,26 @@
 
+# Data pre-processing function ################################################################################################
+###############################################################################################################################
+
+# Input ###
+# X: a p by N matrix containing list of observations
+
+# Output ###
+# X: a p by N matrix containing list of observations after de-trending
+
+preProc <- function(X) {
+  
+  p <- nrow(X)
+  N <- ncol(X)
+  
+  for(i in 1:p) {
+    X[i, ] <- X[i, ] - sm.regression(1:N, X[i, ], ngrid = N)$estimate
+  }
+  
+  return(X)
+}
+
+
 # Covariance/Correlation matrix generation function ###########################################################################
 ###############################################################################################################################
 
@@ -18,17 +40,12 @@ makeCorr <- function(X, pos, h, fit.corr) {
   N <- ncol(X)
   L <- length(pos)
   
-  sd.X <- rep(NA, p)
+  sd.X <- rep(1, p)
   
   if(fit.corr) {
     for(i in 1:p) {
-      sd.X[i] <- sd(X[i, pos])
-      X[i, pos] <- scale(X[i, pos])
-    }
-  } else {
-    for(i in 1:p) {
-      sd.X[i] <- 1
-      X[i, pos] <- scale(X[i, pos], scale = FALSE)
+      sd.X[i] <- sd(X[i, ])
+      X[i, ] <- X[i, ] / sd(X[i, ])
     }
   }
   
