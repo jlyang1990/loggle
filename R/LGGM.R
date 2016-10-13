@@ -14,7 +14,7 @@ dataDetrend <- function(X) {
   N <- ncol(X)
   
   for(i in 1:p) {
-    X[i, ] <- X[i, ] - sm.regression(1:N, X[i, ], ngrid = N)$estimate
+    X[i, ] <- X[i, ] - sm.regression(1:N, X[i, ], ngrid = N, display = "none")$estimate
   }
   
   return(X)
