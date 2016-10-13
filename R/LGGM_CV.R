@@ -274,7 +274,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, fit.type, refit.type, lambda.list, c
 # edge.num: L by D by K list of edge numbers
 # edge: L by D by K list of edges
 
-LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread) {
+LGGM.combine.cv <- function(X, pos.train, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, 
+                            fit.corr, num.thread) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -473,7 +474,9 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # num.fold: number of cv folds
 # cv.thres: grid search stops when number of detected edges exceeds cv.thres times number of nodes
 # return.select: whether to return results from LGGM.cv.select
-# select.type: "all_flexible": d and lambda can vary across time points, "d_fixed": d is fixed and lambda can vary across time points, "all_fixed": d and lambda are fixed across time points
+# select.type: "all_flexible": d and lambda can vary across time points, 
+#              "d_fixed": d is fixed and lambda can vary across time points, 
+#              "all_fixed": d and lambda are fixed across time points
 # cv.vote.thres: only the edges existing in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
@@ -487,7 +490,12 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # cv.result.list: list of results from LGGM.combine.cv of length num.fold
 # cv.select.result: results from LGGM.cv.select if return.select is TRUE
 
-LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), lambda.list = seq(0.15, 0.35, length = 11), num.fold = 5, cv.thres = 5, return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
+LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), 
+                    d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
+                    lambda.list = seq(0.15, 0.35, length = 11), num.fold = 5, cv.thres = 5, return.select = TRUE, 
+                    select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
+                    epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
+                    num.thread = 1) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -564,7 +572,8 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
     pos.test <- seq(i, N, num.fold)
     pos.train <- (1:N)[-pos.test]
     
-    result.i <- LGGM.combine.cv(X, pos.train, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel, fit.corr, num.thread)
+    result.i <- LGGM.combine.cv(X, pos.train, pos, fit.type, refit.type, h, d.list, lambda.list, cv.thres, epi.abs, epi.rel,
+                                fit.corr, num.thread)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
@@ -614,7 +623,9 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
 # num.fold: number of cv folds
 # cv.thres: grid search stops when number of detected edges exceeds cv.thres times number of nodes
 # return.select: whether to return results from LGGM.cv.select
-# select.type: "all_flexible": d and lambda can vary across time points, "d_fixed": d is fixed and lambda can vary across time points, "all_fixed": d and lambda are fixed across time points
+# select.type: "all_flexible": d and lambda can vary across time points, 
+#              "d_fixed": d is fixed and lambda can vary across time points, 
+#              "all_fixed": d and lambda are fixed across time points
 # cv.vote.thres: only the edges exsting in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
@@ -628,7 +639,12 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
 # cv.score.min.h: optimal cv scores across h's
 # cv.result.list: list of results from LGGM.cv of length H (number of h's)
 
-LGGM.cv.h <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), num.fold = 5, cv.thres = 5, select.type = "all_flexible", cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
+LGGM.cv.h <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", 
+                      h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
+                      lambda.list = c(0.15, 0.2, 0.25, 0.3), num.fold = 5, cv.thres = 5, select.type = "all_flexible", 
+                      cv.vote.thres = 0.8, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
+                      epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
+                      num.thread = 1) {
   
   N <- dim(X)[2]
   H <- length(h.list)
@@ -640,7 +656,8 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "lik
   for(h in 1:H) {
     
     cat("\nRunning h =", h.list[h], "...\n")
-    cv.result.h <- LGGM.cv(X, pos, fit.type, refit.type, h.list[h], d.list, lambda.list, num.fold, cv.thres, return.select = TRUE, select.type, cv.vote.thres, epi.abs, epi.rel, fit.corr, h.correct, num.thread)
+    cv.result.h <- LGGM.cv(X, pos, fit.type, refit.type, h.list[h], d.list, lambda.list, num.fold, cv.thres, 
+                           return.select = TRUE, select.type, cv.vote.thres, epi.abs, epi.rel, fit.corr, h.correct, num.thread)
     cv.result.list[[h]] <- cv.result.h
     cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
