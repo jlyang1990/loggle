@@ -542,7 +542,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
   
   if(detrend) {
     cat("Detrending each variable in data matrix...\n")
-    X <- preProc(X)
+    X <- dataDetrend(X)
   }
   
   if(h.correct) {
