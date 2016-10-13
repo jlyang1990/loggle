@@ -259,6 +259,7 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 # lambda: list of tuning parameters of Lasso penalty
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # num.thread: number of threads
 
@@ -268,7 +269,7 @@ LGGM.global <- function(pos, Corr, sd.X, fit.type, refit.type, lambda, epi.abs, 
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
-LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, epi.abs = 1e-5, epi.rel = 1e-3, fit.corr = TRUE, num.thread = 1) {
+LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likelihood", h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, num.thread = 1) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -303,6 +304,11 @@ LGGM <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likeliho
   }
   if(!length(lambda) %in% c(1, K)) {
     stop("lambda must be a scalar or a vector of the same length as 'pos'!")
+  }
+  
+  if(detrend) {
+    cat("Detrending each variable in data matrix...\n")
+    X <- dataDetrend(X)
   }
   
   cat("Generating sample covariance/correlation matrices...\n")

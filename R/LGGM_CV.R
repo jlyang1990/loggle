@@ -477,6 +477,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # cv.vote.thres: only the edges existing in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
+# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads
@@ -617,6 +618,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), fit.type = "glasso", refit.type = "likel
 # cv.vote.thres: only the edges exsting in no less than cv.vote.thres*num.fold cv folds are retained in cv vote
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
+# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads
