@@ -6,7 +6,7 @@
 # X: a p by N matrix containing list of observations
 
 # Output ###
-# X: a p by N matrix containing list of observations after de-trending
+# X: a p by N matrix containing list of observations after detrending
 
 preProc <- function(X) {
   
