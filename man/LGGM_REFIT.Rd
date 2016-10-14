@@ -17,6 +17,10 @@ LGGM.refit(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5))
   \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix}
 }
 
+\details{
+This function uses the model refitting method based on negative log-likelihood.
+}
+
 \value{
   \item{Omega.rf.list}{a list of estimated precision matrices via model refitting at positions of time points specified by \code{pos}}
 }
