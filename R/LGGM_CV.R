@@ -319,7 +319,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 }
 
 
-# Model refitting function for selected model #################################################################################
+# Model refitting function for given graph structures #########################################################################
 ###############################################################################################################################
 
 # Input ###
