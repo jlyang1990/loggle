@@ -679,3 +679,60 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
 }
 
 
+# Model refitting function for selected model #################################################################################
+###############################################################################################################################
+
+# Input ###
+# X: a p by N matrix containing list of observations
+# pos: position of observations used to generate correlation matrices
+# Omega.edge.list: graph structures across time points
+# h: bandwidth in kernel function used to generate correlation matrices
+
+# Output ###
+# Omega.rf.list: list of refitted precision matrices of length K
+
+LGGM.refit <- function(X, pos, Omega.edge.list, h) {
+  
+  p <- dim(X)[1]
+  N <- dim(X)[2]
+  K <- length(pos)
+  
+  cat("Generating sample covariance matrices for training dataset...\n")
+  Sigma <- makeCorr(X, 1:N, h, fit.corr = FALSE)$Corr
+  
+  cat("Estimating graphs...\n")
+  
+  Omega.rf.list <- vector("list", K)
+  
+  for(k in 1:K) {
+    
+    adj.mat <- as.integer(Omega.edge.list[, , k])
+    diag(adj.mat) <- 1
+    graph <- graph.adjacency(adj.mat)
+    cluster <- clusters(graph)
+    member <- cluster$membership
+    csize <- cluster$csize
+    no <- cluster$no
+    member.index <- sort(member, index.return = T)$ix - 1
+    csize.index <- c(0, cumsum(csize))
+    
+    result <- .C("ADMM_simple_refit",
+                 as.integer(p),
+                 as.integer(member.index),
+                 as.integer(csize.index),
+                 as.integer(no),
+                 as.double(Sigma[, , pos[k]]),
+                 Z.pos.vec = as.double(Z.pos.vec),
+                 as.double(rho),
+                 as.double(epi.abs),
+                 as.double(epi.rel),
+                 as.integer(refit.type)
+    )
+    
+    Omega.rf.list[[k]] <- Matrix(result$Z.pos.vec, p, p, sparse = T)
+    
+    cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
+  }
+  
+  return(Omega.rf.list)
+}

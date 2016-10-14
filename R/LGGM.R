@@ -264,10 +264,10 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
 # num.thread: number of threads
 
 # Output ###
-# Omega: list of estimated precision matrices of length K (number of time points)
-# Omega.rf: list of refitted precision matrices of length K
-# edge.num: list of detected edge numbers of length K
-# edge: list of detected edges of length K
+# Omega.list: list of estimated precision matrices of length K (number of time points)
+# Omega.rf.list: list of refitted precision matrices of length K
+# edge.num.list: list of detected edge numbers of length K
+# edge.list: list of detected edges of length K
 
 LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "glasso", 
                  refit.type = "likelihood", epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, num.thread = 1) {
