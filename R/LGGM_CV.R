@@ -699,6 +699,13 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   N <- dim(X)[2]
   K <- length(pos)
   
+  if(any(!pos %in% 1:N)) {
+    stop("pos must be a subset of 1, 2, ..., N!")
+  }
+  if(length(Omega.edge.list) != K) {
+    stop("Omega.edge.list must have the same length as pos!")
+  }
+  
   cat("Generating sample covariance matrices for training dataset...\n")
   Sigma <- makeCorr(X, 1:N, h, fit.corr = FALSE)$Corr
   
