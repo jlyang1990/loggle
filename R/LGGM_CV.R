@@ -709,7 +709,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
     
     Z.pos.vec <- rep(0, p*p)
     
-    adj.mat <- as.integer(Omega.edge.list[, , k])
+    adj.mat <- as.numeric(Omega.edge.list[, , k])
     diag(adj.mat) <- 1
     graph <- graph.adjacency(adj.mat)
     cluster <- clusters(graph)
@@ -725,6 +725,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
                  as.integer(csize.index),
                  as.integer(no),
                  as.double(Sigma[, , pos[k]]),
+                 as.double(adj.mat),
                  Z.pos.vec = as.double(Z.pos.vec),
                  as.double(rho),
                  as.double(epi.abs),

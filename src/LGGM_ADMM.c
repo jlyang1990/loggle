@@ -17,6 +17,10 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
                  double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len);
 
+//apply ADMM to refit graphical structure
+void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
+                       double *Epi_abs, double *Epi_rel, int *pseudo_refit);
+
 //local group graphical lasso
 void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
 
