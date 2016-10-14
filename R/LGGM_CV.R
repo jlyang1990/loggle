@@ -691,7 +691,7 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
 # Output ###
 # Omega.rf.list: list of refitted precision matrices of length K
 
-LGGM.refit <- function(X, pos, Omega.edge.list, h) {
+LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -702,9 +702,12 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h) {
   
   cat("Estimating graphs...\n")
   
+  rho <- 0.25
   Omega.rf.list <- vector("list", K)
   
   for(k in 1:K) {
+    
+    Z.pos.vec <- rep(0, p*p)
     
     adj.mat <- as.integer(Omega.edge.list[, , k])
     diag(adj.mat) <- 1
