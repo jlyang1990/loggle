@@ -32,7 +32,7 @@ The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseud
 
 The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is usually computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
 
-\code{fit.corr = TRUE} is suggested in model fitting since the Lasso-type penalty can be applied appropriately when all the variables are of similar scales.
+\code{fit.corr = TRUE} is suggested in model fitting since the Lasso-type penalty can be applied appropriately when all the variables are of similar scales. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} should change accordingly.
 }
 
 \value{
