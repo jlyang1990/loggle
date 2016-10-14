@@ -380,7 +380,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
                        double *Epi_abs, double *Epi_rel, int *pseudo_refit){
   
-  int p = *P, no = *No, p_n, n, i, j, k, pos, S_L, *S_Len;
+  int p = *P, no = *No, p_n, n, j, k, pos, S_L, *S_Len;
   int *member_ind_n;
   
   S_Len[0] = 0;
@@ -444,12 +444,11 @@ void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double 
           
         pos = 1;
         
-          
         ADMM_pseudo_refit(&p_n, &pos, Corr_n, Z_n, Z_pos_n, S_Len);
           
         for(j=0; j<p_n; j++){
           for(k=0; k<p_n; k++){
-            Z_pos[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
+            Z_pos[p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
           }
         }
       }
@@ -457,7 +456,7 @@ void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double 
       free(Corr_n);
       free(Z_n);
       free(Z_pos_n);
-      free(S);		
+      free(S);	
     }
   }//end iteration across block diagonals
 }

@@ -691,11 +691,19 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
 # Output ###
 # Omega.rf.list: list of refitted precision matrices of length K
 
-LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
+LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5), refit.type = "likelihood") {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
   K <- length(pos)
+  
+  if(refit.type == "likelihood") {
+    refit.type <- 0
+  } else if(refit.type == "pseudo") {
+    refit.type <- 1
+  } else {
+    stop("refit.type must be 'likelihood' or 'pseudo'!")
+  }
   
   cat("Generating sample covariance matrices for training dataset...\n")
   Sigma <- makeCorr(X, 1:N, h, fit.corr = FALSE)$Corr
@@ -703,6 +711,8 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   cat("Estimating graphs...\n")
   
   rho <- 0.25
+  epi.abs <- 1e-5
+  epi.rel <- 1e-3
   Omega.rf.list <- vector("list", K)
   
   for(k in 1:K) {
