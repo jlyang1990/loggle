@@ -441,11 +441,11 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
       }
   }
   
-  Omega.edge.list.min <- (apply(Omega.edge.list.min != 0, c(1, 2, 3), sum) >= cv.fold * cv.vote.thres)
+  Omega.edge.list.min <- Matrix((apply(Omega.edge.list.min != 0, c(1, 2, 3), sum) >= cv.fold * cv.vote.thres), sparse = TRUE)
   
   for(k in 1:K) {
     
-    edge <- which(Omega.edge.list.min[, , k] != 0, arr.ind = T)
+    edge <- which(Omega.edge.list.min[, , k], arr.ind = T)
     edge.list.min[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
     edge.num.list.min[k] <- nrow(edge.list.min[[k]])
   }
@@ -457,6 +457,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   result$cv.score.min.sd <- cv.score.min.sd
   result$edge.num.list.min <- edge.num.list.min
   result$edge.list.min <- edge.list.min
+  result$Omega.edge.list.min <- Omega.edge.list.min
   result <- as.list(result)
   
   return(result)
