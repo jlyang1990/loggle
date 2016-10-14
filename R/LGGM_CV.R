@@ -395,9 +395,10 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   lambda.list <- as.numeric(rownames(cv.score))
   d.list <- as.numeric(colnames(cv.score))
   
-  Omega.edge.list.min <- array(NA, c(p, p, K, cv.fold))
+  Omega.edge.list <- array(NA, c(p, p, K, cv.fold))
   edge.num.list.min <- rep(NA, K)
   edge.list.min <- vector("list", K)
+  Omega.edge.list.min <- vector("list", K)
   
   cv.score.fold <- apply(cv.score, c(1, 2, 3), mean)
   
@@ -438,17 +439,18 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
     
     Omega.rf.list <- cv.result.list[[i]]$Omega.rf.list
     for(k in 1:K) {
-      Omega.edge.list.min[, , k, i] <- as.matrix(Omega.rf.list[[lambda.index[k], d.index[k], k]])
+      Omega.edge.list[, , k, i] <- as.matrix(Omega.rf.list[[lambda.index[k], d.index[k], k]])
       }
   }
   
-  Omega.edge.list.min <- apply(Omega.edge.list.min != 0, c(1, 2, 3), sum) >= cv.fold * cv.vote.thres
+  Omega.edge.list <- apply(Omega.edge.list != 0, c(1, 2, 3), sum) >= cv.fold * cv.vote.thres
   
   for(k in 1:K) {
     
-    edge <- which(Omega.edge.list.min[, , k] != 0, arr.ind = T)
+    edge <- which(Omega.edge.list[, , k] != 0, arr.ind = T)
     edge.list.min[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
     edge.num.list.min[k] <- nrow(edge.list.min[[k]])
+    Omega.edge.list.min[[k]] <- Matrix(as.numeric(Omega.edge.list[, , k]), p, p, sparse = TRUE)
   }
   
   result <- new.env()
@@ -711,7 +713,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
     
     Z.pos.vec <- rep(0, p*p)
     
-    adj.mat <- matrix(as.numeric(Omega.edge.list[, , k]), p, p)
+    adj.mat <- as.matrix(Omega.edge.list[[k]])
     graph <- graph.adjacency(adj.mat)
     cluster <- clusters(graph)
     member <- cluster$membership
