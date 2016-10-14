@@ -17,7 +17,8 @@ return.select = TRUE, select.type = "all_flexible",
 cv.vote.thres = 0.8, early.stop.thres = 5, 
 epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
 epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
-fit.corr = TRUE, h.correct = TRUE, num.thread = 1)
+detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
+num.thread = 1)
 }
 
 \arguments{
@@ -27,13 +28,14 @@ fit.corr = TRUE, h.correct = TRUE, num.thread = 1)
   \item{d.list}{a vector: a grid of widths of neighborhood centered at each position where graph is estimated}
   \item{lambda.list}{a vector: a grid of tuning parameters of Lasso penalty at each position where graph is estimated}
   \item{cv.fold}{a scalar: number of cv folds}
-  \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "glasso"}
+  \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
   \item{refit.type}{a string: "likelihood" -- likelihood estimation, or "pseudo" -- pseudo likelihood estimation, default = "likelihood"}
   \item{select.type}{a string: "all_flexible" -- optimal d and lambda can vary at each position where graph is estimated, "d_fixed" -- optimal d is fixed and optimal lambda can vary at each position where graph is estimated, "all_fixed" -- optimal d and lambda are fixed at each position where graph is estimated, default = "all_flexible"}
   \item{cv.vote.thres}{a scalar (between 0 and 1): an edge is retained in cv vote if and only if it exists in no less than \code{cv.vote.thres}*\code{cv.fold} cv folds}
   \item{early.stop.thres}{a scalar: stopping criterion in grid search: grid search stops when the ratio between number of detected edges and number of nodes exceeds \code{early.stop.thres}}
   \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4 if p >= 400 or 1e-5 otherwise. When it is a scalar, absolute tolerances are the same for all elements in \code{d.list}}
   \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2 if p >= 400 or 1e-3 otherwise. When it is a scalar, relative tolerances are the same for all elements in \code{d.list}}
+  \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average, default = TRUE}
   \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
   \item{h.correct}{logic: whether to apply bandwidth correction to h in calculating cv scores for validation sets}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
