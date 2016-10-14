@@ -19,7 +19,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 //apply ADMM to refit graphical structure
 void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
-                       double *Epi_abs, double *Epi_rel, int *pseudo_refit);
+                       double *Epi_abs, double *Epi_rel);
 
 //local group graphical lasso
 void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
@@ -378,12 +378,10 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
-                       double *Epi_abs, double *Epi_rel, int *pseudo_refit){
+                       double *Epi_abs, double *Epi_rel){
   
-  int p = *P, no = *No, p_n, n, j, k, pos, S_L, *S_Len;
+  int p = *P, no = *No, p_n, n, j, k, pos, S_L;
   int *member_ind_n;
-  
-  S_Len[0] = 0;
   
   //iteration across block diagonals
   for(n=0; n<no; n++){
@@ -400,6 +398,7 @@ void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double 
       double *Corr_n = (double *) malloc(p_n*p_n*sizeof(double));
       double *Z_n = (double *) malloc(p_n*p_n*sizeof(double));
       double *Z_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
+      double *U_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
       int *S = (int *) malloc(p_n*(p_n-1)*sizeof(int));
       
       for(j=0; j<p_n; j++){
@@ -410,52 +409,34 @@ void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double 
       }
       
       //model refitting
-      if(*pseudo_refit == 0){
-        
-        double *U_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
-        
-        pos = 1;
-        S_L = 0;
+      pos = 0;
+      S_L = 0;
           
-        for(j=0; j<p_n; j++){
-          for(k=j; k<p_n; k++){
-            Z_pos_n[p_n*j+k] = 0;
-            U_pos_n[p_n*j+k] = 0;
-            if(j!=k && Z_n[p_n*j+k]!=0 && Z_n[p_n*k+j]!=0){
-              S[2*S_L] = j;
-              S[2*S_L+1] = k;
-              S_L++;
-            }
-          }
-        }
-          
-        ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, Rho, Epi_abs, Epi_rel);
-          
-        for(j=0; j<p_n; j++){
-          for(k=j; k<p_n; k++){
-            Z_pos[p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
-            Z_pos[p*(*(member_ind_n+k))+(*(member_ind_n+j))] = Z_pos_n[p_n*j+k];
-          }
-        }
-        
-        free(U_pos_n);
-      }
-      else if(*pseudo_refit == 1){
-          
-        pos = 1;
-        
-        ADMM_pseudo_refit(&p_n, &pos, Corr_n, Z_n, Z_pos_n, S_Len);
-          
-        for(j=0; j<p_n; j++){
-          for(k=0; k<p_n; k++){
-            Z_pos[p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
+      for(j=0; j<p_n; j++){
+        for(k=j; k<p_n; k++){
+          Z_pos_n[p_n*j+k] = 0;
+          U_pos_n[p_n*j+k] = 0;
+          if(j!=k && Z_n[p_n*j+k]!=0 && Z_n[p_n*k+j]!=0){
+            S[2*S_L] = j;
+            S[2*S_L+1] = k;
+            S_L++;
           }
         }
       }
-      
+          
+      ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, Rho, Epi_abs, Epi_rel);
+          
+      for(j=0; j<p_n; j++){
+        for(k=j; k<p_n; k++){
+          Z_pos[p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
+          Z_pos[p*(*(member_ind_n+k))+(*(member_ind_n+j))] = Z_pos_n[p_n*j+k];
+        }
+      }
+        
       free(Corr_n);
       free(Z_n);
       free(Z_pos_n);
+      free(U_pos_n);
       free(S);	
     }
   }//end iteration across block diagonals
