@@ -499,7 +499,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 
 LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
                     d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
-                    lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "glasso", refit.type = "likelihood", 
+                    lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo", refit.type = "likelihood", 
                     return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
                     epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
                     detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
@@ -648,7 +648,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 
 LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), 
                       d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), cv.fold = 5, 
-                      fit.type = "glasso", refit.type = "likelihood", select.type = "all_flexible", cv.vote.thres = 0.8, 
+                      fit.type = "pseudo", refit.type = "likelihood", select.type = "all_flexible", cv.vote.thres = 0.8, 
                       early.stop.thres = 5, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
                       epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
                       num.thread = 1) {
