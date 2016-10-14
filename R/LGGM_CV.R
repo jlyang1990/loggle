@@ -442,7 +442,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
       }
   }
   
-  Omega.edge.list.min <- Matrix((apply(Omega.edge.list.min != 0, c(1, 2, 3), sum) >= cv.fold * cv.vote.thres), sparse = TRUE)
+  Omega.edge.list.min <- apply(Omega.edge.list.min != 0, c(1, 2, 3), sum) >= cv.fold * cv.vote.thres
   
   for(k in 1:K) {
     
