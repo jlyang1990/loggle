@@ -30,6 +30,7 @@ select.type = "all_flexible", cv.vote.thres = 0.8)
   \item{cv.score.min.sd}{standard deviation of optimal cv scores across cv folds}
   \item{edge.num.list.min}{a vector of numbers of graph edges in selected model at each position of time point}
   \item{edge.list.min}{a list of graph edges in selected model at each position of time point}
+  \item{Omega.edge.list.min}{a list of adjacency matrices in selected model at each position of time point}
 }
 
 \references{

@@ -378,6 +378,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
 # cv.score.min.sd: standard deviation of optimal cv scores across cv folds
 # edge.num.list.min: optimal edge numbers across time points
 # edge.list.min: optimal list of edges across time points
+# Omega.edge.list.min: optimal graph structures across time points
 
 LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
@@ -676,3 +677,5 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
   
   return(cv.result)
 }
+
+
