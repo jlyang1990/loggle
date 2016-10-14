@@ -446,7 +446,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   
   for(k in 1:K) {
     
-    edge <- which(Omega.edge.list.min[, , k], arr.ind = T)
+    edge <- which(Omega.edge.list.min[, , k] != 0, arr.ind = T)
     edge.list.min[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
     edge.num.list.min[k] <- nrow(edge.list.min[[k]])
   }
@@ -719,8 +719,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5), refit.ty
     
     Z.pos.vec <- rep(0, p*p)
     
-    adj.mat <- as.numeric(Omega.edge.list[, , k])
-    diag(adj.mat) <- 1
+    adj.mat <- matrix(as.numeric(Omega.edge.list[, , k]), p, p)
     graph <- graph.adjacency(adj.mat)
     cluster <- clusters(graph)
     member <- cluster$membership
