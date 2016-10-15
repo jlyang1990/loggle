@@ -18,7 +18,7 @@ cv.vote.thres = 0.8, early.stop.thres = 5,
 epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
 epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
 detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
-num.thread = 1)
+num.thread = 1, print.detail = TRUE)
 }
 
 \arguments{
@@ -40,6 +40,7 @@ num.thread = 1)
   \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
   \item{h.correct}{logic: whether to apply bandwidth correction to h in calculating cv scores for validation sets}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
+  \item{print.detail}{logic: whether to print details in model fitting procedure}
 }
   
 \details{

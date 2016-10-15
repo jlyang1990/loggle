@@ -11,7 +11,8 @@ LGGM(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 d = 0.2, lambda = 0.25, fit.type = c("glasso", 
 "pseudo", "space"), refit.type = c("likelihood", 
 "pseudo"), epi.abs = 1e-5, epi.rel = 1e-3, 
-detrend = TRUE, fit.corr = TRUE, num.thread = 1)
+detrend = TRUE, fit.corr = TRUE, num.thread = 1, 
+print.detail = TRUE)
 }
 
 \arguments{
@@ -27,6 +28,7 @@ detrend = TRUE, fit.corr = TRUE, num.thread = 1)
   \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average, default = TRUE}
   \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
+  \item{print.detail}{logic: whether to print details in model fitting procedure}
 }
   
 \details{
