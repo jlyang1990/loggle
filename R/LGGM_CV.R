@@ -23,6 +23,7 @@
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads
+# print.detail: whether to print details in model fitting procedure
 
 # Output ###
 # cv.score: L (number of lambda's) by D (number of d's) by K (number of time points) by cv.fold array of cv scores 
@@ -34,7 +35,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
                     lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo", refit.type = "likelihood", 
                     return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
                     epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
-                    detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1) {
+                    detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -112,7 +113,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     pos.train <- (1:N)[-pos.test]
     
     result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, refit.type, early.stop.thres, 
-                                epi.abs, epi.rel, fit.corr, num.thread)
+                                epi.abs, epi.rel, fit.corr, num.thread, print.detail)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
@@ -172,6 +173,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads
+# print.detail: whether to print details in model fitting procedure
 
 # Output ###
 # h.min: optimal h
@@ -183,7 +185,7 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
                       fit.type = "pseudo", refit.type = "likelihood", select.type = "all_flexible", cv.vote.thres = 0.8, 
                       early.stop.thres = 5, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
                       epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
-                      num.thread = 1) {
+                      num.thread = 1, print.detail = TRUE) {
   
   N <- dim(X)[2]
   H <- length(h.list)
@@ -197,7 +199,7 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
     cat("\nRunning h =", h.list[h], "...\n")
     cv.result.h <- LGGM.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, refit.type, return.select = TRUE, 
                            select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, detrend, fit.corr, h.correct, 
-                           num.thread)
+                           num.thread, print.detail)
     cv.result.list[[h]] <- cv.result.h
     cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
@@ -404,6 +406,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
+# print.detail: whether to print details in model fitting procedure
 
 # Output ###
 # Omega: L (number of lambda's) by D (number of d's) list of estimated precision matrices
@@ -411,7 +414,8 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # edge.num: L by D list of edge numbers
 # edge: L by D list of edges
 
-LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel) {
+LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
+                          print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -505,7 +509,9 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
       edge.list[[l, j]] <- edge
     }
     
-    cat(sprintf("Complete: d = %.3f, t = %.2f\n", d, round((pos-1)/(N-1), 2)))
+    if(print.detail) {
+      cat(sprintf("Complete: d = %.3f, t = %.2f\n", d, round((pos-1)/(N-1), 2)))
+    }
     
     result <- new.env()
     result$Omega.list <- Omega.list
@@ -532,6 +538,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# print.detail: whether to print details in model fitting procedure
 
 # Output ###
 # Omega: L (number of lambda's) by K (number of time points) list of estimated precision matrices
@@ -539,7 +546,8 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
 # edge.num: L by K list of edge numbers
 # edge: L by K list of edges
 
-LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel) {
+LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
+                           print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -628,7 +636,9 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
     }
   }
   
-  cat("Complete: d = 1", "\n")
+  if(print.detail) {
+    cat("Complete: d = 1", "\n")
+  }
   
   result <- new.env()
   result$Omega.list <- Omega.list
@@ -658,6 +668,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # num.thread: number of threads
+# print.detail: whether to print details in model fitting procedure
 
 # Output ###
 # Omega: L (number of lambda's) by D (number of d's) by K (number of time points) list of estimated precision matrices
@@ -666,7 +677,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
 # edge: L by D by K list of edges
 
 LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, 
-                            epi.rel, fit.corr, num.thread) {
+                            epi.rel, fit.corr, num.thread, print.detail) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -684,7 +695,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
   
   if(d.list[1] == 1) {
 
-    result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel)
+    result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
+                             print.detail)
     
   } else {
     
@@ -699,7 +711,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[-D], 
-                      epi.rel[-D])
+                      epi.rel[-D], print.detail)
       
       stopImplicitCluster()
       
@@ -713,7 +725,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
         edge.list[, -D, k] <- result.k$edge.list
       }
       
-      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[D], epi.rel[D])
+      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[D], epi.rel[D],
+                               print.detail)
       
       Omega.list[, D, ] <- result$Omega.list
       Omega.rf.list[, D, ] <- result$Omega.rf.list
@@ -725,7 +738,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       registerDoParallel(num.thread)
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-        LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel)
+        LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
+                      print.detail)
       
       stopImplicitCluster()
       

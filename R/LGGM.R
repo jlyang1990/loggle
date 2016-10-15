@@ -15,6 +15,7 @@
 # detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # num.thread: number of threads
+# print.detail: whether to print details in model fitting procedure
 
 # Output ###
 # Omega.list: list of estimated precision matrices of length K (number of time points)
@@ -23,7 +24,8 @@
 # edge.list: list of detected edges of length K
 
 LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
-                 refit.type = "likelihood", epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, num.thread = 1) {
+                 refit.type = "likelihood", epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, 
+                 num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -84,7 +86,9 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel)
       
-      cat("Complete all!\n")
+      if(print.detail) {
+        cat("Complete all!\n")
+      }
       
     } else {
       
@@ -102,7 +106,9 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
           edge.list[[i]] <- result.l$edge.list[[i]]
         }
         
-        cat("Complete: t =", round((pos[idx]-1) / (N-1), 2), "\n")
+        if(print.detail) {
+          cat("Complete: t =", round((pos[idx]-1) / (N-1), 2), "\n")
+        }
       }
       
       result <- new.env()
@@ -126,7 +132,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     registerDoParallel(num.thread)
     
     result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel)
+      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel, print.detail)
     
     for(k in 1:K) {
       
@@ -163,6 +169,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# print.detail: whether to print details in model fitting procedure
 
 # Output ###
 # Omega: estimated precision matrix
@@ -170,7 +177,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # edge.num: detected edge number
 # edge: detected edges
 
-LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs, epi.rel) {
+LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs, epi.rel, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -228,7 +235,9 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
   edge <- which(Omega.rf != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
   
-  cat("Complete: t =", round((pos-1) / (N-1), 2), "\n")
+  if(print.detail) {
+    cat("Complete: t =", round((pos-1) / (N-1), 2), "\n")
+  }
   
   result <- new.env()
   result$Omega <- Omega
