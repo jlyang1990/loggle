@@ -85,7 +85,7 @@ pos.example <- round(seq(0.02, 0.98, length=25)
 *(ncol(X)-1)+1, 0)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
-result <- LGGM.cv(X, pos = pos.example, h = 0.25, 
+result <- LGGM.cv(X, pos = pos.example, h = 0.2, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type 
 = "pseudo", refit.type = "pseudo", num.thread = 2)
@@ -98,4 +98,17 @@ print(result$cv.select.result$lambda.min)
 # numbers of edges at each position of time point 
 # in selected model
 print(result$cv.select.result$edge.num.list.min)
+
+# false discovery rate (FDR) and power based on 
+# true precision matrices for selected model
+p <- dim(X)[1]
+edge.num.true.list <- sapply(1:length(pos.example), 
+function(i) (sum(Omega.true.list[[pos.example[i]]]!=0)-p)/2)
+edge.num.overlap.list <- sapply(1:length(pos.example), 
+function(i) (sum(result$cv.select.result$Omega.edge.list.min[[i]]
+& Omega.true.list[[pos.example[i]]])-p)/2)
+perform.matrix <- cbind(
+"FDR" = 1 - edge.num.overlap.list / result$edge.num.list,
+"power" = edge.num.overlap.list / edge.num.true.list)
+print(apply(perform.matrix, 2, mean))
 }

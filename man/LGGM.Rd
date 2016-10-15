@@ -59,24 +59,26 @@ data(example)  # load data matrix
 dim(X)  # dimension of data matrix
 
 # positions of time points to estimate graphs
-pos.example <- round(seq(0.02, 0.98, length=25)
+pos.example <- round(seq(0.02, 0.98, length=49)
 *(ncol(X)-1)+1, 0)
 # estimate time-varying graphs
-result <- LGGM(X, pos = pos.example, h = 0.25, 
-d = 0.25, lambda = 0.25, fit.type = "pseudo", 
+result <- LGGM(X, pos = pos.example, h = 0.1, 
+d = 0.15, lambda = 0.225, fit.type = "pseudo", 
 refit.type = "pseudo", num.thread = 2)
 
 # numbers of edges at each position of time point
 print(result$edge.num.list)
 
-# false discovery rate and power based on true precision matrices
-edge.num.true.list <- sapply(1:length(Omega.true.list), 
-function(i) (sum(Omega.true.list[[i]] != 0) - dim(X)[1])/2)
-edge.num.overlap.list <- sapply(1:length(Omega.true.list), 
-function(i) (sum(result$Omega.rf.list[[i]] 
-& Omega.true.list[[pos.example[i]]]) - dim(X)[1])/2)
-perform.matrix <- sapply(1:length(pos.example), function(i) 
-c("FDR.list" = 1 - edge.num.overlap.list / result$edge.num.list,
-"power.list" = edge.num.overlap.list / edge.num.true.list[pos.example]))
-print(apply(perform.matrix, 1, mean))
+# false discovery rate (FDR) and power based on 
+# true precision matrices
+p <- dim(X)[1]
+edge.num.true.list <- sapply(1:length(pos.example), 
+function(i) (sum(Omega.true.list[[pos.example[i]]]!=0)-p)/2)
+edge.num.overlap.list <- sapply(1:length(pos.example), 
+function(i) (sum(result$Omega.rf.list[[i]]
+& Omega.true.list[[pos.example[i]]])-p)/2)
+perform.matrix <- cbind(
+"FDR" = 1 - edge.num.overlap.list / result$edge.num.list,
+"power" = edge.num.overlap.list / edge.num.true.list)
+print(apply(perform.matrix, 2, mean))
 }

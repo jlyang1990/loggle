@@ -112,7 +112,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     pos.train <- (1:N)[-pos.test]
     
     result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, refit.type, early.stop.thres, 
-                                epi.abs, epi.rel, fit.corr, cv.thread)
+                                epi.abs, epi.rel, fit.corr, num.thread)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
