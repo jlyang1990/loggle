@@ -68,4 +68,15 @@ refit.type = "pseudo", num.thread = 2)
 
 # numbers of edges at each position of time point
 print(result$edge.num.list)
+
+# false discovery rate and power based on true precision matrices
+edge.num.true.list <- sapply(1:length(Omega.true.list), 
+function(i) (sum(Omega.true.list[[i]] != 0) - dim(X)[1])/2)
+edge.num.overlap.list <- sapply(1:length(Omega.true.list), 
+function(i) (sum(result$Omega.rf.list[[i]] 
+& Omega.true.list[[pos.example[i]]]) - dim(X)[1])/2)
+perform.matrix <- sapply(1:length(pos.example), function(i) 
+c("FDR.list" = 1 - edge.num.overlap.list / result$edge.num.list,
+"power.list" = edge.num.overlap.list / edge.num.true.list[pos.example]))
+print(apply(perform.matrix, 1, mean))
 }
