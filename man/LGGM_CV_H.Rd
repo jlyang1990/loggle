@@ -102,8 +102,9 @@ print(result$cv.result.list[[h.min.index]]
 $cv.select.result$lambda.min)
 # numbers of edges at each position of time point in 
 # selected model
-print(result$cv.result.list[[h.min.index]]
+edge.num.list.min <- (result$cv.result.list[[h.min.index]]
 $cv.select.result$edge.num.list.min)
+print(edge.num.list.min)
 
 # false discovery rate (FDR) and power based on 
 # true precision matrices for selected model
@@ -115,7 +116,7 @@ function(i) (sum(result$cv.result.list[[h.min.index]]
 $cv.select.result$Omega.edge.list.min[[i]]
 & Omega.true.list[[pos.example[i]]])-p)/2)
 perform.matrix <- cbind(
-"FDR" = 1 - edge.num.overlap.list / result$edge.num.list,
+"FDR" = 1 - edge.num.overlap.list / edge.num.list.min,
 "power" = edge.num.overlap.list / edge.num.true.list)
 print(apply(perform.matrix, 2, mean))
 }

@@ -92,12 +92,12 @@ lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type
 
 # optimal values of d at each position of time point
 print(result$cv.select.result$d.min)
-# optimal values of lambda at each position of 
-# time point
+# optimal values of lambda at each position of time point
 print(result$cv.select.result$lambda.min)
 # numbers of edges at each position of time point 
 # in selected model
-print(result$cv.select.result$edge.num.list.min)
+edge.num.list.min <- result$cv.select.result$edge.num.list.min
+print(edge.num.list.min)
 
 # false discovery rate (FDR) and power based on 
 # true precision matrices for selected model
@@ -108,7 +108,7 @@ edge.num.overlap.list <- sapply(1:length(pos.example),
 function(i) (sum(result$cv.select.result$Omega.edge.list.min[[i]]
 & Omega.true.list[[pos.example[i]]])-p)/2)
 perform.matrix <- cbind(
-"FDR" = 1 - edge.num.overlap.list / result$edge.num.list,
+"FDR" = 1 - edge.num.overlap.list / edge.num.list.min,
 "power" = edge.num.overlap.list / edge.num.true.list)
 print(apply(perform.matrix, 2, mean))
 }

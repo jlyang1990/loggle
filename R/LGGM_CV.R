@@ -195,8 +195,9 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
   for(h in 1:H) {
     
     cat("\nRunning h =", h.list[h], "...\n")
-    cv.result.h <- LGGM.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, refit.type, early.stop.thres, 
-                           return.select = TRUE, select.type, cv.vote.thres, epi.abs, epi.rel, fit.corr, h.correct, num.thread)
+    cv.result.h <- LGGM.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, refit.type, return.select = TRUE, 
+                           select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, detrend, fit.corr, h.correct, 
+                           num.thread)
     cv.result.list[[h]] <- cv.result.h
     cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
