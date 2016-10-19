@@ -71,6 +71,23 @@ refit.type = "pseudo", num.thread = 2)
 # numbers of edges at each position of time point
 print(result$edge.num.list)
 
+# graphs at selected positions of time points
+par(mfrow = c(2, 2))
+pos.plot <- round(seq(0.02, 0.98, length=4)
+*(ncol(X)-1)+1, 0)
+for(k in 1:length(pos.plot)) {
+  adj.matrix <- result$Omega.rf.list[[which(pos.example 
+  == pos.plot[k])]] != 0
+  net <- graph.adjacency(adj.matrix, mode = "undirected", 
+  diag = FALSE)
+  set.seed(0)
+  plot(net, vertex.size = 14, vertex.color = "lightblue", 
+  vertex.label.cex = 0.6, edge.color = "black", layout = 
+  layout.fruchterman.reingold, margin = rep(-0.5, 4))
+  title(main = paste("t =", round(pos.plot[k]/(ncol(X)-1), 
+  2)), cex.main = 0.8)
+}
+
 # false discovery rate (FDR) and power based on 
 # true precision matrices
 p <- dim(X)[1]
