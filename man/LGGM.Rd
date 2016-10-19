@@ -71,7 +71,7 @@ refit.type = "pseudo", num.thread = 2)
 # numbers of edges at each position of time point
 print(result$edge.num.list)
 
-# graphs at selected positions of time points
+# graphs at some positions of time points
 par(mfrow = c(2, 2))
 pos.plot <- round(seq(0.02, 0.98, length=4)
 *(ncol(X)-1)+1, 0)
