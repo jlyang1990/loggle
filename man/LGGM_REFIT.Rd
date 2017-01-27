@@ -56,5 +56,6 @@ select.type = "all_flexible", cv.vote.thres = 0.6)
 Omega.edge.list.min <- cv.select.result$Omega.edge.list.min
 # Precision matrices at each position of time point in 
 # selected model via model refitting
-Omega.rf.list.min <- LGGM.refit(X, pos, Omega.edge.list.min)
+Omega.rf.list.min <- LGGM.refit(X, pos.example, 
+Omega.edge.list.min)
 }
