@@ -237,7 +237,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
   Omega <- Matrix(result$Z.vec, p, p, sparse = T)
   Omega.rf <- Matrix(result$Z.pos.vec, p, p, sparse = T)
   edge.num <- result$edge.num
-  edge <- which(Omega.rf != 0, arr.ind = T)
+  edge <- which(as.matrix(Omega.rf) != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
   
   if(print.detail) {
@@ -358,7 +358,7 @@ dataDetrend <- function(X) {
   N <- ncol(X)
   
   for(i in 1:p) {
-    X[i, ] <- X[i, ] - sm.regression(1:N, X[i, ], ngrid = N, display = "none")$estimate
+    X[i, ] <- X[i, ] - sm::sm.regression(1:N, X[i, ], ngrid = N, display = "none")$estimate
   }
   
   return(X)
