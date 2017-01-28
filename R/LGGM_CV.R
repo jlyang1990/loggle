@@ -707,13 +707,16 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
     
     if(d.list[D] == 1) {
       
-      registerDoParallel(num.thread)
+      cl <- makeCluster(num.thread)
+      registerDoParallel(cl)
+      #registerDoParallel(num.thread)
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[-D], 
                       epi.rel[-D], print.detail)
       
-      stopImplicitCluster()
+      stopCluster(cl)
+      #stopImplicitCluster()
       
       for(k in 1:K) {
         
@@ -735,13 +738,16 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
     } else {
       
-      registerDoParallel(num.thread)
+      cl <- makeCluster(num.thread)
+      registerDoParallel(cl)
+      #registerDoParallel(num.thread)
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
                       print.detail)
       
-      stopImplicitCluster()
+      stopCluster(cl)
+      #stopImplicitCluster()
       
       for(k in 1:K) {
         

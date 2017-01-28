@@ -129,10 +129,15 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       lambda <- rep(lambda, K)
     }
     
-    registerDoParallel(num.thread)
+    cl <- makeCluster(num.thread)
+    registerDoParallel(cl)
+    #registerDoParallel(num.thread)
     
     result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
       LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel, print.detail)
+    
+    stopCluster(cl)
+    #stopImplicitCluster()
     
     for(k in 1:K) {
       
