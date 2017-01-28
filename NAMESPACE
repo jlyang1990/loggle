@@ -1,2 +1,2 @@
 useDynLib(LGGM)
-export(LGGM, LGGM_CV)
+export(LGGM, LGGM.cv, LGGM.cv.h, LGGM.cv.select, LGGM.refit)
