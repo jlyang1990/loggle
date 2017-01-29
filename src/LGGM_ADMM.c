@@ -174,6 +174,21 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 	
 			//model refitting
 			if(*pseudo_refit == 0){
+			  
+			  for(i=0; i<Pos_L; i++){
+			    
+			    pos = Pos[i];
+			    
+			    for(j=0; j<p_n; j++){
+			      for(k=j; k<p_n; k++){
+			        if(j!=k && Z_n[p_n*p_n*pos+p_n*j+k]!=0 && Z_n[p_n*p_n*pos+p_n*k+j]!=0){
+			          S_Len[0]++;		
+			        }
+			      }
+			    }
+			  }
+			}
+			else if(*pseudo_refit == 1){
 
 				double *U_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
 
@@ -207,7 +222,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 				free(U_pos_n);
 			}
-			else if(*pseudo_refit == 1){
+			else if(*pseudo_refit == 2){
 
 				for(i=0; i<Pos_L; i++){
 	
@@ -218,21 +233,6 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 					for(j=0; j<p_n; j++){
 						for(k=0; k<p_n; k++){
 							Z_pos[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
-						}
-					}
-				}
-			}
-			else if(*pseudo_refit == 2){
-
-				for(i=0; i<Pos_L; i++){
-	
-					pos = Pos[i];
-				
-					for(j=0; j<p_n; j++){
-						for(k=j; k<p_n; k++){
-							if(j!=k && Z_n[p_n*p_n*pos+p_n*j+k]!=0 && Z_n[p_n*p_n*pos+p_n*k+j]!=0){
-								S_Len[0]++;		
-							}
 						}
 					}
 				}
@@ -331,6 +331,21 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       
 			//model refitting
 			if(*pseudo_refit == 0){
+			  
+			  for(i=0; i<Pos_L; i++){
+			    
+			    pos = Pos[i];
+			    
+			    for(j=0; j<p_n; j++){
+			      for(k=j; k<p_n; k++){
+			        if(j!=k && Z_n[p_n*p_n*pos+p_n*j+k]!=0 && Z_n[p_n*p_n*pos+p_n*k+j]!=0){
+			          S_Len[0]++;		
+			        }
+			      }
+			    }
+			  }
+			}
+			else if(*pseudo_refit == 1){
         
 				double *U_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
         
@@ -364,7 +379,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
         
 				free(U_pos_n);
 			}
-			else if(*pseudo_refit == 1){
+			else if(*pseudo_refit == 2){
         
 				for(i=0; i<Pos_L; i++){
           
@@ -375,21 +390,6 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 					for(j=0; j<p_n; j++){
 						for(k=0; k<p_n; k++){
 							Z_pos[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
-						}
-					}
-				}
-			}
-			else if(*pseudo_refit == 2){
-
-				for(i=0; i<Pos_L; i++){
-	
-					pos = Pos[i];
-				
-					for(j=0; j<p_n; j++){
-						for(k=j; k<p_n; k++){
-							if(j!=k && Z_n[p_n*p_n*pos+p_n*j+k]!=0 && Z_n[p_n*p_n*pos+p_n*k+j]!=0){
-								S_Len[0]++;		
-							}
 						}
 					}
 				}

@@ -53,12 +53,14 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     stop("fit.type must be 'glasso', 'pseudo' or 'space'!")
   }
   
-  if(refit.type == "likelihood") {
+  if(refit.type == "glasso") {
     refit.type <- 0
-  } else if(refit.type == "pseudo") {
+  } else if(refit.type == "likelihood") {
     refit.type <- 1
+  } else if(refit.type == "pseudo") {
+    refit.type <- 2
   } else {
-    stop("refit.type must be 'likelihood' or 'pseudo'!")
+    stop("refit.type must be 'glasso', 'likelihood' or 'pseudo'!")
   }
   
   if(any(!pos %in% 1:N)) {
