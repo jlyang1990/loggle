@@ -129,7 +129,11 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       lambda <- rep(lambda, K)
     }
     
-    cl <- makeCluster(num.thread, outfile = "")
+    if(print.detail) {
+      cl <- makeCluster(num.thread, outfile = "")
+    } else {
+      cl <- makeCluster(num.thread)
+    }
     registerDoParallel(cl)
     
     result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%

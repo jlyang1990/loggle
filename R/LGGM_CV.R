@@ -140,7 +140,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   
   if(return.select) {
     
-    cat(sprintf("Selecting models based on %d-fold cross-validation results...\n", cv.fold))
+    cat(sprintf("\nSelecting models based on %d-fold cross-validation results...\n", cv.fold))
     cv.select.result <- LGGM.cv.select(cv.result, select.type, cv.vote.thres)
     cv.result$cv.select.result <- cv.select.result
   }
@@ -707,7 +707,11 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
     
     if(d.list[D] == 1) {
       
-      cl <- makeCluster(num.thread, outfile = "")
+      if(print.detail) {
+        cl <- makeCluster(num.thread, outfile = "")
+      } else {
+        cl <- makeCluster(num.thread)
+      }
       registerDoParallel(cl)
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
@@ -736,7 +740,11 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
     } else {
       
-      cl <- makeCluster(num.thread, outfile = "")
+      if(print.detail) {
+        cl <- makeCluster(num.thread, outfile = "")
+      } else {
+        cl <- makeCluster(num.thread)
+      }
       registerDoParallel(cl)
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
