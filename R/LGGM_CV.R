@@ -9,8 +9,12 @@
 # d.list: list of widths of neighborhood
 # lambda.list: list of tuning parameters of Lasso penalty
 # cv.fold: number of cv folds
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # return.select: whether to return results from LGGM.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
@@ -32,7 +36,7 @@
 
 LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
                     d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
-                    lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo", refit.type = "likelihood", 
+                    lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo", refit.type = "glasso", 
                     return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
                     epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
                     detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
@@ -161,8 +165,12 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # d.list: list of widths of neighborhood
 # lambda.list: list of tuning parameters of Lasso penalty
 # cv.fold: number of cv folds
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # return.select: whether to return results from LGGM.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
@@ -184,7 +192,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 
 LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), 
                       d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), cv.fold = 5, 
-                      fit.type = "pseudo", refit.type = "likelihood", select.type = "all_flexible", cv.vote.thres = 0.8, 
+                      fit.type = "pseudo", refit.type = "glasso", select.type = "all_flexible", cv.vote.thres = 0.8, 
                       early.stop.thres = 5, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
                       epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
                       num.thread = 1, print.detail = TRUE) {
@@ -403,8 +411,12 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # sd.X: list of standard deviations of variables
 # d.list: list of widths of neighborhood
 # lambda.list: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
@@ -557,8 +569,12 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
 # lambda.list: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
@@ -711,8 +727,12 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
 # h: bandwidth in kernel function used to generate correlation matrices
 # d.list: list of widths of neighborhood
 # lambda.list: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion

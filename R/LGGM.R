@@ -8,8 +8,12 @@
 # h: bandwidth in kernel function used to generate correlation matrices
 # d: list of widths of neighborhood
 # lambda: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
@@ -24,7 +28,7 @@
 # edge.list: list of detected edges of length K
 
 LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
-                 refit.type = "likelihood", epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, 
+                 refit.type = "glasso", epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, 
                  num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
@@ -174,8 +178,12 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # sd.X: list of standard deviations of variables
 # d: width of neighborhood
 # lambda: tuning parameter of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # print.detail: whether to print details in model fitting procedure
@@ -283,8 +291,12 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
 # sd.X: list of standard deviations of variables
 # d: width of neighborhood
 # lambda: tuning parameter of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 1: pseudo likelihood estimation, 2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation, 1: pseudo likelihood estimation
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 
