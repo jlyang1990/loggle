@@ -496,19 +496,41 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
     Z.vec <- result$Z.vec
     Z.pos.vec <- result$Z.pos.vec
       
-    for(l in L:1){
+    for(l in L:1) {
       
-      Omega <- matrix(Z.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
-      Omega.rf <- matrix(Z.pos.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
+      if(Z.vec[p*p*l] != -1) {
+      
+        Omega <- matrix(Z.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
         
-      edge <- which(Omega.rf != 0, arr.ind = T)
-      edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
-      edge.num <- nrow(edge)
+        edge <- which(Omega != 0, arr.ind = T)
+        edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+        edge.num <- nrow(edge)
         
-      Omega.list[[l, j]] <- Matrix(Omega, sparse = T)
-      Omega.rf.list[[l, j]] <- Matrix(Omega.rf, sparse = T)
-      edge.num.list[l, j] <- edge.num
-      edge.list[[l, j]] <- edge
+        if(refit.type == 0) {
+          
+          edge.zero <- which(Omega == 0, arr.ind = T)
+          edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+          
+          Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
+          Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+          if(any((eigen(Omega.rf, symmetric = T)$values) < 0)) {
+            Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+          }
+        } else {
+          Omega.rf <- matrix(Z.pos.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
+        }
+      
+        Omega.list[[l, j]] <- Matrix(Omega, sparse = T)
+        Omega.rf.list[[l, j]] <- Matrix(Omega.rf, sparse = T)
+        edge.num.list[l, j] <- edge.num
+        edge.list[[l, j]] <- edge
+      } else {
+        
+        Omega.list[[l, j]] <- NA
+        Omega.rf.list[[l, j]] <- NA
+        edge.num.list[l, j] <- NA
+        edge.list[[l, j]] <- NA
+      }
     }
     
     if(print.detail) {
@@ -621,20 +643,46 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
   
   for(l in L:1) {
     
-    Omega <- array(Z.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
-    Omega.rf <- array(Z.pos.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
+    if(Z.vec[p*p*K*l] != -1) {
     
-    edge <- which(Omega.rf[, , 1] != 0, arr.ind = T)
-    edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
-    edge.num <- nrow(edge)
-  
-    edge.num.list[l, 1, ] <- edge.num
-    
-    for(k in 1:K) {
+      Omega <- array(Z.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
       
-      Omega.list[[l, 1, k]] <- Matrix(Omega[, , k], sparse = T)
-      Omega.rf.list[[l, 1, k]] <- Matrix(Omega.rf[, , k], sparse = T)
-      edge.list[[l, 1, k]] <- edge
+      edge <- which(Omega[, , 1] != 0, arr.ind = T)
+      edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+      edge.num <- nrow(edge)
+      
+      if(refit.type == 0) {
+        
+        Omega.rf <- array(0, c(p, p, K))
+        edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
+        edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+        for(k in 1:K) {
+          Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
+          Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+          if(any((eigen(Omega.rf[, , k], symmetric = T)$values) < 0)) {
+            Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+          }
+        }
+      } else {
+        Omega.rf <- array(Z.pos.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
+      }
+      
+      edge.num.list[l, 1, ] <- edge.num
+    
+      for(k in 1:K) {
+      
+        Omega.list[[l, 1, k]] <- Matrix(Omega[, , k], sparse = T)
+        Omega.rf.list[[l, 1, k]] <- Matrix(Omega.rf[, , k], sparse = T)
+        edge.list[[l, 1, k]] <- edge
+      }
+    } else {
+      
+      edge.num.list[l, 1, ] <- NA
+      for(k in 1:K) {
+        Omega.list[[l, 1, k]] <- NA
+        Omega.rf.list[[l, 1, k]] <- NA
+        edge.list[[l, 1, k]] <- NA
+      }
     }
   }
   

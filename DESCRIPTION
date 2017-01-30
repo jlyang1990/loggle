@@ -12,7 +12,8 @@ Depends:
   doParallel (>= 1.0.8),
   igraph (>= 1.0)
 Imports:
-  sm
+  sm,
+  glasso
 License: GPL (>= 2)
 NeedsCompilation: yes
 Packaged: 2016-10-06 10:58:06 UTC; jiepeng
