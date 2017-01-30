@@ -66,7 +66,7 @@ pos.example <- round(seq(0.02, 0.98, length=49)
 # estimate time-varying graphs
 result <- LGGM(X, pos = pos.example, h = 0.1, 
 d = 0.15, lambda = 0.225, fit.type = "pseudo", 
-refit.type = "pseudo", num.thread = 2)
+refit.type = "glasso", num.thread = 2)
 
 # numbers of edges at each position of time point
 print(result$edge.num.list)

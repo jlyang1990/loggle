@@ -90,7 +90,7 @@ h.list <- c(0.15, 0.2, 0.25, 0.3)
 result <- LGGM.cv.h(X, pos = pos.example, h.list = h.list, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type = "pseudo", 
-refit.type = "pseudo", num.thread = 2)
+refit.type = "glasso", cv.vote.thres = 1, num.thread = 2)
 
 # optimal value of h
 print(result$h.min)
