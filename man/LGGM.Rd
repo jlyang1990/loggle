@@ -9,10 +9,10 @@ This function is to efficiently implement the ADMM (alternating directions metho
 \usage{
 LGGM(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
 d = 0.2, lambda = 0.25, fit.type = c("glasso", 
-"pseudo", "space"), refit.type = c("likelihood", 
-"pseudo"), epi.abs = 1e-5, epi.rel = 1e-3, 
-detrend = TRUE, fit.corr = TRUE, num.thread = 1, 
-print.detail = TRUE)
+"pseudo", "space"), refit.type = c("glasso", 
+"likelihood", "pseudo"), epi.abs = 1e-5, 
+epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, 
+num.thread = 1, print.detail = TRUE)
 }
 
 \arguments{

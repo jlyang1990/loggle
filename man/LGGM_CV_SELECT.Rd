@@ -8,7 +8,8 @@ This function is to conduct model selection based on cross validation results fo
 
 \usage{
 LGGM.cv.select <- function(cv.result, 
-select.type = "all_flexible", cv.vote.thres = 0.8)
+select.type = c("all_flexible", "d_fixed", "all_fixed"), 
+cv.vote.thres = 0.8)
 }
 
 \arguments{
