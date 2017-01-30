@@ -22,7 +22,7 @@ print.detail = TRUE)
   \item{d}{a scalar or a vector of the same length as \code{pos}: width of neighborhood centered at each position where graph is estimated. When it is a scalar, widths of neighborhoods are the same across all positions}
   \item{lambda}{a scalar or a vector of the same length as \code{pos}: tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
   \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
-  \item{refit.type}{a string: "likelihood" -- likelihood estimation, or "pseudo" -- pseudo likelihood estimation, default = "likelihood"}
+  \item{refit.type}{a string: "glasso" -- likelihood estimation using \code{glasso} function in "glasso" package, "likelihood" -- likelihood estimation using ADMM algorithm, or "pseudo" -- pseudo likelihood estimation, default = "glasso"}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
   \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average, default = TRUE}
@@ -34,7 +34,7 @@ print.detail = TRUE)
 \details{
 The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance.
 
-The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is usually computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
+The model refitting method by using \code{glasso} function in "glasso" package (\code{refit.type = "glasso"}) is usually computationally cheaper than the model refitting method by using ADMM algorithm (\code{refit.type = "likelihood"}), with almost the same model refitting performance. The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is even less computationally intensive than the model refitting method based on negative log-likelihood (\code{refit.type = "glasso"} and \code{refit.type = "likelihood"}).
 
 If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is required to detrend each variable in data matrix by subtracting each kernel weighted moving average.
 

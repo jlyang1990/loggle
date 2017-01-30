@@ -29,7 +29,7 @@ num.thread = 1, print.detail = TRUE)
   \item{lambda.list}{a vector: a grid of tuning parameters of Lasso penalty at each position where graph is estimated}
   \item{cv.fold}{a scalar: number of cv folds}
   \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
-  \item{refit.type}{a string: "likelihood" -- likelihood estimation, or "pseudo" -- pseudo likelihood estimation, default = "likelihood"}
+  \item{refit.type}{a string: "glasso" -- likelihood estimation using \code{glasso} function in "glasso" package, "likelihood" -- likelihood estimation using ADMM algorithm, or "pseudo" -- pseudo likelihood estimation, default = "glasso"}
   \item{select.type}{a string: "all_flexible" -- optimal d and lambda can vary at each position where graph is estimated, "d_fixed" -- optimal d is fixed and optimal lambda can vary at each position where graph is estimated, "all_fixed" -- optimal d and lambda are fixed at each position where graph is estimated, default = "all_flexible"}
   \item{cv.vote.thres}{a scalar (between 0 and 1): an edge is retained in cv vote if and only if it exists in no less than \code{cv.vote.thres}*\code{cv.fold} cv folds}
   \item{early.stop.thres}{a scalar: stopping criterion in grid search: grid search stops when the ratio between number of detected edges and number of nodes exceeds \code{early.stop.thres}}
@@ -47,7 +47,7 @@ This function conducts grid search for optimal \code{h}, \code{d} and \code{lamb
 
 The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance.
 
-The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is usually computationally cheaper than the model refitting method based on negative log-likelihood (\code{refit.type = "likelihood"}).
+The model refitting method by using \code{glasso} function in "glasso" package (\code{refit.type = "glasso"}) is usually computationally cheaper than the model refitting method by using ADMM algorithm (\code{refit.type = "likelihood"}), with almost the same model refitting performance. The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is even less computationally intensive than the model refitting method based on negative log-likelihood (\code{refit.type = "glasso"} and \code{refit.type = "likelihood"}).
 
 \code{select.type = "all_flexible"} is chosen in model selection if we believe both the extent of smoothness (controlled by \code{d}) and sparsity (controlled by \code{lambda}) vary across time points. If only the extent of sparsity varies across time points, we choose \code{select.type = "d_fix"}. If both of them are consistent across time points, we choose \code{select.type = "all_fix"}.
 
