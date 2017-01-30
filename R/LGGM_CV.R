@@ -23,7 +23,7 @@
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
-# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
+# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads
@@ -95,10 +95,8 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     epi.rel <- rep(epi.rel, D)
   }
   
-  if(detrend) {
-    cat("Detrending each variable in data matrix...\n")
-    X <- dataDetrend(X)
-  }
+  cat("Detrending each variable in data matrix...\n")
+  X <- dataDetrend(X, detrend)
   
   if(h.correct) {
     h.test <- h * (cv.fold-1) ^ (1/5)
@@ -179,7 +177,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
-# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
+# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads

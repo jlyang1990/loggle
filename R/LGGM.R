@@ -16,7 +16,7 @@
 #             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
-# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average
+# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # num.thread: number of threads
 # print.detail: whether to print details in model fitting procedure
@@ -68,10 +68,8 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     stop("lambda must be a scalar or a vector of the same length as 'pos'!")
   }
   
-  if(detrend) {
-    cat("Detrending each variable in data matrix...\n")
-    X <- dataDetrend(X)
-  }
+  cat("Detrending each variable in data matrix...\n")
+  X <- dataDetrend(X, detrend)
   
   cat("Generating sample covariance/correlation matrices...\n")
   result.Corr <- makeCorr(X, 1:N, h, fit.corr)
@@ -396,17 +394,22 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
 
 # Input ###
 # X: a p by N matrix containing list of observations
+# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average 
 
 # Output ###
 # X: a p by N matrix containing list of observations after detrending
 
-dataDetrend <- function(X) {
+dataDetrend <- function(X, detrend) {
   
   p <- nrow(X)
   N <- ncol(X)
   
   for(i in 1:p) {
-    X[i, ] <- X[i, ] - sm::sm.regression(1:N, X[i, ], ngrid = N, display = "none")$estimate
+    if(detrend) {
+      X[i, ] <- X[i, ] - sm::sm.regression(1:N, X[i, ], ngrid = N, display = "none")$estimate
+    } else {
+      X[i, ] <- X[i, ] - mean(X[i, ])
+    }
   }
   
   return(X)

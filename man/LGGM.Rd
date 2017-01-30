@@ -25,7 +25,7 @@ print.detail = TRUE)
   \item{refit.type}{a string: "glasso" -- likelihood estimation using \code{glasso} function in "glasso" package, "likelihood" -- likelihood estimation using ADMM algorithm, or "pseudo" -- pseudo likelihood estimation, default = "glasso"}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
-  \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average, default = TRUE}
+  \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or subtracting overall average, default = TRUE, which is kernel weighted moving average}
   \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
   \item{print.detail}{logic: whether to print details in model fitting procedure}
