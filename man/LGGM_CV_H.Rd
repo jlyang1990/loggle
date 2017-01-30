@@ -50,7 +50,7 @@ The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseud
 
 The model refitting method by using \code{glasso} function in "glasso" package (\code{refit.type = "glasso"}) is usually computationally cheaper than the model refitting method by using ADMM algorithm (\code{refit.type = "likelihood"}), with almost the same model refitting performance. The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is even less computationally intensive than the model refitting method based on negative log-likelihood (\code{refit.type = "glasso"} and \code{refit.type = "likelihood"}).
 
-\code{select.type = "all_flexible"} is chosen in model selection if we believe both the extent of smoothness (controlled by \code{d}) and sparsity (controlled by \code{lambda}) vary across time points. If only the extent of sparsity varies across time points, we choose \code{select.type = "d_fix"}. If both of them are consistent across time points, we choose \code{select.type = "all_fix"}.
+\code{select.type = "all_flexible"} is chosen in model selection if we believe both the extent of smoothness (controlled by \code{d}) and sparsity (controlled by \code{lambda}) vary across time points. If only the extent of sparsity varies across time points, we choose \code{select.type = "d_fixed"}. If both of them are consistent across time points, we choose \code{select.type = "all_fixed"}.
 
 \code{cv.vote.thres} controls the tradeoff between false discovery rate and power in model selection. A large value of \code{cv.vote.thres} would decrease false discovery rate but also hurt power. 
 
