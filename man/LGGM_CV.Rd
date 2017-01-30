@@ -55,7 +55,7 @@ The model refitting method by using \code{glasso} function in "glasso" package (
 
 \code{cv.vote.thres} controls the tradeoff between false discovery rate and power in model selection. A large value of \code{cv.vote.thres} would decrease false discovery rate but also hurt power. 
 
-When underlying graphs are sparse, there is usually no need to conduct the complete grid search, especially for those dense graphs which may need a large amount of training time. \code{early.stop.thres} is used as an early stopping criterion in grid search, where the grid search (grid of \code{lambda} for each \code{d}) stops when the number of detected edges is large enough.
+When underlying graphs are sparse, there is usually no need to conduct the complete grid search, especially for those dense graphs which may need a large amount of training time. \code{early.stop.thres} is used as an early stopping criterion in grid search, where the grid search (grid of \code{lambda} for each \code{d}) stops when the number of detected edges is large enough. In this case, the output corresponding to the remaining \code{lambda}'s will be denoted as \code{NA}.
 
 If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is required to detrend each variable in data matrix by subtracting each kernel weighted moving average.
 
