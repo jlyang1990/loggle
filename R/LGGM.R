@@ -16,6 +16,7 @@
 #             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 # detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # num.thread: number of threads
@@ -28,8 +29,8 @@
 # edge.list: list of detected edges of length K
 
 LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
-                 refit.type = "glasso", epi.abs = 1e-5, epi.rel = 1e-3, detrend = TRUE, fit.corr = TRUE, 
-                 num.thread = 1, print.detail = TRUE) {
+                 refit.type = "glasso", epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
+                 fit.corr = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -88,7 +89,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     
     if(length(lambda) == 1) {
       
-      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel)
+      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step)
       
       if(print.detail) {
         cat("Complete all!\n")
@@ -100,7 +101,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       for(lambda.l in lambda.list) {
         
-        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit.type, epi.abs, epi.rel)
+        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit.type, epi.abs, epi.rel, max.step)
         idx <- which(lambda == lambda.l)
         
         for(i in idx) {
@@ -141,7 +142,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     registerDoParallel(cl)
     
     result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel, print.detail)
+      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel, max.step, print.detail)
     
     stopCluster(cl)
     
@@ -184,6 +185,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 #             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
@@ -192,7 +194,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # edge.num: detected edge number
 # edge: detected edges
 
-LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs, epi.rel, print.detail) {
+LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -241,7 +243,8 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
                as.double(epi.rel),
                as.integer(fit.type),
                as.integer(refit.type),
-               edge.num = as.integer(edge.num)
+               edge.num = as.integer(edge.num),
+               as.integer(max.step)
   )
   
   Omega <- Matrix(result$Z.vec, p, p, sparse = T)
@@ -297,6 +300,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
 #             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 
 # Output ###
 # Omega: list of estimated precision matrices of length K (number of time points)
@@ -304,7 +308,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
-LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel) {
+LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -351,7 +355,8 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
                as.double(epi.rel),
                as.integer(fit.type),
                as.integer(refit.type),
-               edge.num = as.integer(edge.num)
+               edge.num = as.integer(edge.num),
+               as.integer(max.step)
   )
   
   Omega.list <- sapply(1:K, function(k) Matrix(result$Z.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = T))

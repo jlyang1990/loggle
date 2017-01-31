@@ -23,6 +23,7 @@
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 # detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
@@ -38,7 +39,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
                     d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
                     lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo", refit.type = "glasso", 
                     return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
-                    epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
+                    epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), max.step = 500,
                     detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
@@ -117,7 +118,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     pos.train <- (1:N)[-pos.test]
     
     result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, refit.type, early.stop.thres, 
-                                epi.abs, epi.rel, fit.corr, num.thread, print.detail)
+                                epi.abs, epi.rel, max.step, fit.corr, num.thread, print.detail)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
@@ -177,6 +178,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 # detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
@@ -192,8 +194,8 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
                       d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), cv.fold = 5, 
                       fit.type = "pseudo", refit.type = "glasso", select.type = "all_flexible", cv.vote.thres = 0.8, 
                       early.stop.thres = 5, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
-                      epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
-                      num.thread = 1, print.detail = TRUE) {
+                      epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+                      h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   N <- dim(X)[2]
   H <- length(h.list)
@@ -206,8 +208,8 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
     
     cat("\nRunning h =", h.list[h], "...\n")
     cv.result.h <- LGGM.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, refit.type, return.select = TRUE, 
-                           select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, detrend, fit.corr, h.correct, 
-                           num.thread, print.detail)
+                           select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, max.step, detrend, fit.corr, 
+                           h.correct, num.thread, print.detail)
     cv.result.list[[h]] <- cv.result.h
     cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
@@ -363,6 +365,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   rho <- 0.25
   epi.abs <- 1e-5
   epi.rel <- 1e-3
+  max.step <- 500
   Omega.rf.list <- vector("list", K)
   
   for(k in 1:K) {
@@ -388,7 +391,8 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
                  Z.pos.vec = as.double(Z.pos.vec),
                  as.double(rho),
                  as.double(epi.abs),
-                 as.double(epi.rel)
+                 as.double(epi.rel),
+                 as.integer(max.step)
     )
     
     Omega.rf.list[[k]] <- Matrix(result$Z.pos.vec, p, p, sparse = T)
@@ -418,6 +422,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
@@ -427,7 +432,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # edge: L by D list of edges
 
 LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
-                          print.detail) {
+                          max.step, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -500,7 +505,8 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
                   as.double(epi.rel.d),
                   as.integer(fit.type),
                   as.integer(refit.type),
-                  as.double(early.stop.thres)
+                  as.double(early.stop.thres),
+                  as.integer(max.step)
     )
       
     Z.vec <- result$Z.vec
@@ -576,6 +582,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
@@ -584,7 +591,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
 # edge.num: L by K list of edge numbers
 # edge: L by K list of edges
 
-LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
+LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                            print.detail) {
   
   p <- dim(Corr)[1]
@@ -649,7 +656,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
               as.double(epi.rel),
               as.integer(fit.type),
               as.integer(refit.type),
-              as.double(early.stop.thres)
+              as.double(early.stop.thres),
+              as.integer(max.step)
   )
   
   Z.vec <- result$Z.vec
@@ -734,6 +742,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # num.thread: number of threads
 # print.detail: whether to print details in model fitting procedure
@@ -745,7 +754,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
 # edge: L by D by K list of edges
 
 LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, 
-                            epi.rel, fit.corr, num.thread, print.detail) {
+                            epi.rel, max.step, fit.corr, num.thread, print.detail) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -763,7 +772,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
   
   if(d.list[1] == 1) {
 
-    result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
+    result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                              print.detail)
     
   } else {
@@ -784,7 +793,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[-D], 
-                      epi.rel[-D], print.detail)
+                      epi.rel[-D], max.step, print.detail)
       
       stopCluster(cl)
       
@@ -798,8 +807,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
         edge.list[, -D, k] <- result.k$edge.list
       }
       
-      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[D], epi.rel[D],
-                               print.detail)
+      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[D], epi.rel[D], 
+                               max.step, print.detail)
       
       Omega.list[, D, ] <- result$Omega.list
       Omega.rf.list[, D, ] <- result$Omega.rf.list
@@ -817,7 +826,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
-                      print.detail)
+                      max.step, print.detail)
       
       stopCluster(cl)
       

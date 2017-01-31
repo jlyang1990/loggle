@@ -18,8 +18,8 @@ select.type = c("all_flexible", "d_fixed", "all_fixed"),
 cv.vote.thres = 0.8, early.stop.thres = 5, 
 epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
 epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
-detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
-num.thread = 1, print.detail = TRUE)
+max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+h.correct = TRUE, num.thread = 1, print.detail = TRUE)
 }
 
 \arguments{
@@ -36,6 +36,7 @@ num.thread = 1, print.detail = TRUE)
   \item{early.stop.thres}{a scalar: stopping criterion in grid search: grid search stops when the ratio between number of detected edges and number of nodes exceeds \code{early.stop.thres}, default = 5}
   \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4 if p >= 400 or 1e-5 otherwise. When it is a scalar, absolute tolerances are the same for all elements in \code{d.list}}
   \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2 if p >= 400 or 1e-3 otherwise. When it is a scalar, relative tolerances are the same for all elements in \code{d.list}}
+  \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
   \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or subtracting overall average, default = TRUE, which is kernel weighted moving average}
   \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
   \item{h.correct}{logic: whether to apply bandwidth correction to h in calculating cv scores for validation sets, default = TRUE}

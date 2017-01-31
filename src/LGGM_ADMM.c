@@ -7,34 +7,34 @@
 
 //apply ADMM across lambda's when h and d are fixed
 void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres);
+                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda
 void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len);
+                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda (simple version)
 void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len);
+                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step);
 
 //apply ADMM to refit graphical structure
 void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
-                       double *Epi_abs, double *Epi_rel);
+                       double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //local group graphical lasso
-void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
+void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //pseudo-likelihood group lasso
-void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
+void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //SPACE (rho step)
-void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel);
+void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //SPACE (d step)
 void ADMM_SPACE_d(int *P, int *LL, double *d, double *Sigma, double *Z);
 
 //likelihood refit
-void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, int *S_Len, double *Rho, double *Epi_abs, double *Epi_rel);
+void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, int *S_Len, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //pseudo-likelihood refit
 void ADMM_pseudo_refit(int *P, int *Pos, double *Sigma, double *Z, double *Z_pos, int *S_Len);
@@ -47,7 +47,7 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J);
 
 
 void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres) {
+                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres, int *Max_step) {
 
 	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0;
 
@@ -75,7 +75,7 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 		}
 
 		ADMM_cluster(P, (member_ind+p*i), (csize_ind+no_sum), (No+i), LL, Pos, Pos_Len, Corr, sd, Z_i, (Z_pos+p*p*Pos_L*i), 
-               U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, pseudo_refit, S_L);
+               U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, pseudo_refit, S_L, Max_step);
 
 		for(m=0; m<Pos_L; m++){
 			for(j=0; j<p; j++){
@@ -96,7 +96,7 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len){
+                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step){
 
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k, pos, S_L;
 	int *member_ind_n;
@@ -141,10 +141,10 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 			//model fitting
 			if(*pseudo_fit == 0){
-				ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+				ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+				ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
@@ -154,7 +154,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 					}
 				}
 				for(i=0; i<3; i++){
-					ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+					ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 					if(i<2){
 						ADMM_SPACE_d(&p_n, LL, d_n, Corr_n, Z_n);
 					}
@@ -210,7 +210,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 						}
 					}
 
-					ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel);
+					ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel, Max_step);
 
 					for(j=0; j<p_n; j++){
 						for(k=j; k<p_n; k++){
@@ -252,7 +252,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 
 void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len){
+                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step){
   
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k, pos, S_L;
 	int *member_ind_n;
@@ -297,10 +297,10 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       
 			//model fitting
 			if(*pseudo_fit == 0){
-				ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+				ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+				ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
@@ -310,7 +310,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 					}
 				}
 				for(i=0; i<3; i++){
-					ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel);
+					ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 					if(i<2){
 						ADMM_SPACE_d(&p_n, LL, d_n, Corr_n, Z_n);
 					}
@@ -367,7 +367,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 						}
 					}
           
-					ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel);
+					ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel, Max_step);
           
 					for(j=0; j<p_n; j++){
 						for(k=j; k<p_n; k++){
@@ -409,7 +409,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
-                       double *Epi_abs, double *Epi_rel){
+                       double *Epi_abs, double *Epi_rel, int *Max_step){
   
 	int p = *P, no = *No, p_n, n, j, k, pos, S_L;
 	int *member_ind_n;
@@ -454,8 +454,8 @@ void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double 
 					}
 				}
 			}
-          
-			ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, Rho, Epi_abs, Epi_rel);
+
+			ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, Rho, Epi_abs, Epi_rel, Max_step);
           
 			for(j=0; j<p_n; j++){
 				for(k=j; k<p_n; k++){
@@ -475,9 +475,9 @@ void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double 
 
 
 
-void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel){
+void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
  
-	int p = *P, L = *LL;
+	int p = *P, L = *LL, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
 	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, i, j, k, m, index_ijk;
@@ -491,7 +491,7 @@ void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, dou
 	double *eig_val = (double *) malloc(p*sizeof(double));
 
 	//ADMM iteration
-	while(prd>0 || drd>0){
+	while((prd>0 || drd>0) && max_step>0){
 
 		r = 0, s = 0, epi_dual = 0, epi_pri_1 = 0, epi_pri_2 = 0;
 
@@ -566,7 +566,12 @@ void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, dou
 		
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
+		max_step--;
 	}//end ADMM iteration
+
+	if(max_step == 0){
+		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
+	}
 
 	for(i=0; i<L; i++){
 		for(j=0; j<p; j++){
@@ -588,12 +593,12 @@ void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, dou
 
 
 
-void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel){ 
+void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){ 
 
-	int p = *P, L = *LL, p_1 = p-1;
+	int p = *P, L = *LL, p_1 = p-1, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
-	int nrhs = 1, info, i, j, k, m, index_ijk, index_ikj;
+	int nrhs = 1, info, i, j, k, index_ijk, index_ikj;
 	double coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2, alp = 1;
 	double *Omega = (double *) malloc(p_1*p*L*sizeof(double));
 	double *Chol = (double *) malloc(p*p*L*sizeof(double));
@@ -615,7 +620,7 @@ void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, do
 	}
 
 	//ADMM iteration
-	while(prd>0 || drd>0){
+	while((prd>0 || drd>0) && max_step>0){
 
 		r = 0, s = 0, epi_dual = 0, epi_pri_1 = 0, epi_pri_2 = 0;
 
@@ -681,7 +686,12 @@ void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, do
 		
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
+		max_step--;
 	}//end ADMM iteration
+
+	if(max_step == 0){
+		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
+	}
 
 	for(i=L-1; i>=0; i--){
 		for(j=p-1; j>=0; j--){
@@ -706,12 +716,12 @@ void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, do
 
 
 
-void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel){
+void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
  
-	int p = *P, L = *LL, p_1 = p-1;
+	int p = *P, L = *LL, p_1 = p-1, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
-	int nrhs = 1, info, i, j, k, m, index_ijk, index_ikj;
+	int nrhs = 1, info, i, j, k, index_ijk, index_ikj;
 	double coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2, alp = 1;
 	double *Omega = (double *) malloc(p_1*p*L*sizeof(double));
 	double *Chol = (double *) malloc(p*p*L*sizeof(double));
@@ -733,7 +743,7 @@ void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double
 	}
 
 	//ADMM iteration
-	while(prd>0 || drd>0){
+	while((prd>0 || drd>0) && max_step>0){
 
 		r = 0, s = 0, epi_dual = 0, epi_pri_1 = 0, epi_pri_2 = 0;
 
@@ -801,7 +811,12 @@ void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double
 		
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
+		max_step--;
 	}//end ADMM iteration
+
+	if(max_step == 0){
+		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
+	}
 
 	for(i=L-1; i>=0; i--){
 		for(j=p-1; j>=0; j--){
@@ -829,7 +844,7 @@ void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double
 void ADMM_SPACE_d(int *P, int *LL, double *d, double *Sigma, double *Z){
 
 	int p = *P, L = *LL;
-	int i, j, k, m, index_ijk, index_ijm;
+	int i, j, k, m;
 	double *rho = (double *) malloc(p*sizeof(double));
 	double *d_new = (double *) malloc(p*sizeof(double));
 
@@ -862,13 +877,13 @@ void ADMM_SPACE_d(int *P, int *LL, double *d, double *Sigma, double *Z){
 
 
 
-void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, int *S_Len, double *Rho, double *Epi_abs, double *Epi_rel){
+void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, int *S_Len, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
  
-	int p = *P, pos = *Pos, S_L = *S_Len;
+	int p = *P, pos = *Pos, S_L = *S_Len, max_step = *Max_step;
 	double rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
 	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, j, k, m, index_jk;
-	double vl = -1, vu= -1, abstol = pow(10, -6), coef, epi_pri_1, epi_pri_2;
+	double vl = -1, vu= -1, abstol = pow(10, -6), epi_pri_1, epi_pri_2;
 	int *isuppz = (int *) malloc(2*p*sizeof(int));
 	double *work = (double *) malloc(lwork*sizeof(double));
 	int *iwork = (int *) malloc(liwork*sizeof(int));
@@ -878,7 +893,7 @@ void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, i
 	double *eig_val = (double *) malloc(p*sizeof(double));
 
 	//ADMM iteration
-	while(prd>0 || drd>0){
+	while((prd>0 || drd>0) && max_step>0){
 
 		r = 0, s = 0, epi_dual = 0, epi_pri_1 = 0, epi_pri_2 = 0;
 
@@ -936,7 +951,12 @@ void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, i
 		
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
+		max_step--;
 	}//end ADMM iteration
+
+	if(max_step == 0){
+		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
+	}
 
 	free(isuppz);
 	free(work);
