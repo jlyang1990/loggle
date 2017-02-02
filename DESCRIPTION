@@ -10,7 +10,7 @@ Depends:
   R (>= 3.0.2),
   Matrix (>= 1.2),
   doParallel (>= 1.0.8),
-  igraph (>= 1.0)
+  igraph (>= 0.7)
 Imports:
   sm,
   glasso
