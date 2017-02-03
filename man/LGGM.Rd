@@ -84,7 +84,7 @@ for(k in 1:length(pos.plot)) {
   set.seed(0)
   plot(net, vertex.size = 10, vertex.color = "lightblue", 
   vertex.label = NA, edge.color = "black", layout = 
-  layout_in_circle, margin = rep(0, 4))
+  layout.circle, margin = rep(0, 4))
   title(main = paste("t =", round(pos.plot[k]/(ncol(X)-1), 
   2)), cex.main = 0.8)
 }
