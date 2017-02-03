@@ -7,11 +7,11 @@
 
 //apply ADMM across lambda's when h and d are fixed
 void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres, int *Max_step);
+                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, double *thres, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda
 void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step);
+                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda (simple version)
 void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
@@ -47,7 +47,7 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J);
 
 
 void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, double *thres, int *Max_step) {
+                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, double *thres, int *Max_step) {
 
 	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0;
 
@@ -75,7 +75,7 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 		}
 
 		ADMM_cluster(P, (member_ind+p*i), (csize_ind+no_sum), (No+i), LL, Pos, Pos_Len, Corr, sd, Z_i, (Z_pos+p*p*Pos_L*i), 
-               U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, pseudo_refit, S_L, Max_step);
+               U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, S_L, Max_step);
 
 		for(m=0; m<Pos_L; m++){
 			for(j=0; j<p; j++){
@@ -96,7 +96,7 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
-                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step){
+                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step){
 
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k, pos, S_L;
 	int *member_ind_n;
@@ -168,72 +168,6 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 						Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*i+p_n*j+k];
 						U[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = U_n[p_n*p_n*i+p_n*j+k];
 						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))]*sd[*(member_ind_n+j)]*sd[*(member_ind_n+k)];
-					}
-				}
-			}
-	
-			//model refitting
-			if(*pseudo_refit == 0){
-			  
-			  for(i=0; i<Pos_L; i++){
-			    
-			    pos = Pos[i];
-			    
-			    for(j=0; j<p_n; j++){
-			      for(k=j; k<p_n; k++){
-			        if(j!=k && Z_n[p_n*p_n*pos+p_n*j+k]!=0 && Z_n[p_n*p_n*pos+p_n*k+j]!=0){
-			          S_Len[0]++;		
-			        }
-			      }
-			    }
-			  }
-			}
-			else if(*pseudo_refit == 1){
-
-				double *U_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
-
-				for(i=0; i<Pos_L; i++){
-	
-					pos = Pos[i];
-					S_L = 0;
-				
-					for(j=0; j<p_n; j++){
-						for(k=j; k<p_n; k++){
-							Z_pos_n[p_n*j+k] = Z_n[p_n*p_n*pos+p_n*j+k];
-							U_pos_n[p_n*j+k] = U_n[p_n*p_n*pos+p_n*j+k];
-							if(j!=k && Z_n[p_n*p_n*pos+p_n*j+k]!=0 && Z_n[p_n*p_n*pos+p_n*k+j]!=0){
-								S[2*S_L] = j;
-								S[2*S_L+1] = k;
-								S_L++;
-								S_Len[0]++;		
-							}
-						}
-					}
-
-					ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, &rho, Epi_abs, Epi_rel, Max_step);
-
-					for(j=0; j<p_n; j++){
-						for(k=j; k<p_n; k++){
-							Z_pos[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
-							Z_pos[p*p*i+p*(*(member_ind_n+k))+(*(member_ind_n+j))] = Z_pos_n[p_n*j+k];
-						}
-					}
-				}
-
-				free(U_pos_n);
-			}
-			else if(*pseudo_refit == 2){
-
-				for(i=0; i<Pos_L; i++){
-	
-					pos = Pos[i];
-
-					ADMM_pseudo_refit(&p_n, &pos, Corr_n, Z_n, Z_pos_n, S_Len);
-
-					for(j=0; j<p_n; j++){
-						for(k=0; k<p_n; k++){
-							Z_pos[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
-						}
 					}
 				}
 			}

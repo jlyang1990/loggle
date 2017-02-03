@@ -12,9 +12,6 @@
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
 # return.select: whether to return results from LGGM.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
@@ -37,7 +34,7 @@
 
 LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
                     d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
-                    lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo", refit.type = "glasso", 
+                    lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo",
                     return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
                     epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), max.step = 500,
                     detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
@@ -56,16 +53,6 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     fit.type <- 2
   } else {
     stop("fit.type must be 'glasso', 'pseudo' or 'space'!")
-  }
-  
-  if(refit.type == "glasso") {
-    refit.type <- 0
-  } else if(refit.type == "likelihood") {
-    refit.type <- 1
-  } else if(refit.type == "pseudo") {
-    refit.type <- 2
-  } else {
-    stop("refit.type must be 'glasso', 'likelihood' or 'pseudo'!")
   }
   
   if(any(!pos %in% 1:N)) {
@@ -117,8 +104,8 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     pos.test <- seq(i, N, cv.fold)
     pos.train <- (1:N)[-pos.test]
     
-    result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, refit.type, early.stop.thres, 
-                                epi.abs, epi.rel, max.step, fit.corr, num.thread, print.detail)
+    result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
+                                max.step, fit.corr, num.thread, print.detail)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
@@ -167,9 +154,6 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
 # return.select: whether to return results from LGGM.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
@@ -192,10 +176,9 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 
 LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), 
                       d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), cv.fold = 5, 
-                      fit.type = "pseudo", refit.type = "glasso", select.type = "all_flexible", cv.vote.thres = 0.8, 
-                      early.stop.thres = 5, epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), 
-                      epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), max.step = 500, detrend = TRUE, fit.corr = TRUE, 
-                      h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
+                      fit.type = "pseudo", select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
+                      epi.abs = ifelse(nrow(X) >= 400, 1e-4, 1e-5), epi.rel = ifelse(nrow(X) >= 400, 1e-2, 1e-3), 
+                      max.step = 500, detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   N <- dim(X)[2]
   H <- length(h.list)
@@ -207,9 +190,9 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 
   for(h in 1:H) {
     
     cat("\nRunning h =", h.list[h], "...\n")
-    cv.result.h <- LGGM.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, refit.type, return.select = TRUE, 
-                           select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, max.step, detrend, fit.corr, 
-                           h.correct, num.thread, print.detail)
+    cv.result.h <- LGGM.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, return.select = TRUE, select.type, 
+                           cv.vote.thres, early.stop.thres, epi.abs, epi.rel, max.step, detrend, fit.corr, h.correct, 
+                           num.thread, print.detail)
     cv.result.list[[h]] <- cv.result.h
     cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
@@ -416,9 +399,6 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
@@ -431,8 +411,8 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # edge.num: L by D list of edge numbers
 # edge: L by D list of edges
 
-LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
-                          max.step, print.detail) {
+LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
+                          print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -504,7 +484,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
                   as.double(epi.abs.d),
                   as.double(epi.rel.d),
                   as.integer(fit.type),
-                  as.integer(refit.type),
                   as.double(early.stop.thres),
                   as.integer(max.step)
     )
@@ -521,19 +500,14 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
         edge <- which(Omega != 0, arr.ind = T)
         edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
         edge.num <- nrow(edge)
-        
-        if(refit.type == 0) {
           
-          edge.zero <- which(Omega == 0, arr.ind = T)
-          edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+        edge.zero <- which(Omega == 0, arr.ind = T)
+        edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
           
-          Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
-          Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-          if(any((eigen(Omega.rf, symmetric = T)$values) < 0)) {
-            Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
-          }
-        } else {
-          Omega.rf <- matrix(Z.pos.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
+        Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
+        Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+        if(any((eigen(Omega.rf, symmetric = T)$values) < 0)) {
+          Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
         }
       
         Omega.list[[l, j]] <- Matrix(Omega, sparse = T)
@@ -576,9 +550,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
@@ -591,7 +562,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, refit.
 # edge.num: L by K list of edge numbers
 # edge: L by K list of edges
 
-LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
+LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                            print.detail) {
   
   p <- dim(Corr)[1]
@@ -655,7 +626,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
               as.double(epi.abs),
               as.double(epi.rel),
               as.integer(fit.type),
-              as.integer(refit.type),
               as.double(early.stop.thres),
               as.integer(max.step)
   )
@@ -672,21 +642,16 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
       edge <- which(Omega[, , 1] != 0, arr.ind = T)
       edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
       edge.num <- nrow(edge)
-      
-      if(refit.type == 0) {
         
-        Omega.rf <- array(0, c(p, p, K))
-        edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
-        edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
-        for(k in 1:K) {
-          Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-          Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-          if(any((eigen(Omega.rf[, , k], symmetric = T)$values) < 0)) {
-            Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
-          }
+      Omega.rf <- array(0, c(p, p, K))
+      edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
+      edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+      for(k in 1:K) {
+        Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
+        Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+        if(any((eigen(Omega.rf[, , k], symmetric = T)$values) < 0)) {
+          Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
         }
-      } else {
-        Omega.rf <- array(Z.pos.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
       }
       
       edge.num.list[l, 1, ] <- edge.num
@@ -736,9 +701,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
@@ -753,8 +715,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, refit.type, e
 # edge.num: L by D by K list of edge numbers
 # edge: L by D by K list of edges
 
-LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, 
-                            epi.rel, max.step, fit.corr, num.thread, print.detail) {
+LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
+                            max.step, fit.corr, num.thread, print.detail) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -772,7 +734,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
   
   if(d.list[1] == 1) {
 
-    result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
+    result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                              print.detail)
     
   } else {
@@ -792,8 +754,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       registerDoParallel(cl)
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-        LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[-D], 
-                      epi.rel[-D], max.step, print.detail)
+        LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], epi.rel[-D], 
+                      max.step, print.detail)
       
       stopCluster(cl)
       
@@ -807,8 +769,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
         edge.list[, -D, k] <- result.k$edge.list
       }
       
-      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs[D], epi.rel[D], 
-                               max.step, print.detail)
+      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs[D], epi.rel[D], max.step,
+                               print.detail)
       
       Omega.list[, D, ] <- result$Omega.list
       Omega.rf.list[, D, ] <- result$Omega.rf.list
@@ -825,8 +787,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       registerDoParallel(cl)
       
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-        LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, refit.type, early.stop.thres, epi.abs, epi.rel, 
-                      max.step, print.detail)
+        LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
+                      print.detail)
       
       stopCluster(cl)
       
