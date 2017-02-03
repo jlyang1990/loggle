@@ -206,20 +206,20 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   csize.index <- c(0, cumsum(csize))
   
   result <- .C("ADMM_simple",
+               as.double(Corr[, , Nd.index]),
+               Z.vec = as.double(Z.vec),
                as.integer(p),
-               as.integer(member.index),
-               as.integer(csize.index),
-               as.integer(no),
                as.integer(Nd),
                as.integer(Nd.pos.c),
                as.integer(Nd.pos.l),
-               as.double(Corr[, , Nd.index]),
-               Z.vec = as.double(Z.vec),
+               as.integer(member.index),
+               as.integer(csize.index),
+               as.integer(no),
                as.double(lambda),
+               as.integer(fit.type),
                as.double(rho),
                as.double(epi.abs),
                as.double(epi.rel),
-               as.integer(fit.type),
                as.integer(max.step)
   )
   
@@ -308,20 +308,20 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
   csize.index <- c(0, cumsum(csize))
   
   result <- .C("ADMM_simple",
+               as.double(Corr),
+               Z.vec = as.double(Z.vec),
                as.integer(p),
-               as.integer(member.index),
-               as.integer(csize.index),
-               as.integer(no),
                as.integer(N),
                as.integer(pos.c),
                as.integer(K),
-               as.double(Corr),
-               Z.vec = as.double(Z.vec),
+               as.integer(member.index),
+               as.integer(csize.index),
+               as.integer(no),
                as.double(lambda),
+               as.integer(fit.type),
                as.double(rho),
                as.double(epi.abs),
                as.double(epi.rel),
-               as.integer(fit.type),
                as.integer(max.step)
   )
   

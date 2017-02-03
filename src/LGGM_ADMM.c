@@ -6,28 +6,31 @@
 #include <R_ext/Lapack.h>
 
 //apply ADMM across lambda's when h and d are fixed
-void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
-                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, double *thres, int *Max_step);
+void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
+	double *Lambda, int *Lambda_Len, int *pseudo_fit, double *thres, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda
-void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
-                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step);
+void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, 
+	int *No, double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step, int *S_Len);
 
 //apply ADMM to fixed h, d and lambda (simple version)
-void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
-                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *Max_step);
+void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
+	double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //local group graphical lasso
-void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
+void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
+	double *Epi_rel, int *Max_step);
 
 //pseudo-likelihood group lasso
-void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
+void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
+	double *Epi_rel, int *Max_step);
 
 //SPACE (rho step)
-void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
+void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
+	double *Epi_rel, int *Max_step);
 
 //SPACE (d step)
-void ADMM_SPACE_d(int *P, int *LL, double *d, double *Sigma, double *Z);
+void ADMM_SPACE_d(double *Sigma, double *d, double *Z, int *P, int *LL);
 
 //Givens rotation
 void Givens_rotation(double *U, double *Chol, int *P, int *J);
@@ -36,8 +39,8 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
-                 int *Lambda_Len, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, double *thres, int *Max_step) {
+void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
+	double *Lambda, int *Lambda_Len, int *pseudo_fit, double *thres, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
 
 	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0;
 
@@ -64,8 +67,8 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 			continue;
 		}
 
-		ADMM_cluster(P, (member_ind+p*i), (csize_ind+no_sum), (No+i), LL, Pos, Pos_Len, Corr, Z_i, 
-               U_i, (Lambda+i), (Rho+i), Epi_abs, Epi_rel, pseudo_fit, S_L, Max_step);
+		ADMM_cluster(Corr, Z_i, U_i, P, LL, Pos, Pos_Len, (member_ind+p*i), (csize_ind+no_sum), (No+i), (Lambda+i), pseudo_fit, 
+			(Rho+i), Epi_abs, Epi_rel, Max_step, S_L);
 
 		for(m=0; m<Pos_L; m++){
 			for(j=0; j<p; j++){
@@ -85,8 +88,8 @@ void ADMM_lambda(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 
-void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
-                  double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step){
+void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, 
+	int *No, double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step, int *S_Len){
 
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k;
 	int *member_ind_n;
@@ -125,10 +128,10 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 			//model fitting
 			if(*pseudo_fit == 0){
-				ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_local_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_pseudo_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
@@ -138,9 +141,9 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 					}
 				}
 				for(i=0; i<3; i++){
-					ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+					ADMM_SPACE_rho(Corr_n, d_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 					if(i<2){
-						ADMM_SPACE_d(&p_n, LL, d_n, Corr_n, Z_n);
+						ADMM_SPACE_d(Corr_n, d_n, Z_n, &p_n, LL);
 					}
 				}
 				free(d_n);
@@ -166,8 +169,8 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 
 
-void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
-                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *Max_step){
+void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
+	double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
   
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k;
 	int *member_ind_n;
@@ -204,10 +207,10 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       
 			//model fitting
 			if(*pseudo_fit == 0){
-				ADMM_local_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_local_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_glasso(&p_n, LL, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_pseudo_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 			}
 			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
@@ -217,9 +220,9 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 					}
 				}
 				for(i=0; i<3; i++){
-					ADMM_SPACE_rho(&p_n, LL, d_n, Corr_n, Z_n, U_n, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+					ADMM_SPACE_rho(Corr_n, d_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
 					if(i<2){
-						ADMM_SPACE_d(&p_n, LL, d_n, Corr_n, Z_n);
+						ADMM_SPACE_d(Corr_n, d_n, Z_n, &p_n, LL);
 					}
 				}
 				free(d_n);
@@ -242,7 +245,8 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 
 
 
-void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
+void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
+	double *Epi_rel, int *Max_step){
  
 	int p = *P, L = *LL, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
@@ -269,7 +273,8 @@ void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, dou
 				}
 			}
 			
-			F77_CALL(dsyevr)("V", "A", "L", &p, A, &p, &vl, &vu, &il, &iu, &abstol, &num, eig_val, eig_vec, &p, isuppz, work, &lwork, iwork, &liwork, &info);
+			F77_CALL(dsyevr)("V", "A", "L", &p, A, &p, &vl, &vu, &il, &iu, &abstol, &num, eig_val, eig_vec, &p, isuppz, work, 
+				&lwork, iwork, &liwork, &info);
 			
 			for(j=0; j<p; j++){
 				eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho))/(2*rho);
@@ -360,7 +365,8 @@ void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, dou
 
 
 
-void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){ 
+void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
+	double *Epi_rel, int *Max_step){ 
 
 	int p = *P, L = *LL, p_1 = p-1, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
@@ -483,7 +489,8 @@ void ADMM_pseudo_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, do
 
 
 
-void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
+void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
+	double *Epi_rel, int *Max_step){
  
 	int p = *P, L = *LL, p_1 = p-1, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
@@ -608,7 +615,7 @@ void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double
 
 
 
-void ADMM_SPACE_d(int *P, int *LL, double *d, double *Sigma, double *Z){
+void ADMM_SPACE_d(double *Sigma, double *d, double *Z, int *P, int *LL){
 
 	int p = *P, L = *LL;
 	int i, j, k, m;

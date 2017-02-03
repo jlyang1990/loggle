@@ -440,24 +440,24 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
       csize.index.list <- c(csize.index.list, csize.index)
     }
       
-    result <- .C("ADMM_lambda", 
-                  as.integer(p),
-                  as.integer(member.index.list),
-                  as.integer(csize.index.list),
-                  as.integer(no.list),
-                  as.integer(Nd),
-                  as.integer(Nd.pos.c),
-                  as.integer(Nd.pos.l),
-                  as.double(Corr[, , Nd.index]),
-                  Z.vec = as.double(Z.vec),
-                  as.integer(L),
-                  as.double(lambda),
-                  as.double(rho),
-                  as.double(epi.abs.d),
-                  as.double(epi.rel.d),
-                  as.integer(fit.type),
-                  as.double(early.stop.thres),
-                  as.integer(max.step)
+    result <- .C("ADMM_lambda",
+                 as.double(Corr[, , Nd.index]),
+                 Z.vec = as.double(Z.vec),
+                 as.integer(p),
+                 as.integer(Nd),
+                 as.integer(Nd.pos.c),
+                 as.integer(Nd.pos.l),
+                 as.integer(member.index.list),
+                 as.integer(csize.index.list),
+                 as.integer(no.list),
+                 as.double(lambda),
+                 as.integer(L),
+                 as.integer(fit.type),
+                 as.double(early.stop.thres),
+                 as.double(rho),
+                 as.double(epi.abs.d),
+                 as.double(epi.rel.d),
+                 as.integer(max.step)
     )
       
     Z.vec <- result$Z.vec
@@ -573,24 +573,24 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
     csize.index.list <- c(csize.index.list, csize.index)
   }
   
-  result <- .C("ADMM_lambda", 
-              as.integer(p),
-              as.integer(member.index.list),
-              as.integer(csize.index.list),
-              as.integer(no.list),
-              as.integer(N),
-              as.integer(pos.c),
-              as.integer(K),
-              as.double(Corr),
-              Z.vec = as.double(Z.vec),
-              as.integer(L),
-              as.double(lambda),
-              as.double(rho),
-              as.double(epi.abs),
-              as.double(epi.rel),
-              as.integer(fit.type),
-              as.double(early.stop.thres),
-              as.integer(max.step)
+  result <- .C("ADMM_lambda",
+               as.double(Corr),
+               Z.vec = as.double(Z.vec),
+               as.integer(p),
+               as.integer(N),
+               as.integer(pos.c),
+               as.integer(K),
+               as.integer(member.index.list),
+               as.integer(csize.index.list),
+               as.integer(no.list),
+               as.double(lambda),
+               as.integer(L),
+               as.integer(fit.type),
+               as.double(early.stop.thres),
+               as.double(rho),
+               as.double(epi.abs),
+               as.double(epi.rel),
+               as.integer(max.step)
   )
   
   Z.vec <- result$Z.vec
