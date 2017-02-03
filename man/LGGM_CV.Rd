@@ -12,7 +12,6 @@ h = 0.8*ncol(X)^(-1/5), d.list = c(0, 0.001, 0.01,
 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
 lambda.list = seq(0.15, 0.35, length = 11), 
 cv.fold = 5, fit.type = c("glasso", "pseudo", "space"), 
-refit.type = c("glasso", "likelihood", "pseudo"), 
 return.select = TRUE, 
 select.type = c("all_flexible", "d_fixed", "all_fixed"), 
 cv.vote.thres = 0.8, early.stop.thres = 5, 
@@ -30,7 +29,6 @@ h.correct = TRUE, num.thread = 1, print.detail = TRUE)
   \item{lambda.list}{a vector: a grid of tuning parameters of Lasso penalty at each position where graph is estimated}
   \item{cv.fold}{a scalar: number of cv folds, default = 5}
   \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
-  \item{refit.type}{a string: "glasso" -- likelihood estimation using \code{glasso} function in "glasso" package, "likelihood" -- likelihood estimation using ADMM algorithm, or "pseudo" -- pseudo likelihood estimation, default = "glasso"}
   \item{return.select}{logic: whether to return model selection result, default = TRUE}
   \item{select.type}{a string: "all_flexible" -- optimal d and lambda can vary at each position where graph is estimated, "d_fixed" -- optimal d is fixed and optimal lambda can vary at each position where graph is estimated, "all_fixed" -- optimal d and lambda are fixed at each position where graph is estimated, default = "all_flexible"}
   \item{cv.vote.thres}{a scalar (between 0 and 1): an edge is retained in cv vote if and only if it exists in no less than \code{cv.vote.thres}*\code{cv.fold} cv folds, default = 0.8}
@@ -49,8 +47,6 @@ h.correct = TRUE, num.thread = 1, print.detail = TRUE)
 This function conducts grid search for optimal \code{d} and \code{lambda} selection, while \code{h} is fixed and pre-specified. To figure out the optimal \code{h} as well, one can apply this function to different candidate \code{h}'s or use the function \link{LGGM.cv.h}.
 
 The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance.
-
-The model refitting method by using \code{glasso} function in "glasso" package (\code{refit.type = "glasso"}) is usually computationally cheaper than the model refitting method by using ADMM algorithm (\code{refit.type = "likelihood"}), with almost the same model refitting performance. The model refitting method based on pseudo log-likelihood (\code{refit.type = "pseudo"}) is even less computationally intensive than the model refitting method based on negative log-likelihood (\code{refit.type = "glasso"} and \code{refit.type = "likelihood"}).
 
 \code{select.type = "all_flexible"} is chosen in model selection if we believe both the extent of smoothness (controlled by \code{d}) and sparsity (controlled by \code{lambda}) vary across time points. If only the extent of sparsity varies across time points, we choose \code{select.type = "d_fixed"}. If both of them are consistent across time points, we choose \code{select.type = "all_fixed"}.
 
@@ -91,8 +87,7 @@ pos.example <- round(seq(0.02, 0.98, length=25)
 result <- LGGM.cv(X, pos = pos.example, h = 0.2, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type 
-= "pseudo", refit.type = "glasso", cv.vote.thres = 1,
-num.thread = 2)
+= "pseudo", cv.vote.thres = 1, num.thread = 2)
 
 # optimal values of d at each position of time point
 print(result$cv.select.result$d.min)

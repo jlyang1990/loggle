@@ -115,8 +115,8 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     for(d in 1:D) {
       for(l in 1:L) {
         for(k in 1:K) {
-          Omega.rf <- as.matrix(result.i$Omega.rf.list[[l, d, k]])
-          cv.score[l, d, k, i] <- sum(c(t(Sigma.test[, , pos[k]]))*c(Omega.rf)) - log(det(Omega.rf))
+          Omega <- as.matrix(result.i$Omega.list[[l, d, k]])
+          cv.score[l, d, k, i] <- sum(c(t(Sigma.test[, , pos[k]]))*c(Omega)) - log(det(Omega))
         }
       }
     }
@@ -238,7 +238,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   D <- dim(cv.score)[2]
   K <- dim(cv.score)[3]
   cv.fold <- dim(cv.score)[4]
-  p <- dim(cv.result.list[[1]]$Omega.rf.list[[L, D, K]])[1]
+  p <- dim(cv.result.list[[1]]$Omega.list[[L, D, K]])[1]
   
   lambda.list <- as.numeric(rownames(cv.score))
   d.list <- as.numeric(colnames(cv.score))
@@ -285,9 +285,9 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   
   for(i in 1:cv.fold) {
     
-    Omega.rf.list <- cv.result.list[[i]]$Omega.rf.list
+    Omega.list <- cv.result.list[[i]]$Omega.list
     for(k in 1:K) {
-      Omega.edge.list[, , k, i] <- as.matrix(Omega.rf.list[[lambda.index[k], d.index[k], k]])
+      Omega.edge.list[, , k, i] <- as.matrix(Omega.list[[lambda.index[k], d.index[k], k]])
     }
   }
   
@@ -325,7 +325,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # h: bandwidth in kernel function used to generate correlation matrices
 
 # Output ###
-# Omega.rf.list: list of refitted precision matrices of length K
+# Omega.list: list of refitted precision matrices of length K
 
 LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   
@@ -383,8 +383,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# Omega: L (number of lambda's) by D (number of d's) list of estimated precision matrices
-# Omega.rf: L by D list of refitted precision matrices
+# Omega: L (number of lambda's) by D (number of d's) list of refitted precision matrices
 # edge.num: L by D list of edge numbers
 # edge: L by D list of edges
 
@@ -397,7 +396,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
   L <- length(lambda.list)
   
   Omega.list <- matrix(vector("list", 1), L, D)
-  Omega.rf.list <- matrix(vector("list", 1), L, D)
   edge.num.list <- matrix(0, L, D)
   edge.list <- matrix(vector("list", 1), L, D)
   
@@ -478,19 +476,17 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
         edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
           
         Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
-        Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-        if(any((eigen(Omega.rf, symmetric = T)$values) < 0)) {
-          Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+        Omega <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+        if(any((eigen(Omega, symmetric = T)$values) < 0)) {
+          Omega <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
         }
       
         Omega.list[[l, j]] <- Matrix(Omega, sparse = T)
-        Omega.rf.list[[l, j]] <- Matrix(Omega.rf, sparse = T)
         edge.num.list[l, j] <- edge.num
         edge.list[[l, j]] <- edge
       } else {
         
         Omega.list[[l, j]] <- NA
-        Omega.rf.list[[l, j]] <- NA
         edge.num.list[l, j] <- NA
         edge.list[[l, j]] <- NA
       }
@@ -502,7 +498,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
     
     result <- new.env()
     result$Omega.list <- Omega.list
-    result$Omega.rf.list <- Omega.rf.list
     result$edge.num.list <- edge.num.list
     result$edge.list <- edge.list
     result <- as.list(result)
@@ -530,8 +525,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# Omega: L (number of lambda's) by K (number of time points) list of estimated precision matrices
-# Omega.rf: L by K list of refitted precision matrices
+# Omega: L (number of lambda's) by K (number of time points) list of refitted precision matrices
 # edge.num: L by K list of edge numbers
 # edge: L by K list of edges
 
@@ -544,7 +538,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   L <- length(lambda.list)
   
   Omega.list <- array(vector("list", 1), c(L, 1, K))
-  Omega.rf.list <- array(vector("list", 1), c(L, 1, K))
   edge.num.list <- array(0, c(L, 1, K))
   edge.list <- array(vector("list", 1), c(L, 1, K))
   
@@ -612,14 +605,15 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
       edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
       edge.num <- nrow(edge)
         
-      Omega.rf <- array(0, c(p, p, K))
       edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
       edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+      
+      Omega <- array(0, c(p, p, K))
       for(k in 1:K) {
         Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-        Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-        if(any((eigen(Omega.rf[, , k], symmetric = T)$values) < 0)) {
-          Omega.rf[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+        Omega[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+        if(any((eigen(Omega[, , k], symmetric = T)$values) < 0)) {
+          Omega[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
         }
       }
       
@@ -628,7 +622,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
       for(k in 1:K) {
       
         Omega.list[[l, 1, k]] <- Matrix(Omega[, , k], sparse = T)
-        Omega.rf.list[[l, 1, k]] <- Matrix(Omega.rf[, , k], sparse = T)
         edge.list[[l, 1, k]] <- edge
       }
     } else {
@@ -636,7 +629,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
       edge.num.list[l, 1, ] <- NA
       for(k in 1:K) {
         Omega.list[[l, 1, k]] <- NA
-        Omega.rf.list[[l, 1, k]] <- NA
         edge.list[[l, 1, k]] <- NA
       }
     }
@@ -648,7 +640,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   
   result <- new.env()
   result$Omega.list <- Omega.list
-  result$Omega.rf.list <- Omega.rf.list
   result$edge.num.list <- edge.num.list
   result$edge.list <- edge.list
   result <- as.list(result)
@@ -679,8 +670,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# Omega: L (number of lambda's) by D (number of d's) by K (number of time points) list of estimated precision matrices
-# Omega.rf: L by D by K list of refitted precision matrices
+# Omega: L (number of lambda's) by D (number of d's) by K (number of time points) list of refitted precision matrices
 # edge.num: L by D by K list of edge numbers
 # edge: L by D by K list of edges
 
@@ -709,7 +699,6 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
   } else {
     
     Omega.list <- array(vector("list", 1), c(L, D, K))
-    Omega.rf.list <- array(vector("list", 1), c(L, D, K))
     edge.num.list <- array(NA, c(L, D, K))
     edge.list <- array(vector("list", 1), c(L, D, K))
     
@@ -733,7 +722,6 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
         result.k <- result[[k]]
         
         Omega.list[, -D, k] <- result.k$Omega.list
-        Omega.rf.list[, -D, k] <- result.k$Omega.rf.list
         edge.num.list[, -D, k] <- result.k$edge.num.list
         edge.list[, -D, k] <- result.k$edge.list
       }
@@ -742,7 +730,6 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
                                print.detail)
       
       Omega.list[, D, ] <- result$Omega.list
-      Omega.rf.list[, D, ] <- result$Omega.rf.list
       edge.num.list[, D, ] <- result$edge.num.list
       edge.list[, D, ] <- result$edge.list
       
@@ -766,7 +753,6 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
         result.k <- result[[k]]
         
         Omega.list[, , k] <- result.k$Omega.list
-        Omega.rf.list[, , k] <- result.k$Omega.rf.list
         edge.num.list[, , k] <- result.k$edge.num.list
         edge.list[, , k] <- result.k$edge.list
       }
@@ -774,7 +760,6 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
     
     result <- new.env()
     result$Omega.list <- Omega.list
-    result$Omega.rf.list <- Omega.rf.list
     result$edge.num.list <- edge.num.list
     result$edge.list <- edge.list
     result <- as.list(result)
