@@ -11,9 +11,7 @@
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
+# refit: whether to conduct model refitting
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
@@ -29,7 +27,7 @@
 # edge.list: list of detected edges of length K
 
 LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
-                 refit.type = "glasso", epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
+                 refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
                  fit.corr = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
@@ -44,16 +42,6 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     fit.type <- 2
   } else {
     stop("fit.type must be 'glasso', 'pseudo' or 'space'!")
-  }
-  
-  if(refit.type == "glasso") {
-    refit.type <- 0
-  } else if(refit.type == "likelihood") {
-    refit.type <- 1
-  } else if(refit.type == "pseudo") {
-    refit.type <- 2
-  } else {
-    stop("refit.type must be 'glasso', 'likelihood' or 'pseudo'!")
   }
   
   if(any(!pos %in% 1:N)) {
@@ -89,7 +77,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     
     if(length(lambda) == 1) {
       
-      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step)
+      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step)
       
       if(print.detail) {
         cat("Complete all!\n")
@@ -101,7 +89,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       for(lambda.l in lambda.list) {
         
-        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit.type, epi.abs, epi.rel, max.step)
+        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit, epi.abs, epi.rel, max.step)
         idx <- which(lambda == lambda.l)
         
         for(i in idx) {
@@ -142,7 +130,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     registerDoParallel(cl)
     
     result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel, max.step, print.detail)
+      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, print.detail)
     
     stopCluster(cl)
     
@@ -180,9 +168,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
+# refit: whether to conduct model refitting
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
@@ -194,7 +180,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # edge.num: detected edge number
 # edge: detected edges
 
-LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step, print.detail) {
+LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi.rel, max.step, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -242,7 +228,6 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
                as.double(epi.abs),
                as.double(epi.rel),
                as.integer(fit.type),
-               as.integer(refit.type),
                edge.num = as.integer(edge.num),
                as.integer(max.step)
   )
@@ -253,7 +238,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
   edge.num <- nrow(edge)
   
-  if(refit.type == 0) {
+  if(refit) {
     
     edge.zero <- which(as.matrix(Omega) == 0, arr.ind = T)
     edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
@@ -295,9 +280,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit.type: 0: likelihood estimation using 'glasso' package, 
-#             1: likelihood estimation using ADMM, 
-#             2: pseudo likelihood estimation
+# refit: whether to conduct model refitting
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
@@ -308,7 +291,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
-LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step) {
+LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -354,7 +337,6 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
                as.double(epi.abs),
                as.double(epi.rel),
                as.integer(fit.type),
-               as.integer(refit.type),
                edge.num = as.integer(edge.num),
                as.integer(max.step)
   )
@@ -366,7 +348,7 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
   edge.list <- rep(list(edge), K)
   edge.num.list <- rep(nrow(edge), K)
   
-  if(refit.type == 0) {
+  if(refit) {
     
     Omega.rf.list <- vector("list", K)
     edge.zero <- which(as.matrix(Omega.list[[1]]) == 0, arr.ind = T)
