@@ -345,45 +345,22 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   
   cat("Estimating graphs...\n")
   
-  rho <- 0.25
-  epi.abs <- 1e-5
-  epi.rel <- 1e-3
-  max.step <- 500
-  Omega.rf.list <- vector("list", K)
+  Omega.list <- vector("list", K)
   
   for(k in 1:K) {
     
-    Z.pos.vec <- rep(0, p*p)
+    edge.zero <- which(as.matrix(Omega.edge.list[[k]]) == 0, arr.ind = T)
+    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
     
-    adj.mat <- as.matrix(Omega.edge.list[[k]])
-    graph <- graph.adjacency(adj.mat)
-    cluster <- clusters(graph)
-    member <- cluster$membership
-    csize <- cluster$csize
-    no <- cluster$no
-    member.index <- sort(member, index.return = T)$ix - 1
-    csize.index <- c(0, cumsum(csize))
-    
-    result <- .C("ADMM_simple_refit",
-                 as.integer(p),
-                 as.integer(member.index),
-                 as.integer(csize.index),
-                 as.integer(no),
-                 as.double(Sigma[, , pos[k]]),
-                 as.double(adj.mat),
-                 Z.pos.vec = as.double(Z.pos.vec),
-                 as.double(rho),
-                 as.double(epi.abs),
-                 as.double(epi.rel),
-                 as.integer(max.step)
-    )
-    
-    Omega.rf.list[[k]] <- Matrix(result$Z.pos.vec, p, p, sparse = T)
+    Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 0, zero = edge.zero)$wi
+    if(any((eigen(Omega.list[[k]], symmetric = T)$values) < 0)) {
+      Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+    }
     
     cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
   }
   
-  return(Omega.rf.list)
+  return(Omega.list)
 }
 
 

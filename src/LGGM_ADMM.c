@@ -17,10 +17,6 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
                  double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *Max_step);
 
-//apply ADMM to refit graphical structure
-void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
-                       double *Epi_abs, double *Epi_rel, int *Max_step);
-
 //local group graphical lasso
 void ADMM_local_glasso(int *P, int *LL, double *Sigma, double *Z, double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
@@ -32,12 +28,6 @@ void ADMM_SPACE_rho(int *P, int *LL, double *d, double *Sigma, double *Z, double
 
 //SPACE (d step)
 void ADMM_SPACE_d(int *P, int *LL, double *d, double *Sigma, double *Z);
-
-//likelihood refit
-void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, int *S_Len, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
-
-//pseudo-likelihood refit
-void ADMM_pseudo_refit(int *P, int *Pos, double *Sigma, double *Z, double *Z_pos, int *S_Len);
 
 //Givens rotation
 void Givens_rotation(double *U, double *Chol, int *P, int *J);
@@ -246,73 +236,6 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 			free(Corr_n);
 			free(Z_n);
 			free(U_n);		
-		}
-	}//end iteration across block diagonals
-}
-
-
-
-void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
-                       double *Epi_abs, double *Epi_rel, int *Max_step){
-  
-	int p = *P, no = *No, p_n, n, j, k, pos, S_L;
-	int *member_ind_n;
-  
-	//iteration across block diagonals
-	for(n=0; n<no; n++){
-    
-		p_n = csize_ind[n+1]-csize_ind[n];
-		member_ind_n = &member_ind[csize_ind[n]];
-    
-		//block diagonal with dimension equals one
-		if(p_n==1){
-			Z_pos[p*(*member_ind_n)+(*member_ind_n)] = 1/Corr[p*(*member_ind_n)+(*member_ind_n)];
-		}
-		//block diagonal with dimension larger than one
-		else{
-			double *Corr_n = (double *) malloc(p_n*p_n*sizeof(double));
-			double *Z_n = (double *) malloc(p_n*p_n*sizeof(double));
-			double *Z_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
-			double *U_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
-			int *S = (int *) malloc(p_n*(p_n-1)*sizeof(int));
-      
-			for(j=0; j<p_n; j++){
-				for(k=0; k<p_n; k++){
-					Corr_n[p_n*j+k] = Corr[p*(*(member_ind_n+j))+(*(member_ind_n+k))];
-					Z_n[p_n*j+k] = Z[p*(*(member_ind_n+j))+(*(member_ind_n+k))];
-				}
-			}
-      
-			//model refitting
-			pos = 0;
-			S_L = 0;
-          
-			for(j=0; j<p_n; j++){
-				for(k=j; k<p_n; k++){
-					Z_pos_n[p_n*j+k] = 0;
-					U_pos_n[p_n*j+k] = 0;
-					if(j!=k && Z_n[p_n*j+k]!=0 && Z_n[p_n*k+j]!=0){
-						S[2*S_L] = j;
-						S[2*S_L+1] = k;
-						S_L++;
-					}
-				}
-			}
-
-			ADMM_refit(&p_n, &pos, Corr_n, Z_pos_n, U_pos_n, S, &S_L, Rho, Epi_abs, Epi_rel, Max_step);
-          
-			for(j=0; j<p_n; j++){
-				for(k=j; k<p_n; k++){
-					Z_pos[p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_pos_n[p_n*j+k];
-					Z_pos[p*(*(member_ind_n+k))+(*(member_ind_n+j))] = Z_pos_n[p_n*j+k];
-				}
-			}
-        
-			free(Corr_n);
-			free(Z_n);
-			free(Z_pos_n);
-			free(U_pos_n);
-			free(S);	
 		}
 	}//end iteration across block diagonals
 }
@@ -717,171 +640,6 @@ void ADMM_SPACE_d(int *P, int *LL, double *d, double *Sigma, double *Z){
 
 	free(rho);
 	free(d_new);
-}
-
-
-
-void ADMM_refit(int *P, int *Pos, double *Sigma, double *Z, double *U, int *S, int *S_Len, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
- 
-	int p = *P, pos = *Pos, S_L = *S_Len, max_step = *Max_step;
-	double rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel;
-	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
-	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, j, k, m, index_jk;
-	double vl = -1, vu= -1, abstol = pow(10, -6), epi_pri_1, epi_pri_2;
-	int *isuppz = (int *) malloc(2*p*sizeof(int));
-	double *work = (double *) malloc(lwork*sizeof(double));
-	int *iwork = (int *) malloc(liwork*sizeof(int));
-	double *Omega = (double *) malloc(p*p*sizeof(double));
-	double *A = (double *) malloc(p*p*sizeof(double));
-	double *eig_vec = (double *) malloc(p*p*sizeof(double));
-	double *eig_val = (double *) malloc(p*sizeof(double));
-
-	//ADMM iteration
-	while((prd>0 || drd>0) && max_step>0){
-
-		r = 0, s = 0, epi_dual = 0, epi_pri_1 = 0, epi_pri_2 = 0;
-
-		for(j=0; j<p; j++){
-			for(k=j; k<p; k++){
-				A[p*j+k] = Sigma[p*p*pos+p*j+k] - rho*(Z[p*j+k] - U[p*j+k]);
-			}
-		}
-			
-		F77_CALL(dsyevr)("V", "A", "L", &p, A, &p, &vl, &vu, &il, &iu, &abstol, &num, eig_val, eig_vec, &p, isuppz, work, &lwork, iwork, &liwork, &info);
-			
-		for(j=0; j<p; j++){
-			eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho))/(2*rho);
-		}
-		for(j=0; j<p; j++){
-			for(k=j; k<p; k++){
-				index_jk = p*j+k;
-				Omega[index_jk] = 0;
-				for(m=0; m<p; m++){
-					Omega[index_jk] += eig_val[m]*eig_vec[p*m+j]*eig_vec[p*m+k];
-				}
-				U[index_jk] += Omega[index_jk]; 
-			}
-			index_jk = p*j+j;
-			s += pow((U[index_jk] - Z[index_jk]), 2)/2;
-			Z[index_jk] = U[index_jk];
-			U[index_jk] = 0;
-			r += pow((Omega[index_jk] - Z[index_jk]), 2)/2;
-			epi_pri_1 += pow(Omega[index_jk], 2)/2;
-			epi_pri_2 += pow(Z[index_jk], 2)/2;
-		}
-
-		if(S_L!=0){
-			for(m=0; m<S_L; m++){
-				index_jk = p*S[2*m] + S[2*m+1];
-				s += pow((U[index_jk] - Z[index_jk]), 2);
-				Z[index_jk] = U[index_jk];
-			}
-		}
-
-		for(j=0; j<p; j++){
-			for(k=j+1; k<p; k++){
-				index_jk = p*j+k;
-				U[index_jk] -= Z[index_jk];
-				r += pow((Omega[index_jk] - Z[index_jk]), 2);
-				epi_pri_1 += pow(Omega[index_jk], 2);
-				epi_pri_2 += pow(Z[index_jk], 2);
-				epi_dual += pow(U[index_jk], 2);
-			}
-		}
-		r = sqrt(2*r);
-		s = rho*sqrt(2*s);
-		epi_pri = sqrt(p)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
-		epi_dual = sqrt(p)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
-		
-		prd = (r>epi_pri);
-		drd = (s>epi_dual);
-		max_step--;
-	}//end ADMM iteration
-
-	if(max_step == 0){
-		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
-	}
-
-	free(isuppz);
-	free(work);
-	free(iwork);
-	free(Omega);
-	free(A);
-	free(eig_vec);
-	free(eig_val);
-}
-
-
-
-void ADMM_pseudo_refit(int *P, int *Pos, double *Sigma, double *Z, double *Z_pos, int *S_Len){
-
-	int p = *P, pos = *Pos, S_L;
-	int nrhs = 1, info, j, k, m;
-	int *S = (int *) malloc(p*sizeof(int));
-	double temp;
-	double *Sigma_j = (double *) malloc(p*p*sizeof(double));
-	double *C = (double *) malloc(p*sizeof(double));
-
-	for(j=0; j<p; j++){
-		S_L = 0;
-		for(k=0; k<p; k++){
-			Z_pos[p*j+k] = 0;
-			if(j!=k && Z[p*p*pos+p*j+k]!=0 && Z[p*p*pos+p*k+j]!=0){
-				S[S_L] = k;
-				S_L++;
-				if(k>j){
-					S_Len[0]++;
-				}		
-			}
-		}
-		if(S_L==0){
-			Z_pos[p*j+j] = 1/Sigma[p*p*pos+p*j+j];
-		}
-		else{
-			for(k=0; k<S_L; k++){
-				for(m=k; m<S_L; m++){
-					Sigma_j[S_L*k+m] = Sigma[p*p*pos+p*S[k]+S[m]];
-				}
-				C[k] = Sigma[p*p*pos+p*j+S[k]];
-			}
-			F77_CALL(dpotrf)("L", &S_L, Sigma_j, &S_L, &info);
-			F77_CALL(dpotrs)("L", &S_L, &nrhs, Sigma_j, &S_L, C, &S_L, &info);
-			for(k=0; k<S_L; k++){
-				Z_pos[p*j+j] += C[k]*Sigma[p*p*pos+p*j+S[k]];
-			}
-			Z_pos[p*j+j] = 1/(-Z_pos[p*j+j]+Sigma[p*p*pos+p*j+j]);
-			for(k=0; k<S_L; k++){
-				if(S[k]>j){
-					Z_pos[p*j+S[k]] = C[k];
-				}
-				else{
-					temp = Z_pos[p*S[k]+j]*C[k];
-					if(temp>0){
-						if(Z[p*S[k]+j]>0){
-							Z_pos[p*S[k]+j] = -sqrt(temp);
-						}
-						else{
-							Z_pos[p*S[k]+j] = sqrt(temp);
-						}
-					}
-					else{
-						if(Z[p*S[k]+j]>0){
-							Z_pos[p*S[k]+j] = -sqrt(-temp);
-						}
-						else{
-							Z_pos[p*S[k]+j] = sqrt(-temp);
-						}
-					}
-					Z_pos[p*S[k]+j] = Z_pos[p*S[k]+j]*sqrt(Z_pos[p*S[k]+S[k]]*Z_pos[p*j+j]);
-					Z_pos[p*j+S[k]] = Z_pos[p*S[k]+j];
-				}
-			}
-		}
-	}
-
-	free(S);
-	free(Sigma_j);
-	free(C);
 }
 
 
