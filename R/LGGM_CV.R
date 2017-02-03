@@ -439,7 +439,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
     Corr.sq <- apply(Corr[, , Nd.index] ^ 2, c(1, 2), sum)
     
     Z.vec <- rep(0, p*p*L)
-    Z.pos.vec <- rep(0, p*p*L)
     
     lambda <- sqrt(Nd) * lambda.list
     rho <- lambda
@@ -477,7 +476,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
                   as.double(Corr[, , Nd.index]),
                   as.double(sd.X),
                   Z.vec = as.double(Z.vec),
-                  Z.pos.vec = as.double(Z.pos.vec),
                   as.integer(L),
                   as.double(lambda),
                   as.double(rho),
@@ -489,7 +487,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
     )
       
     Z.vec <- result$Z.vec
-    Z.pos.vec <- result$Z.pos.vec
       
     for(l in L:1) {
       
@@ -581,7 +578,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   Corr.sq <- apply(Corr ^ 2, c(1, 2), sum)
   
   Z.vec <- rep(0, p*p*K*L)
-  Z.pos.vec <- rep(0, p*p*K*L)
   
   lambda <- sqrt(N) * lambda.list
   rho <- lambda
@@ -619,7 +615,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
               as.double(Corr),
               as.double(sd.X),
               Z.vec = as.double(Z.vec),
-              Z.pos.vec = as.double(Z.pos.vec),
               as.integer(L),
               as.double(lambda),
               as.double(rho),
@@ -631,7 +626,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   )
   
   Z.vec <- result$Z.vec
-  Z.pos.vec <- result$Z.pos.vec
   
   for(l in L:1) {
     
