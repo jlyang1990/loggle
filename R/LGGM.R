@@ -249,9 +249,9 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs
   
   Omega <- Matrix(result$Z.vec, p, p, sparse = T)
   
-  edge.num <- result$edge.num
   edge <- which(as.matrix(Omega) != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+  edge.num <- nrow(edge)
   
   if(refit.type == 0) {
     
@@ -361,10 +361,10 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
   
   Omega.list <- sapply(1:K, function(k) Matrix(result$Z.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = T))
   
-  edge.num.list <- rep(result$edge.num, K)
   edge <- which(as.matrix(Omega.list[[1]]) != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
   edge.list <- rep(list(edge), K)
+  edge.num.list <- rep(nrow(edge), K)
   
   if(refit.type == 0) {
     
