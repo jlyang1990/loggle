@@ -14,8 +14,8 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
                   double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda (simple version)
-void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, 
-                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step);
+void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
+                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *Max_step);
 
 //apply ADMM to refit graphical structure
 void ADMM_simple_refit(int *P, int *member_ind, int *csize_ind, int *No, double *Corr, double *Z, double *Z_pos, double *Rho, 
@@ -251,14 +251,11 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 
 
-void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, 
-                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step){
+void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *Z, 
+                 double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *Max_step){
   
-	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k, pos, S_L;
+	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k;
 	int *member_ind_n;
-	double rho = (*Rho)/sqrt(L);
-  
-	S_Len[0] = 0;
   
 	//iteration across block diagonals
 	for(n=0; n<no; n++){
@@ -328,8 +325,6 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 			free(S);		
 		}
 	}//end iteration across block diagonals
-  
-	S_Len[0] = S_Len[0]/Pos_L;
 }
 
 

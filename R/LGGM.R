@@ -219,14 +219,12 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
                as.integer(Nd.pos.c),
                as.integer(Nd.pos.l),
                as.double(Corr[, , Nd.index]),
-               as.double(sd.X),
                Z.vec = as.double(Z.vec),
                as.double(lambda),
                as.double(rho),
                as.double(epi.abs),
                as.double(epi.rel),
                as.integer(fit.type),
-               edge.num = as.integer(edge.num),
                as.integer(max.step)
   )
   
@@ -324,14 +322,12 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
                as.integer(pos.c),
                as.integer(K),
                as.double(Corr),
-               as.double(sd.X),
                Z.vec = as.double(Z.vec),
                as.double(lambda),
                as.double(rho),
                as.double(epi.abs),
                as.double(epi.rel),
                as.integer(fit.type),
-               edge.num = as.integer(edge.num),
                as.integer(max.step)
   )
   
