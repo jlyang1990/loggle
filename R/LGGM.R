@@ -194,7 +194,6 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   Corr.sq <- apply(Corr[, , Nd.index] ^ 2, c(1, 2), sum)
   
   Z.vec <- rep(0, p*p)
-  Z.pos.vec <- rep(0, p*p)
   edge.num <- 0
   
   lambda <- sqrt(Nd) * lambda
@@ -222,7 +221,6 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
                as.double(Corr[, , Nd.index]),
                as.double(sd.X),
                Z.vec = as.double(Z.vec),
-               Z.pos.vec = as.double(Z.pos.vec),
                as.double(lambda),
                as.double(rho),
                as.double(epi.abs),
@@ -249,8 +247,6 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
       Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
     }
     Omega.rf <- Matrix(Omega.rf, sparse = T)
-  } else {
-    Omega.rf <- Matrix(result$Z.pos.vec, p, p, sparse = T)
   }
   
   if(print.detail) {
@@ -303,7 +299,6 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
   Corr.sq <- apply(Corr ^ 2, c(1, 2), sum)
   
   Z.vec <- rep(0, p*p*K)
-  Z.pos.vec <- rep(0, p*p*K)
   edge.num <- 0
   
   lambda <- sqrt(N) * lambda
@@ -331,7 +326,6 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
                as.double(Corr),
                as.double(sd.X),
                Z.vec = as.double(Z.vec),
-               Z.pos.vec = as.double(Z.pos.vec),
                as.double(lambda),
                as.double(rho),
                as.double(epi.abs),
@@ -361,8 +355,6 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
       }
       Omega.rf.list[[k]] <- Matrix(Omega.rf.list[[k]], sparse = T)
     }
-  } else {
-    Omega.rf.list <- sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = T))
   }
   
   result <- new.env()

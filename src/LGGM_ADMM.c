@@ -14,7 +14,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
                   double *U, double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *pseudo_refit, int *S_Len, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda (simple version)
-void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
+void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, 
                  double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step);
 
 //apply ADMM to refit graphical structure
@@ -251,7 +251,7 @@ void ADMM_cluster(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int
 
 
 
-void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, double *Z_pos, 
+void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int *Pos, int *Pos_Len, double *Corr, double *sd, double *Z, 
                  double *Lambda, double *Rho, double *Epi_abs, double *Epi_rel, int *pseudo_fit, int *S_Len, int *Max_step){
   
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k, pos, S_L;
@@ -273,16 +273,12 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 					Z[p*p*i+p*(*member_ind_n)+(*member_ind_n)] = 1/Corr[p*p*Pos[i]+p*(*member_ind_n)+(*member_ind_n)];
 				}
 			}
-			for(i=0; i<Pos_L; i++){
-				Z_pos[p*p*i+p*(*member_ind_n)+(*member_ind_n)] = 1/(Corr[p*p*Pos[i]+p*(*member_ind_n)+(*member_ind_n)]*sd[*member_ind_n]*sd[*member_ind_n]);
-			}
 		}
 		//block diagonal with dimension larger than one
 		else{
 			double *Corr_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *Z_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *U_n = (double *) malloc(p_n*p_n*L*sizeof(double));
-			double *Z_pos_n = (double *) malloc(p_n*p_n*sizeof(double));
 			int *S = (int *) malloc(p_n*(p_n-1)*sizeof(int));
       
 			for(i=0; i<L; i++){
@@ -320,9 +316,6 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       
 			for(j=0; j<p_n; j++){
 				for(k=0; k<p_n; k++){
-					for(i=0; i<L; i++){
-						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))]*sd[*(member_ind_n+j)]*sd[*(member_ind_n+k)];
-					}
 					for(i=0; i<Pos_L; i++){
 						Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*Pos[i]+p_n*j+k];
 					}
@@ -332,7 +325,6 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 			free(Corr_n);
 			free(Z_n);
 			free(U_n);
-			free(Z_pos_n);
 			free(S);		
 		}
 	}//end iteration across block diagonals
