@@ -11,7 +11,9 @@
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit: whether to conduct model refitting
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
@@ -27,7 +29,7 @@
 # edge.list: list of detected edges of length K
 
 LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
-                 refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
+                 refit.type = "glasso", epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
                  fit.corr = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
@@ -42,6 +44,16 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     fit.type <- 2
   } else {
     stop("fit.type must be 'glasso', 'pseudo' or 'space'!")
+  }
+  
+  if(refit.type == "glasso") {
+    refit.type <- 0
+  } else if(refit.type == "likelihood") {
+    refit.type <- 1
+  } else if(refit.type == "pseudo") {
+    refit.type <- 2
+  } else {
+    stop("refit.type must be 'glasso', 'likelihood' or 'pseudo'!")
   }
   
   if(any(!pos %in% 1:N)) {
@@ -77,7 +89,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     
     if(length(lambda) == 1) {
       
-      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step)
+      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step)
       
       if(print.detail) {
         cat("Complete all!\n")
@@ -89,7 +101,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       for(lambda.l in lambda.list) {
         
-        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit, epi.abs, epi.rel, max.step)
+        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit.type, epi.abs, epi.rel, max.step)
         idx <- which(lambda == lambda.l)
         
         for(i in idx) {
@@ -130,7 +142,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     registerDoParallel(cl)
     
     result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
-      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, print.detail)
+      LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit.type, epi.abs, epi.rel, max.step, print.detail)
     
     stopCluster(cl)
     
@@ -168,7 +180,9 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit: whether to conduct model refitting
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
@@ -180,7 +194,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # edge.num: detected edge number
 # edge: detected edges
 
-LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi.rel, max.step, print.detail) {
+LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit.type, epi.abs, epi.rel, max.step, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -194,6 +208,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   Corr.sq <- apply(Corr[, , Nd.index] ^ 2, c(1, 2), sum)
   
   Z.vec <- rep(0, p*p)
+  Z.pos.vec <- rep(0, p*p)
   edge.num <- 0
   
   lambda <- sqrt(Nd) * lambda
@@ -221,6 +236,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
                as.double(Corr[, , Nd.index]),
                as.double(sd.X),
                Z.vec = as.double(Z.vec),
+               Z.pos.vec = as.double(Z.pos.vec),
                as.double(lambda),
                as.double(rho),
                as.double(epi.abs),
@@ -236,16 +252,21 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   edge.num <- result$edge.num
   edge <- which(as.matrix(Omega) != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+  
+  if(refit.type == 0) {
     
-  edge.zero <- which(as.matrix(Omega) == 0, arr.ind = T)
-  edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    edge.zero <- which(as.matrix(Omega) == 0, arr.ind = T)
+    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
     
-  Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
-  Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-  if(any((eigen(Omega.rf, symmetric = T)$values) < 0)) {
-    Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+    Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
+    Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+    if(any((eigen(Omega.rf, symmetric = T)$values) < 0)) {
+      Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+    }
+    Omega.rf <- Matrix(Omega.rf, sparse = T)
+  } else {
+    Omega.rf <- Matrix(result$Z.pos.vec, p, p, sparse = T)
   }
-  Omega.rf <- Matrix(Omega.rf, sparse = T)
   
   if(print.detail) {
     cat("Complete: t =", round((pos-1) / (N-1), 2), "\n")
@@ -274,7 +295,9 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit: whether to conduct model refitting
+# refit.type: 0: likelihood estimation using 'glasso' package, 
+#             1: likelihood estimation using ADMM, 
+#             2: pseudo likelihood estimation
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
@@ -297,6 +320,7 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
   Corr.sq <- apply(Corr ^ 2, c(1, 2), sum)
   
   Z.vec <- rep(0, p*p*K)
+  Z.pos.vec <- rep(0, p*p*K)
   edge.num <- 0
   
   lambda <- sqrt(N) * lambda
@@ -324,6 +348,7 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
                as.double(Corr),
                as.double(sd.X),
                Z.vec = as.double(Z.vec),
+               Z.pos.vec = as.double(Z.pos.vec),
                as.double(lambda),
                as.double(rho),
                as.double(epi.abs),
@@ -340,17 +365,22 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit.type, epi.abs, 
   edge <- which(as.matrix(Omega.list[[1]]) != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
   edge.list <- rep(list(edge), K)
+  
+  if(refit.type == 0) {
     
-  Omega.rf.list <- vector("list", K)
-  edge.zero <- which(as.matrix(Omega.list[[1]]) == 0, arr.ind = T)
-  edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
-  for(k in 1:K) {
-    Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-    Omega.rf.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-    if(any((eigen(Omega.rf.list[[k]], symmetric = T)$values) < 0)) {
-      Omega.rf.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+    Omega.rf.list <- vector("list", K)
+    edge.zero <- which(as.matrix(Omega.list[[1]]) == 0, arr.ind = T)
+    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    for(k in 1:K) {
+      Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
+      Omega.rf.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+      if(any((eigen(Omega.rf.list[[k]], symmetric = T)$values) < 0)) {
+        Omega.rf.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+      }
+      Omega.rf.list[[k]] <- Matrix(Omega.rf.list[[k]], sparse = T)
     }
-    Omega.rf.list[[k]] <- Matrix(Omega.rf.list[[k]], sparse = T)
+  } else {
+    Omega.rf.list <- sapply(1:K, function(k) Matrix(result$Z.pos.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = T))
   }
   
   result <- new.env()
