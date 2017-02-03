@@ -62,7 +62,7 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 	//iteration across lambda
 	for(i=(Lambda_L-1); i>=0; i--){
 
-		if((*S_L)>((*thres)*p)){
+		if((*S_L) > ((*thres)*p)){
 			Z[p*p*Pos_L*(i+1)-1] = -1;
 			continue;
 		}
@@ -99,11 +99,11 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *Pos,
 	//iteration across block diagonals
 	for(n=0; n<no; n++){
 
-		p_n = csize_ind[n+1]-csize_ind[n];
+		p_n = csize_ind[n+1] - csize_ind[n];
 		member_ind_n = &member_ind[csize_ind[n]];
 
 		//block diagonal with dimension equals one
-		if(p_n==1){
+		if(p_n == 1){
 			if(*pseudo_fit == 0){
 				for(i=0; i<L; i++){
 					Z[p*p*i+p*(*member_ind_n)+(*member_ind_n)] = 1/Corr[p*p*i+p*(*member_ind_n)+(*member_ind_n)];
@@ -178,7 +178,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 	//iteration across block diagonals
 	for(n=0; n<no; n++){
     
-		p_n = csize_ind[n+1]-csize_ind[n];
+		p_n = csize_ind[n+1] - csize_ind[n];
 		member_ind_n = &member_ind[csize_ind[n]];
     
 		//block diagonal with dimension equals one
@@ -277,16 +277,16 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 				&lwork, iwork, &liwork, &info);
 			
 			for(j=0; j<p; j++){
-				eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho))/(2*rho);
+				eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho)) / (2*rho);
 			}
 			for(j=0; j<p; j++){
 				for(k=j; k<p; k++){
 					index_ijk = p*p*i+p*j+k;
 					Omega[index_ijk] = 0;
 					for(m=0; m<p; m++){
-						Omega[index_ijk] += eig_val[m]*eig_vec[p*m+j]*eig_vec[p*m+k];
+						Omega[index_ijk] += eig_val[m] * eig_vec[p*m+j] * eig_vec[p*m+k];
 					}
-					U[index_ijk] += alpha*Omega[index_ijk] +(1-alpha)*Z[index_ijk];
+					U[index_ijk] += alpha * Omega[index_ijk] + (1-alpha) * Z[index_ijk];
 				}
 				index_ijk = p*p*i+p*j+j;
 				s += pow((U[index_ijk] - Z[index_ijk]), 2)/2;
@@ -305,7 +305,7 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 					temp_1 += pow(U[p*p*i+p*j+k], 2);
 					temp_2 += pow(Omega[p*p*i+p*j+k], 2);
 				}
-				coef = 1 - lambda/(rho*sqrt(temp_1));
+				coef = 1 - lambda / (rho * sqrt(temp_1));
 				if(coef <= 0){
 					for(i=0; i<L; i++){
 						index_ijk = p*p*i+p*j+k;
@@ -319,10 +319,10 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 					for(i=0; i<L; i++){
 						index_ijk = p*p*i+p*j+k;
 						temp = Z[index_ijk];
-						Z[index_ijk] = U[index_ijk]*coef;
+						Z[index_ijk] = U[index_ijk] * coef;
 						U[index_ijk] -= Z[index_ijk];
 						r += pow((Omega[index_ijk] - Z[index_ijk]), 2);
-						s += pow(Z[index_ijk]-temp, 2);
+						s += pow(Z[index_ijk] - temp, 2);
 						epi_pri_2 += pow(Z[index_ijk], 2);
 						epi_dual += pow(U[index_ijk], 2);
 					}
@@ -332,9 +332,9 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 		}
 
 		r = sqrt(2*r);
-		s = rho*sqrt(2*s);
-		epi_pri = sqrt(L*p)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
-		epi_dual = sqrt(L*p)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
+		s = rho * sqrt(2*s);
+		epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+		epi_dual = sqrt(L*p) * epi_abs + epi_rel * rho * sqrt(2*epi_dual);
 		
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
@@ -387,7 +387,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 			for(k=j; k<p; k++){
 				Chol[p*p*i+p*j+k] = Sigma[p*p*i+p*j+k];
 			}
-			Chol[p*p*i+p*j+j]+=rho;
+			Chol[p*p*i+p*j+j] += rho;
 		}
 		F77_CALL(dpotrf)("L", P, (Chol+p*p*i), P, &info);
 	}
@@ -401,17 +401,17 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 			for(j=0; j<p; j++){
 				Givens_rotation(Chol_ij, (Chol+p*p*i), P, &j);
 				for(k=0; k<j; k++){
-					C[k] = rho*(Z[p_1*p*i+p_1*j+k]-U[p_1*p*i+p_1*j+k])+Sigma[p*p*i+p*j+k];
+					C[k] = rho * (Z[p_1*p*i+p_1*j+k] - U[p_1*p*i+p_1*j+k]) + Sigma[p*p*i+p*j+k];
 				}
 				for(k=j; k<p_1; k++){
-					C[k] = rho*(Z[p_1*p*i+p_1*j+k]-U[p_1*p*i+p_1*j+k])+Sigma[p*p*i+p*j+k+1];
+					C[k] = rho * (Z[p_1*p*i+p_1*j+k] - U[p_1*p*i+p_1*j+k]) + Sigma[p*p*i+p*j+k+1];
 				}
 				F77_CALL(dtrsm)("L", "L", "N", "N", &p_1, &nrhs, &alp, Chol_ij, &p_1, C, &p_1);
 				F77_CALL(dtrsm)("L", "L", "T", "N", &p_1, &nrhs, &alp, Chol_ij, &p_1, C, &p_1);
 				for(k=0; k<p_1; k++){
 					index_ijk = p_1*p*i+p_1*j+k;
 					Omega[index_ijk] = C[k];
-					U[index_ijk] += alpha*C[k]+(1-alpha)*Z[index_ijk];
+					U[index_ijk] += alpha * C[k] + (1-alpha) * Z[index_ijk];
 				}
 			}
 		}
@@ -423,7 +423,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 					temp_1 += (pow(U[p_1*p*i+p_1*j+k], 2) + pow(U[p_1*p*i+p_1*k+j-1], 2));
 					temp_2 += (pow(Omega[p_1*p*i+p_1*j+k], 2) + pow(Omega[p_1*p*i+p_1*k+j-1], 2));
 				}
-				coef = 1 - sqrt(2)*lambda/(rho*sqrt(temp_1));
+				coef = 1 - sqrt(2) * lambda / (rho * sqrt(temp_1));
 				if(coef <= 0){
 					for(i=0; i<L; i++){
 						index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
@@ -438,12 +438,12 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 					for(i=0; i<L; i++){
 						index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
 						temp = Z[index_ijk], temp_1 = Z[index_ikj];
-						Z[index_ijk] = U[index_ijk]*coef;
-						Z[index_ikj] = U[index_ikj]*coef;
+						Z[index_ijk] = U[index_ijk] * coef;
+						Z[index_ikj] = U[index_ikj] * coef;
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
 						r += (pow((Omega[index_ijk] - Z[index_ijk]), 2) + pow((Omega[index_ikj] - Z[index_ikj]), 2));
-						s += (pow(Z[index_ijk]-temp, 2) + pow(Z[index_ikj]-temp_1, 2));
+						s += (pow(Z[index_ijk] - temp, 2) + pow(Z[index_ikj] - temp_1, 2));
 						epi_pri_2 += (pow(Z[index_ijk], 2) + pow(Z[index_ikj], 2));
 						epi_dual += (pow(U[index_ijk], 2) + pow(U[index_ikj], 2));
 					}
@@ -453,9 +453,9 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		}
 		
 		r = sqrt(r);
-		s = rho*sqrt(s);
-		epi_pri = sqrt(L*p)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
-		epi_dual = sqrt(L*p)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
+		s = rho * sqrt(s);
+		epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+		epi_dual = sqrt(L*p) * epi_abs + epi_rel * rho * sqrt(2*epi_dual);
 		
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
@@ -509,9 +509,9 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+((k>=j)?(k+1):k)];
 			}
 			for(k=j; k<p; k++){
-				Chol[p*p*i+p*j+k] = Sigma[p*p*i+p*j+k]*sqrt(d[p*i+j]*d[p*i+k]);
+				Chol[p*p*i+p*j+k] = Sigma[p*p*i+p*j+k] * sqrt(d[p*i+j] * d[p*i+k]);
 			}
-			Chol[p*p*i+p*j+j]+=rho;
+			Chol[p*p*i+p*j+j] += rho;
 		}
 		F77_CALL(dpotrf)("L", P, (Chol+p*p*i), P, &info);
 	}
@@ -525,17 +525,17 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 			for(j=0; j<p; j++){
 				Givens_rotation(Chol_ij, (Chol+p*p*i), P, &j);
 				for(k=0; k<j; k++){
-					C[k] = rho*(Z[p_1*p*i+p_1*j+k]-U[p_1*p*i+p_1*j+k])+Sigma[p*p*i+p*j+k]*sqrt(d[p*i+j]*d[p*i+k]);
+					C[k] = rho * (Z[p_1*p*i+p_1*j+k] - U[p_1*p*i+p_1*j+k]) + Sigma[p*p*i+p*j+k] * sqrt(d[p*i+j] * d[p*i+k]);
 				}
 				for(k=j; k<p_1; k++){
-					C[k] = rho*(Z[p_1*p*i+p_1*j+k]-U[p_1*p*i+p_1*j+k])+Sigma[p*p*i+p*j+k+1]*sqrt(d[p*i+j]*d[p*i+k+1]);
+					C[k] = rho * (Z[p_1*p*i+p_1*j+k] - U[p_1*p*i+p_1*j+k]) + Sigma[p*p*i+p*j+k+1] * sqrt(d[p*i+j] * d[p*i+k+1]);
 				}
 				F77_CALL(dtrsm)("L", "L", "N", "N", &p_1, &nrhs, &alp, Chol_ij, &p_1, C, &p_1);
 				F77_CALL(dtrsm)("L", "L", "T", "N", &p_1, &nrhs, &alp, Chol_ij, &p_1, C, &p_1);
 				for(k=0; k<p_1; k++){
 					index_ijk = p_1*p*i+p_1*j+k;
 					Omega[index_ijk] = C[k];
-					U[index_ijk] += alpha*C[k]+(1-alpha)*Z[index_ijk];
+					U[index_ijk] += alpha * C[k] + (1-alpha) * Z[index_ijk];
 				}
 			}
 		}
@@ -549,7 +549,7 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 					temp_1 += (pow(U[index_ijk], 2) + pow(U[index_ikj], 2));
 					temp_2 += (pow(Omega[index_ijk], 2) + pow(Omega[index_ikj], 2));
 				}
-				coef = 1 - lambda/(rho*sqrt(coef));
+				coef = 1 - lambda / (rho * sqrt(coef));
 				if(coef <= 0){
 					for(i=0; i<L; i++){
 						index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
@@ -564,12 +564,12 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 					for(i=0; i<L; i++){
 						index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
 						temp = Z[index_ijk], temp_1 = Z[index_ikj];
-						Z[index_ijk] = coef*(U[index_ijk] + U[index_ikj])/2;
+						Z[index_ijk] = coef * (U[index_ijk] + U[index_ikj])/2;
 						Z[index_ikj] = Z[index_ijk];
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
 						r += (pow((Omega[index_ijk] - Z[index_ijk]), 2) + pow((Omega[index_ikj] - Z[index_ikj]), 2));
-						s += (pow(Z[index_ijk]-temp, 2) + pow(Z[index_ikj]-temp_1, 2));
+						s += (pow(Z[index_ijk] - temp, 2) + pow(Z[index_ikj] - temp_1, 2));
 						epi_pri_2 += 2*pow(Z[index_ijk], 2);
 						epi_dual += (pow(U[index_ijk], 2) + pow(U[index_ikj], 2));
 					}
@@ -579,9 +579,9 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 		}
 		
 		r = sqrt(r);
-		s = rho*sqrt(s);
-		epi_pri = sqrt(L*p)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
-		epi_dual = sqrt(L*p)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
+		s = rho * sqrt(s);
+		epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+		epi_dual = sqrt(L*p) * epi_abs + epi_rel * rho * sqrt(2*epi_dual);
 		
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
@@ -630,15 +630,15 @@ void ADMM_SPACE_d(double *Sigma, double *d, double *Z, int *P, int *LL){
 			}
 			for(k=0; k<p; k++){
 				if(rho[k]!=0){
-					d_new[j] += pow(rho[k], 2)*d[p*i+k]*Sigma[p*p*i+p*k+k];
+					d_new[j] += pow(rho[k], 2) * d[p*i+k] * Sigma[p*p*i+p*k+k];
 					for(m=k+1; m<p; m++){
 						if(rho[m]!=0){
-							d_new[j] += 2*rho[k]*rho[m]*sqrt(d[p*i+k]*d[p*i+m])*Sigma[p*p*i+p*k+m];
+							d_new[j] += 2 * rho[k] * rho[m] * sqrt(d[p*i+k] * d[p*i+m]) * Sigma[p*p*i+p*k+m];
 						}
 					}
 				}
 			}
-			d_new[j] = 1/(-d_new[j]/d[p*i+j]+Sigma[p*p*i+p*j+j]);
+			d_new[j] = 1 / (-d_new[j] / d[p*i+j] + Sigma[p*p*i+p*j+j]);
 		}
 		for(j=0; j<p; j++){
 			d[p*i+j] = d_new[j];
@@ -667,13 +667,13 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J){
 	}
 
 	for(k=j; k<p_1; k++){
-		r = sqrt(pow(U[p_1*k+k], 2)+pow(Chol[p*(k+1)+k+1], 2));
-		c = U[p_1*k+k]/r;
-		s = -Chol[p*(k+1)+k+1]/r;
+		r = sqrt(pow(U[p_1*k+k], 2) + pow(Chol[p*(k+1)+k+1], 2));
+		c = U[p_1*k+k] / r;
+		s = -Chol[p*(k+1)+k+1] / r;
 		U[p_1*k+k] = r;	
 		for(m=k+1; m<p_1; m++){
-			U[p_1*(k+1)+m] = s*U[p_1*k+m]+c*Chol[p*(k+1)+m+1];
-			U[p_1*k+m] = c*U[p_1*k+m]-s*Chol[p*(k+1)+m+1];
+			U[p_1*(k+1)+m] = s * U[p_1*k+m] + c * Chol[p*(k+1)+m+1];
+			U[p_1*k+m] = c * U[p_1*k+m] - s * Chol[p*(k+1)+m+1];
 		}
 	}
 }
