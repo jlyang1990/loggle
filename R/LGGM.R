@@ -21,8 +21,8 @@
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# Omega.list: list of estimated precision matrices of length K (number of time points)
-# Omega.rf.list: list of refitted precision matrices of length K
+# Omega.list: if refit = TRUE: list of refitted precision matrices of length K (number of time points)
+#             if refit = FALSE: list of estimated precision matrices of length K (number of time points)
 # edge.num.list: list of detected edge numbers of length K
 # edge.list: list of detected edges of length K
 
@@ -69,7 +69,6 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
   cat("Estimating graphs...\n")
   
   Omega.list <- vector("list", K)
-  Omega.rf.list <- vector("list", K)
   edge.num.list <- rep(0, K)
   edge.list <- vector("list", K)
   
@@ -94,7 +93,6 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
         
         for(i in idx) {
           Omega.list[[i]] <- result.l$Omega.list[[i]]
-          Omega.rf.list[[i]] <- result.l$Omega.rf.list[[i]]
           edge.num.list[i] <- result.l$edge.num.list[i]
           edge.list[[i]] <- result.l$edge.list[[i]]
         }
@@ -106,7 +104,6 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       result <- new.env()
       result$Omega.list <- Omega.list
-      result$Omega.rf.list <- Omega.rf.list
       result$edge.num.list <- edge.num.list
       result$edge.list <- edge.list
       result <- as.list(result)
@@ -139,14 +136,12 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       result.k <- result[[k]]
       
       Omega.list[[k]] <- result.k$Omega
-      Omega.rf.list[[k]] <- result.k$Omega.rf
       edge.num.list[[k]] <- result.k$edge.num
       edge.list[[k]] <- result.k$edge
     }
     
     result <- new.env()
     result$Omega.list <- Omega.list
-    result$Omega.rf.list <- Omega.rf.list
     result$edge.num.list <- edge.num.list
     result$edge.list <- edge.list
     result <- as.list(result)
@@ -175,8 +170,8 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# Omega: estimated precision matrix
-# Omega.rf: refitted precision matrix
+# Omega: if refit = TRUE: refitted precision matrix
+#        if refit = FALSE: estimated precision matrix
 # edge.num: detected edge number
 # edge: detected edges
 
@@ -240,11 +235,11 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
     edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
     
     Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
-    Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-    if(any((eigen(Omega.rf, symmetric = T)$values) < 0)) {
-      Omega.rf <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+    Omega <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+    if(any((eigen(Omega, symmetric = T)$values) < 0)) {
+      Omega <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
     }
-    Omega.rf <- Matrix(Omega.rf, sparse = T)
+    Omega <- Matrix(Omega, sparse = T)
   }
   
   if(print.detail) {
@@ -253,7 +248,6 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   
   result <- new.env()
   result$Omega <- Omega
-  result$Omega.rf <- Omega.rf
   result$edge.num <- edge.num
   result$edge <- edge
   result <- as.list(result)
@@ -280,8 +274,8 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
 # max.step: maximum steps in ADMM iteration
 
 # Output ###
-# Omega: list of estimated precision matrices of length K (number of time points)
-# Omega.rf: list of refitted precision matrices of length K
+# Omega: if refit = TRUE: list of refitted precision matrices of length K (number of time points)
+#        if refit = FALSE: list of estimated precision matrices of length K
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
@@ -340,22 +334,22 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
   
   if(refit) {
     
-    Omega.rf.list <- vector("list", K)
     edge.zero <- which(as.matrix(Omega.list[[1]]) == 0, arr.ind = T)
     edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    
+    Omega.list <- vector("list", K)
     for(k in 1:K) {
       Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-      Omega.rf.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
-      if(any((eigen(Omega.rf.list[[k]], symmetric = T)$values) < 0)) {
-        Omega.rf.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+      Omega.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+      if(any((eigen(Omega.list[[k]], symmetric = T)$values) < 0)) {
+        Omega.list[[k]] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
       }
-      Omega.rf.list[[k]] <- Matrix(Omega.rf.list[[k]], sparse = T)
+      Omega.list[[k]] <- Matrix(Omega.list[[k]], sparse = T)
     }
   }
   
   result <- new.env()
   result$Omega.list <- Omega.list
-  result$Omega.rf.list <- Omega.rf.list
   result$edge.num.list <- edge.num.list
   result$edge.list <- edge.list
   result <- as.list(result)
