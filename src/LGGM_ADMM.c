@@ -276,7 +276,6 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
 			double *Corr_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *Z_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *U_n = (double *) malloc(p_n*p_n*L*sizeof(double));
-			int *S = (int *) malloc(p_n*(p_n-1)*sizeof(int));
       
 			for(i=0; i<L; i++){
 				for(j=0; j<p_n; j++){
@@ -321,8 +320,7 @@ void ADMM_simple(int *P, int *member_ind, int *csize_ind, int *No, int *LL, int 
       
 			free(Corr_n);
 			free(Z_n);
-			free(U_n);
-			free(S);		
+			free(U_n);		
 		}
 	}//end iteration across block diagonals
 }
