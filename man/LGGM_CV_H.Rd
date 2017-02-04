@@ -33,7 +33,7 @@ num.thread = 1, print.detail = TRUE)
   \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4. When it is a scalar, absolute tolerances are the same for all elements in \code{d.list}}
   \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2. When it is a scalar, relative tolerances are the same for all elements in \code{d.list}}
   \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
-  \item{detrend}{logic: if TRUE, detrend each variable in data matrix by subtracting kernel weighted moving average, if FALSE, detrend each variable in data matrix by subtracting overall average, default = TRUE}
+  \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centralization), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
   \item{h.correct}{logic: if TRUE, apply bandwidth correction to h in calculating cv scores for validation sets, default = TRUE}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}

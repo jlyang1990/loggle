@@ -25,7 +25,7 @@ fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
   \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
-  \item{detrend}{logic: if TRUE, detrend each variable in data matrix by subtracting kernel weighted moving average, if FALSE, detrend each variable in data matrix by subtracting overall average, default = TRUE}
+  \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centralization), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
   \item{print.detail}{logic: if TRUE, print details in model fitting procedure, default = TRUE}
