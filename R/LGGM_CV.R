@@ -45,14 +45,14 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   D <- length(d.list)
   L <- length(lambda.list)
   
-  if(fit.type == "glasso") {
+  if(fit.type == "likelihood") {
     fit.type <- 0
   } else if(fit.type == "pseudo") {
     fit.type <- 1
   } else if(fit.type == "space") {
     fit.type <- 2
   } else {
-    stop("fit.type must be 'glasso', 'pseudo' or 'space'!")
+    stop("fit.type must be 'likelihood', 'pseudo' or 'space'!")
   }
   
   if(any(!pos %in% 1:N)) {

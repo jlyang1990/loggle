@@ -8,7 +8,7 @@ This function is to efficiently implement the ADMM (alternating directions metho
 
 \usage{
 LGGM(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
-d = 0.2, lambda = 0.25, fit.type = c("glasso", 
+d = 0.2, lambda = 0.25, fit.type = c("likelihood", 
 "pseudo", "space"), refit = TRUE, epi.abs = 1e-5, 
 epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
 fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
@@ -20,7 +20,7 @@ fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
   \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix}
   \item{d}{a scalar or a vector of the same length as \code{pos}: width of neighborhood centered at each position where graph is estimated. When it is a scalar, widths of neighborhoods are the same across all positions}
   \item{lambda}{a scalar or a vector of the same length as \code{pos}: tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
-  \item{fit.type}{a string: "glasso" -- graphical Lasso estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
+  \item{fit.type}{a string: "likelihood" -- likelihood estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
   \item{refit}{logic: whether to conduct model refitting after graph structures are learned, default = TRUE}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
@@ -32,7 +32,7 @@ fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
 }
   
 \details{
-The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "glasso"}), with similar (or sometimes even better) model fitting performance.
+The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "likelihood"}), with similar (or sometimes even better) model fitting performance.
 
 If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is required to detrend each variable in data matrix by subtracting each kernel weighted moving average.
 
