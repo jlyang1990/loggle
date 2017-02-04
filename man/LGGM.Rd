@@ -53,6 +53,10 @@ Peng, J., Wang, P., Zhou, N., & Zhu, J. (2012). Partial correlation estimation b
 Yang, J. and Peng, J.
 }
 
+\seealso{
+\link{LGGM.cv} for learning time-varying graphical models via cross validation, \link{LGGM.cv.h} for learning time-varying graphical models via cross validation (with h selection), \link{LGGM.cv.select} for model selection based on cross validation results, and \link{LGGM.refit} for model refitting based on estimated graphs.
+}
+
 \examples{
 data(example)  # load data matrix
 dim(X)  # dimension of data matrix
