@@ -10,10 +10,10 @@ Depends:
   R (>= 3.0.2),
   Matrix (>= 1.2),
   doParallel (>= 1.0.8),
-  igraph (>= 0.7)
+  igraph (>= 0.7),
+  glasso (>= 1.8)
 Imports:
-  sm,
-  glasso
+  sm
 License: GPL (>= 2)
 NeedsCompilation: yes
 Packaged: 2016-10-06 10:58:06 UTC; jiepeng
