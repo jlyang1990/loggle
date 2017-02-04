@@ -12,7 +12,6 @@ h.list = seq(0.1, 0.35, 0.05),
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = seq(0.15, 0.3, 0.05), cv.fold = 5, 
 fit.type = c("likelihood", "pseudo", "space"), 
-return.select = TRUE, 
 select.type = c("all_flexible", "d_fixed", "all_fixed"), 
 cv.vote.thres = 0.8, early.stop.thres = 5, 
 epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, 
@@ -34,11 +33,11 @@ num.thread = 1, print.detail = TRUE)
   \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4. When it is a scalar, absolute tolerances are the same for all elements in \code{d.list}}
   \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2. When it is a scalar, relative tolerances are the same for all elements in \code{d.list}}
   \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
-  \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or subtracting overall average, default = TRUE, which is kernel weighted moving average}
-  \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
-  \item{h.correct}{logic: whether to apply bandwidth correction to h in calculating cv scores for validation sets, default = TRUE}
+  \item{detrend}{logic: if TRUE, detrend each variable in data matrix by subtracting kernel weighted moving average, if FALSE, detrend each variable in data matrix by subtracting overall average, default = TRUE}
+  \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
+  \item{h.correct}{logic: if TRUE, apply bandwidth correction to h in calculating cv scores for validation sets, default = TRUE}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
-  \item{print.detail}{logic: whether to print details in model fitting procedure, default = TRUE}
+  \item{print.detail}{logic: if TRUE, print details in model fitting procedure, default = TRUE}
 }
   
 \details{

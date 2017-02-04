@@ -21,14 +21,14 @@ fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
   \item{d}{a scalar or a vector of the same length as \code{pos} with values between 0 and 1: width of neighborhood centered at each position where graph is estimated, with the assumption that time points lie in the range from 0 to 1. When it is a scalar, widths of neighborhoods are the same across all positions, default = 0.2}
   \item{lambda}{a scalar or a vector of the same length as \code{pos}: tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions, default = 0.25}
   \item{fit.type}{a string: "likelihood" -- likelihood estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
-  \item{refit}{logic: whether to conduct model refitting after graph structures are learned, default = TRUE}
+  \item{refit}{logic: if TRUE, conduct additional model refitting after graph structures are learned, default = TRUE}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
   \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
-  \item{detrend}{logic: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or subtracting overall average, default = TRUE, which is kernel weighted moving average}
-  \item{fit.corr}{logic: whether to use sample correlation matrix rather than sample covariance matrix in model fitting, default = TRUE, which is sample correlation matrix}
+  \item{detrend}{logic: if TRUE, detrend each variable in data matrix by subtracting kernel weighted moving average, if FALSE, detrend each variable in data matrix by subtracting overall average, default = TRUE}
+  \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
-  \item{print.detail}{logic: whether to print details in model fitting procedure}
+  \item{print.detail}{logic: if TRUE, print details in model fitting procedure, default = TRUE}
 }
   
 \details{

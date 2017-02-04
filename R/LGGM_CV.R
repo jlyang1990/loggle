@@ -167,7 +167,6 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# return.select: whether to return results from LGGM.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
