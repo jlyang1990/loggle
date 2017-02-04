@@ -72,8 +72,7 @@ pos.example <- round(seq(0.005, 0.995, length=25)
 result <- LGGM.cv(X, pos = pos.example, h = 0.1, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = 10 ^ seq(-0.8, -0.2, length = 4), 
-fit.type = "pseudo", cv.vote.thres = 0.8, 
-epi.abs = 1e-4, epi.rel = 1e-2, num.thread = 2)
+fit.type = "pseudo", num.thread = 2)
 
 # graphs at some positions of time points
 # in selected model
