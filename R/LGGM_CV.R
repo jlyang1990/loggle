@@ -97,6 +97,16 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   colnames(cv.score) <- d.list
   cv.result.list <- vector("list", cv.fold)
   
+  if(d.list[1] != 1 && num.thread > 1) {
+    
+    if(print.detail) {
+      cl <- makeCluster(num.thread, outfile = "")
+    } else {
+      cl <- makeCluster(num.thread)
+    }
+    registerDoParallel(cl)
+  }
+  
   for(i in 1:cv.fold) {
     
     cat("\nRunning fold", i, "out of", cv.fold, "folds...\n")
@@ -105,7 +115,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     pos.train <- (1:N)[-pos.test]
     
     result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
-                                max.step, fit.corr, num.thread, print.detail)
+                                max.step, fit.corr, print.detail)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
@@ -122,7 +132,10 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     }
     
     rm(Sigma.test)
-    
+  }
+  
+  if(d.list[1] != 1 && num.thread > 1) {
+    stopCluster(cl)
   }
   
   cv.result <- new.env()
@@ -674,7 +687,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
 # edge: L by D by K list of edges
 
 LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
-                            max.step, fit.corr, num.thread, print.detail) {
+                            max.step, fit.corr, print.detail) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -703,18 +716,9 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
     
     if(d.list[D] == 1) {
       
-      if(print.detail) {
-        cl <- makeCluster(num.thread, outfile = "")
-      } else {
-        cl <- makeCluster(num.thread)
-      }
-      registerDoParallel(cl)
-      
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], epi.rel[-D], 
                       max.step, print.detail)
-      
-      stopCluster(cl)
       
       for(k in 1:K) {
         
@@ -734,18 +738,9 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
     } else {
       
-      if(print.detail) {
-        cl <- makeCluster(num.thread, outfile = "")
-      } else {
-        cl <- makeCluster(num.thread)
-      }
-      registerDoParallel(cl)
-      
       result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
         LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                       print.detail)
-      
-      stopCluster(cl)
       
       for(k in 1:K) {
         
