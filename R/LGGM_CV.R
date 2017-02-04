@@ -42,7 +42,6 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   p <- dim(X)[1]
   N <- dim(X)[2]
   K <- length(pos)
-  D <- length(d.list)
   L <- length(lambda.list)
   
   if(fit.type == "likelihood") {
@@ -67,6 +66,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     d.list <- c(d.list[!d.list.global], 1)
   }
   d.list <- sort(d.list)
+  D <- length(d.list)
   cat("Using d.list:", d.list, "\n")
   
   lambda.list <- sort(lambda.list)
@@ -268,7 +268,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   if(select.type == "all_flexible") {
     
     for(k in 1:K) {
-      index <- which(cv.score.fold[, , k] == min(cv.score.fold[, , k]), arr.ind = T)
+      index <- which(cv.score.fold[, , k, drop = F] == min(cv.score.fold[, , k]), arr.ind = T)
       index <- index[nrow(index), ]
       d.index[k] <- index[2]
       lambda.index[k] <- index[1]
