@@ -14,7 +14,7 @@ LGGM.refit(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5))
   \item{X}{a p by N data matrix: p -- number of variables, N -- number of time points (sample size)}
   \item{pos}{a vector which is a subset of 1, 2, ..., N: positions of time points where graphs are estimated}
   \item{Omega.edge.list}{a list of the same length as \code{pos}: adjacency matrices at positions of time points specified by \code{pos}}
-  \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix}
+  \item{h}{a scalar between 0 and 1: bandwidth in kernel estimated sample covariance matrix, with the assumption that time points lie in the range from 0 to 1, default = 0.8*ncol(X)^(-1/5)}
 }
 
 \details{

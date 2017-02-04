@@ -34,7 +34,7 @@
 
 LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
                     d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
-                    lambda.list = seq(0.15, 0.35, length = 11), cv.fold = 5, fit.type = "pseudo",
+                    lambda.list = seq(0.15, 0.35, 0.02), cv.fold = 5, fit.type = "pseudo",
                     return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
                     epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
                     num.thread = 1, print.detail = TRUE) {
@@ -174,11 +174,10 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # cv.score.min.h: optimal cv scores across h's
 # cv.result.list: list of results from LGGM.cv of length H (number of h's)
 
-LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35), 
-                      d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = c(0.15, 0.2, 0.25, 0.3), cv.fold = 5, 
-                      fit.type = "pseudo", select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
-                      epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
-                      num.thread = 1, print.detail = TRUE) {
+LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
+                      lambda.list = seq(0.15, 0.3, 0.05), cv.fold = 5, fit.type = "pseudo", select.type = "all_flexible", 
+                      cv.vote.thres = 0.8, early.stop.thres = 5, epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, 
+                      detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   N <- dim(X)[2]
   H <- length(h.list)

@@ -10,7 +10,7 @@ This function is to efficiently conduct model selection via cross validation for
 LGGM.cv <- function(X, pos = 1:ncol(X), 
 h = 0.8*ncol(X)^(-1/5), d.list = c(0, 0.001, 0.01, 
 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
-lambda.list = seq(0.15, 0.35, length = 11), 
+lambda.list = seq(0.15, 0.35, 0.02), 
 cv.fold = 5, fit.type = c("likelihood", "pseudo", "space"), 
 return.select = TRUE, 
 select.type = c("all_flexible", "d_fixed", "all_fixed"), 
@@ -23,9 +23,9 @@ num.thread = 1, print.detail = TRUE)
 \arguments{
   \item{X}{a p by N data matrix: p -- number of variables, N -- number of time points (sample size)}
   \item{pos}{a vector which is a subset of 1, 2, ..., N: positions of time points where graphs are estimated}
-  \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix}
-  \item{d.list}{a vector: a grid of widths of neighborhood centered at each position where graph is estimated}
-  \item{lambda.list}{a vector: a grid of tuning parameters of Lasso penalty at each position where graph is estimated}
+  \item{h}{a scalar between 0 and 1: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix, with the assumption that time points lie in the range from 0 to 1, default = 0.8*ncol(X)^(-1/5)}
+  \item{d.list}{a vector with values between 0 and 1: a grid of widths of neighborhood centered at each position where graph is estimated, with the assumption that time points lie in the range from 0 to 1, default = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1)}
+  \item{lambda.list}{a vector: a grid of tuning parameters of Lasso penalty at each position where graph is estimated, default = seq(0.15, 0.35, 0.02)}
   \item{cv.fold}{a scalar: number of cv folds, default = 5}
   \item{fit.type}{a string: "likelihood" -- likelihood estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
   \item{return.select}{logic: whether to return model selection result, default = TRUE}

@@ -17,9 +17,9 @@ fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
 \arguments{
   \item{X}{a p by N data matrix: p -- number of variables, N -- number of time points (sample size)}
   \item{pos}{a vector which is a subset of 1, 2, ..., N: positions of time points where graphs are estimated}
-  \item{h}{a scalar: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix}
-  \item{d}{a scalar or a vector of the same length as \code{pos}: width of neighborhood centered at each position where graph is estimated. When it is a scalar, widths of neighborhoods are the same across all positions}
-  \item{lambda}{a scalar or a vector of the same length as \code{pos}: tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions}
+  \item{h}{a scalar between 0 and 1: bandwidth in kernel estimated sample covariance matrix or sample correlation matrix, with the assumption that time points lie in the range from 0 to 1, default = 0.8*ncol(X)^(-1/5)}
+  \item{d}{a scalar or a vector of the same length as \code{pos} with values between 0 and 1: width of neighborhood centered at each position where graph is estimated, with the assumption that time points lie in the range from 0 to 1. When it is a scalar, widths of neighborhoods are the same across all positions, default = 0.2}
+  \item{lambda}{a scalar or a vector of the same length as \code{pos}: tuning parameter of Lasso penalty at each position where graph is estimated. When it is a scalar, tuning parameters of Lasso penalty are the same across all positions, default = 0.25}
   \item{fit.type}{a string: "likelihood" -- likelihood estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
   \item{refit}{logic: whether to conduct model refitting after graph structures are learned, default = TRUE}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
