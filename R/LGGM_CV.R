@@ -351,9 +351,9 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
     edge.zero <- which(as.matrix(Omega.edge.list[[k]]) == 0, arr.ind = T)
     edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
     
-    Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 0, zero = edge.zero)$wi
+    Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero)$wi
     if(any((eigen(Omega.list[[k]], symmetric = T)$values) < 0)) {
-      Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+      Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
     
     cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
@@ -475,9 +475,9 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
         edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
           
         Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
-        Omega <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+        Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
         if(any((eigen(Omega, symmetric = T)$values) < 0)) {
-          Omega <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+          Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
         }
       
         Omega.list[[l, j]] <- Matrix(Omega, sparse = T)
@@ -610,9 +610,9 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
       Omega <- array(0, c(p, p, K))
       for(k in 1:K) {
         Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-        Omega[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero)$wi
+        Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
         if(any((eigen(Omega[, , k], symmetric = T)$values) < 0)) {
-          Omega[, , k] <- glasso::glasso(s = Sigma, rho = 0, zero = edge.zero, thr = 5*1e-5)$wi
+          Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
         }
       }
       
