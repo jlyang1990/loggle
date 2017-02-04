@@ -115,7 +115,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     pos.train <- (1:N)[-pos.test]
     
     result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
-                                max.step, fit.corr, print.detail)
+                                max.step, fit.corr, num.thread, print.detail)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
@@ -687,7 +687,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
 # edge: L by D by K list of edges
 
 LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
-                            max.step, fit.corr, print.detail) {
+                            max.step, fit.corr, num.thread, print.detail) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -716,9 +716,19 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
     
     if(d.list[D] == 1) {
       
-      result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-        LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], epi.rel[-D], 
-                      max.step, print.detail)
+      if(num.thread > 1) {
+        
+        result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
+          LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], epi.rel[-D], 
+                        max.step, print.detail)
+      } else {
+        
+        result <- vector("list", K)
+        for(k in 1:K) {
+          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D],
+                                       epi.rel[-D], max.step, print.detail)
+        }
+      }
       
       for(k in 1:K) {
         
@@ -738,9 +748,19 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
     } else {
       
-      result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-        LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
-                      print.detail)
+      if(num.thread > 1) {
+        
+        result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
+          LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
+                        print.detail)
+      } else {
+        
+        result <- vector("list", K)
+        for(k in 1:K) {
+          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel,
+                                       max.step, print.detail)
+        }
+      }
       
       for(k in 1:K) {
         
