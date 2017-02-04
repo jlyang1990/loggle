@@ -97,24 +97,6 @@ print(result$cv.select.result$lambda.min)
 edge.num.list.min <- result$cv.select.result$edge.num.list.min
 print(edge.num.list.min)
 
-# graphs at some positions of time points
-# in selected model
-par(mfrow = c(2, 4))
-pos.plot <- pos.example[round(seq(1, length(pos.example), 
-length = 16))]
-for(k in 1:length(pos.plot)) {
-  adj.matrix <- (result$cv.select.result$Omega.edge.list.min
-  [[which(pos.example == pos.plot[k])]]) != 0
-  net <- graph.adjacency(adj.matrix, mode = "undirected", 
-  diag = FALSE)
-  set.seed(0)
-  plot(net, vertex.size = 10, vertex.color = "lightblue", 
-  vertex.label = NA, edge.color = "black", layout = 
-  layout_in_circle, margin = rep(0, 4))
-  title(main = paste("t =", round(pos.plot[k]/(ncol(X)-1), 
-  2)), cex.main = 0.8)
-}
-
 # false discovery rate (FDR) and power based on 
 # true precision matrices for selected model
 p <- dim(X)[1]
