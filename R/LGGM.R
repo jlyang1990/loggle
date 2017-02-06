@@ -244,6 +244,9 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
     
     edge.zero <- which(as.matrix(Omega) == 0, arr.ind = T)
     edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    if(nrow(edge.zero) == 0) {
+      edge.zero = NULL
+    }
     
     Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
     Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi  # set rho = 1e-10 instead of 0 to avoid warning
@@ -347,6 +350,9 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
     
     edge.zero <- which(as.matrix(Omega.list[[1]]) == 0, arr.ind = T)
     edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    if(nrow(edge.zero) == 0) {
+      edge.zero = NULL
+    }
     
     Omega.list <- vector("list", K)
     for(k in 1:K) {
