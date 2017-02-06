@@ -98,13 +98,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   cv.result.list <- vector("list", cv.fold)
   
   if(d.list[1] != 1 && num.thread > 1) {
-    
-    if(print.detail) {
-      cl <- makeCluster(num.thread, outfile = "")
-    } else {
-      cl <- makeCluster(num.thread)
-    }
-    registerDoParallel(cl)
+    registerDoParallel(num.thread)
   }
   
   for(i in 1:cv.fold) {
@@ -132,10 +126,6 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     }
     
     rm(Sigma.test)
-  }
-  
-  if(d.list[1] != 1 && num.thread > 1) {
-    stopCluster(cl)
   }
   
   cv.result <- new.env()
