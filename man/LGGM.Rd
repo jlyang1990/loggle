@@ -60,10 +60,12 @@ Yang, J. and Peng, J.
 \examples{
 data(example)  # load data matrix
 dim(X)  # dimension of data matrix
+p <- nrow(X)  # number of variables
 
 # positions of time points to estimate graphs
 pos.example <- round(seq(0.02, 0.98, length=49)
 *(ncol(X)-1)+1, 0)
+K <- length(pos.example)
 # estimate time-varying graphs
 result <- LGGM(X, pos = pos.example, h = 0.1, 
 d = 0.15, lambda = 0.225, fit.type = "pseudo", 
@@ -74,8 +76,7 @@ print(result$edge.num.list)
 
 # graphs at some positions of time points
 par(mfrow = c(2, 4))
-pos.plot <- pos.example[round(seq(1, length(pos.example), 
-length = 16))]
+pos.plot <- pos.example[round(seq(1, K, length=16))]
 for(k in 1:length(pos.plot)) {
   adj.matrix <- result$Omega.list[[which(pos.example 
   == pos.plot[k])]] != 0
@@ -84,17 +85,16 @@ for(k in 1:length(pos.plot)) {
   set.seed(0)
   plot(net, vertex.size = 10, vertex.color = "lightblue", 
   vertex.label = NA, edge.color = "black", layout = 
-  layout.circle, margin = rep(0, 4))
+  layout.circle)
   title(main = paste("t =", round(pos.plot[k]/(ncol(X)-1), 
   2)), cex.main = 0.8)
 }
 
 # false discovery rate (FDR) and power based on 
 # true precision matrices
-p <- dim(X)[1]
-edge.num.true.list <- sapply(1:length(pos.example), 
-function(i) (sum(Omega.true.list[[pos.example[i]]]!=0)-p)/2)
-edge.num.overlap.list <- sapply(1:length(pos.example), 
+edge.num.true.list <- sapply(1:K, function(i) 
+(sum(Omega.true.list[[pos.example[i]]]!=0)-p)/2)
+edge.num.overlap.list <- sapply(1:K, 
 function(i) (sum(result$Omega.list[[i]]
 & Omega.true.list[[pos.example[i]]])-p)/2)
 perform.matrix <- cbind(

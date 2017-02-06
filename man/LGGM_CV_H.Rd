@@ -79,10 +79,12 @@ Yang, J. and Peng, J.
 \examples{
 data(example)  # load data matrix
 dim(X)  # dimension of data matrix
+p <- nrow(X)  # number of variables
 
 # positions of time points to estimate graphs
 pos.example <- round(seq(0.02, 0.98, length=25)
 *(ncol(X)-1)+1, 0)
+K <- length(pos.example)
 # list of candidate values of h
 h.list <- c(0.15, 0.2, 0.25, 0.3)
 # estimate time-varying graphs and conduct model 
@@ -109,11 +111,10 @@ print(edge.num.list.min)
 
 # false discovery rate (FDR) and power based on 
 # true precision matrices for selected model
-p <- dim(X)[1]
-edge.num.true.list <- sapply(1:length(pos.example), 
-function(i) (sum(Omega.true.list[[pos.example[i]]]!=0)-p)/2)
-edge.num.overlap.list <- sapply(1:length(pos.example), 
-function(i) (sum(result$cv.result.list[[h.min.index]]
+edge.num.true.list <- sapply(1:K, function(i) 
+(sum(Omega.true.list[[pos.example[i]]]!=0)-p)/2)
+edge.num.overlap.list <- sapply(1:K, function(i) 
+(sum(result$cv.result.list[[h.min.index]]
 $cv.select.result$Omega.edge.list.min[[i]]
 & Omega.true.list[[pos.example[i]]])-p)/2)
 perform.matrix <- cbind(
