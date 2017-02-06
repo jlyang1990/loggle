@@ -72,7 +72,8 @@ d = 0.15, lambda = 0.225, fit.type = "pseudo",
 refit = TRUE, num.thread = 2)
 
 # numbers of edges at each position of time point
-print(result$edge.num.list)
+print(cbind("time" = seq(0.02, 0.98, length=49),
+"edge.num" = result$edge.num.list))
 
 # graphs at some positions of time points
 par(mfrow = c(2, 4))

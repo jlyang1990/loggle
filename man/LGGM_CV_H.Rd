@@ -96,26 +96,22 @@ cv.vote.thres = 1, num.thread = 2)
 
 # optimal value of h
 print(result$h.min)
-# optimal values of d at each position of time point
-h.min.index <- which(h.list == result$h.min)
-print(result$cv.result.list[[h.min.index]]
-$cv.select.result$d.min)
-# optimal values of lambda at each position of time point
-print(result$cv.result.list[[h.min.index]]
-$cv.select.result$lambda.min)
-# numbers of edges at each position of time point in 
-# selected model
-edge.num.list.min <- (result$cv.result.list[[h.min.index]]
-$cv.select.result$edge.num.list.min)
-print(edge.num.list.min)
+# optimal values of d, lambda and number of selected edges
+# at each position of time point
+cv.select.result <- result$cv.result.list[[which(h.list 
+== result$h.min)]]$cv.select.result
+print(cbind("time" = seq(0.02, 0.98, length=25),
+"d.opt" = cv.select.result$d.min,
+"lambda.opt" = cv.select.result$lambda.min,
+"edge.num.opt" = cv.select.result$edge.num.list.min))
 
 # false discovery rate (FDR) and power based on 
 # true precision matrices for selected model
+edge.num.list.min <- cv.select.result$edge.num.list.min
 edge.num.true.list <- sapply(1:K, function(i) 
 (sum(Omega.true.list[[pos.example[i]]]!=0)-p)/2)
 edge.num.overlap.list <- sapply(1:K, function(i) 
-(sum(result$cv.result.list[[h.min.index]]
-$cv.select.result$Omega.edge.list.min[[i]]
+(sum(cv.select.result$Omega.edge.list.min[[i]]
 & Omega.true.list[[pos.example[i]]])-p)/2)
 perform.matrix <- cbind(
 "FDR" = 1 - edge.num.overlap.list / edge.num.list.min,
