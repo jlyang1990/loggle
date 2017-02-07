@@ -10,8 +10,8 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 	double *Lambda, int *Lambda_Len, int *pseudo_fit, double *thres, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda
-void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, 
-	int *No, double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step, int *S_Len);
+void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *member_ind, int *csize_ind, int *No, double *Lambda, 
+	int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step);
 
 //apply ADMM to fixed h, d and lambda (simple version)
 void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
@@ -42,11 +42,10 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J);
 void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
 	double *Lambda, int *Lambda_Len, int *pseudo_fit, double *thres, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
 
-	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0;
+	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0, S_L = 0;
 
 	double *Z_i = (double *) malloc(p*p*L*sizeof(double));
 	double *U_i = (double *) malloc(p*p*L*sizeof(double));
-	int *S_L = (int *) malloc(sizeof(int));
 
 	for(i=0; i<L; i++){
 		for(j=0; j<p; j++){
@@ -57,22 +56,25 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 		}
 	}
 
-	*S_L = 0;
-
 	//iteration across lambda
 	for(i=(Lambda_L-1); i>=0; i--){
 
-		if((*S_L) > ((*thres)*p)){
+		if(S_L > ((*thres)*p)){
 			Z[p*p*Pos_L*(i+1)-1] = -1;
 			continue;
 		}
 
-		ADMM_cluster(Corr, Z_i, U_i, P, LL, Pos, Pos_Len, (member_ind+p*i), (csize_ind+no_sum), (No+i), (Lambda+i), pseudo_fit, 
-			(Rho+i), Epi_abs, Epi_rel, Max_step, S_L);
+		ADMM_cluster(Corr, Z_i, U_i, P, LL, (member_ind+p*i), (csize_ind+no_sum), (No+i), (Lambda+i), pseudo_fit, (Rho+i), 
+			Epi_abs, Epi_rel, Max_step);
 
-		for(m=0; m<Pos_L; m++){
-			for(j=0; j<p; j++){
-				for(k=0; k<p; k++){
+		S_L = 0;
+
+		for(j=0; j<p; j++){
+			for(k=0; k<p; k++){
+				if(j<k && Z_i[p*p*Pos[0]+p*j+k] != 0){
+					S_L++;
+				}
+				for(m=0; m<Pos_L; m++){
 					Z[p*p*Pos_L*i+p*p*m+p*j+k] = Z_i[p*p*Pos[m]+p*j+k];
 				}
 			} 
@@ -83,18 +85,15 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 
 	free(Z_i);
 	free(U_i);
-	free(S_L);
 }
 
 
 
-void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, 
-	int *No, double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step, int *S_Len){
+void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *member_ind, int *csize_ind, int *No, double *Lambda, 
+	int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
 
-	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k;
+	int p = *P, no = *No, L = *LL, p_n, n, i, j, k;
 	int *member_ind_n;
-
-	S_Len[0] = 0;
 
 	//iteration across block diagonals
 	for(n=0; n<no; n++){
@@ -154,14 +153,6 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *Pos,
 					for(k=0; k<p_n; k++){
 						Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*i+p_n*j+k];
 						U[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = U_n[p_n*p_n*i+p_n*j+k];
-					}
-				}
-			}
-				
-			for(j=0; j<p_n; j++){
-				for(k=j+1; k<p_n; k++){
-					if(Z_n[p_n*p_n*Pos[0]+p_n*j+k] != 0 && Z_n[p_n*p_n*Pos[0]+p_n*k+j] != 0){
-						S_Len[0]++;
 					}
 				}
 			}

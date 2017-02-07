@@ -193,7 +193,6 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   Corr.sq <- apply(Corr[, , Nd.index] ^ 2, c(1, 2), sum)
   
   Z.vec <- rep(0, p*p)
-  edge.num <- 0
   
   lambda <- sqrt(Nd) * lambda
   rho <- lambda
@@ -298,7 +297,6 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
   Corr.sq <- apply(Corr ^ 2, c(1, 2), sum)
   
   Z.vec <- rep(0, p*p*K)
-  edge.num <- 0
   
   lambda <- sqrt(N) * lambda
   rho <- lambda
