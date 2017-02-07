@@ -157,14 +157,20 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *Pos,
 					}
 				}
 			}
+				
+			for(j=0; j<p_n; j++){
+				for(k=j+1; k<p_n; k++){
+					if(Z_n[p_n*p_n*Pos[0]+p_n*j+k] != 0 && Z_n[p_n*p_n*Pos[0]+p_n*k+j] != 0){
+						S_Len[0]++;
+					}
+				}
+			}
 			
 			free(Corr_n);
 			free(Z_n);
 			free(U_n);		
 		}
 	}//end iteration across block diagonals
-
-	S_Len[0] = S_Len[0]/Pos_L;
 }
 
 
