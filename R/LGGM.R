@@ -242,7 +242,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
     
     Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
     Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi  # set rho = 1e-10 instead of 0 to avoid warning
-    if(any((eigen(Omega, symmetric = T)$values) < 0)) {
+    if(det(Omega) < 0) {
       Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
     Omega <- Matrix(Omega, sparse = T)
@@ -349,7 +349,7 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
     for(k in 1:K) {
       Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
       Omega.list[[k]] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
-      if(any((eigen(Omega.list[[k]], symmetric = T)$values) < 0)) {
+      if(det(Omega.list[[k]]) < 0) {
         Omega.list[[k]] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
       }
       Omega.list[[k]] <- Matrix(Omega.list[[k]], sparse = T)

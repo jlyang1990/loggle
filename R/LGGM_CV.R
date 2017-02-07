@@ -357,7 +357,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
     }
     
     Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero)$wi
-    if(any((eigen(Omega.list[[k]], symmetric = T)$values) < 0)) {
+    if(det(Omega.list[[k]]) < 0) {
       Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
     
@@ -484,7 +484,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
           
         Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
         Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
-        if(any((eigen(Omega, symmetric = T)$values) < 0)) {
+        if(det(Omega) < 0) {
           Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
         }
       
@@ -622,7 +622,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
       for(k in 1:K) {
         Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
         Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
-        if(any((eigen(Omega[, , k], symmetric = T)$values) < 0)) {
+        if(det(Omega[, , k]) < 0) {
           Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
         }
       }
