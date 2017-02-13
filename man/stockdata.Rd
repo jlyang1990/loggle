@@ -81,10 +81,17 @@ for(k in 1:length(pos.loc)) {
   adj.matrix <- result$cv.select.result$Omega.edge.list.min[[pos.loc[k]]]
   net <- graph.adjacency(adj.matrix, mode = "undirected", diag = FALSE)
   set.seed(0)
-  plot(net, edge.color = "black", vertex.size = 3, vertex.label = NA, 
-  vertex.color = rep(rainbow(3), times = c(nrow(sp.m), nrow(sp.t), nrow(sp.u))), 
+  V(net)$color <- rep(rainbow(3), times = c(nrow(sp.m), nrow(sp.t), nrow(sp.u)))
+  sp.ind <- rep(1:3, times = c(nrow(sp.m), nrow(sp.t), nrow(sp.u)))
+  E(net)$color <- apply(get.edgelist(net), 1, function(x) 
+  ifelse(sp.ind[x[1]] == sp.ind[x[2]], "black", "gray"))
+  E(net)$width <- apply(get.edgelist(net), 1, function(x) 
+  ifelse(sp.ind[x[1]] == sp.ind[x[2]], 1, 0.5))
+  plot(net, vertex.size = 3, vertex.label = NA, 
   layout = layout.circle, main = date.index[pos.example[pos.loc[k]]])
   legend("bottomright", c("Materials", "Tele. Services", "Utilities"), 
-  pch = 19, col = rainbow(3), cex = 0.5)
+  pch = 19, col = rainbow(3), cex = 0.4)
+  legend("bottomleft", c("within sector", "between sector"), 
+  lwd = c(1, 0.4), col = c("black", "gray"), cex = 0.4)
 }
 }
