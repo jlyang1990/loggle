@@ -45,6 +45,10 @@ If no pre-processing has been done to the data matrix \code{X}, \code{detrend = 
   \item{edge.list}{a list of graph edges at positions of time points specified by \code{pos}}
 }
 
+\source{
+The source code to generate the underlying true time-varying graphs can be found in \link{example_source}.
+}
+
 \references{
 Peng, J., Wang, P., Zhou, N., & Zhu, J. (2012). Partial correlation estimation by joint sparse regression models. Journal of the American Statistical Association.
 }
