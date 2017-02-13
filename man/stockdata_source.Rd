@@ -21,7 +21,7 @@ library(RCurl)
 library(quantmod)
 
 # extract stock information from wiki
-url <- "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+url <- "https://en.wikipedia.org/wiki/List_of_S\%26P_500_companies"
 tabs <- getURL(url)
 stock.info <- readHTMLTable(tabs, stringsAsFactors = FALSE)[[1]]
 stock.ticker <- stock.info$`Ticker symbol`
@@ -29,8 +29,10 @@ stock.name <- stock.info$Security
 stock.sector <- stock.info$`GICS Sector`
 
 # extract indices of dates and stock closing prices
-date.index <- as.character(index(getSymbols(stock.ticker[1], auto.assign=FALSE, from='2007-01-01', to="2017-01-01")))
-stock.closeprice <- sapply(stock.ticker, function(x) as.vector(getSymbols(x, auto.assign=FALSE, from='2007-01-01', to="2017-01-01")[, 4]))
+date.index <- as.character(index(getSymbols(stock.ticker[1], auto.assign=FALSE, 
+from='2007-01-01', to="2017-01-01")))
+stock.closeprice <- sapply(stock.ticker, function(x) 
+as.vector(getSymbols(x, auto.assign=FALSE, from='2007-01-01', to="2017-01-01")[, 4]))
 
 # delete stocks not covering the whole time interval
 stock.count <- sapply(stock.closeprice, length)
