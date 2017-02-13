@@ -27,7 +27,7 @@ This dataset can be used to perform high-dimensional graph estimation to analyze
 }
 
 \source{
-It is publicly available at www.yahoo.com.
+It is publicly available at www.yahoo.com, and R package \code{quantmod} can be used to extract the information. The source code can be found in \link{stockdata_source}.
 }
 
 \references{
@@ -36,6 +36,10 @@ Peng, J., Wang, P., Zhou, N., & Zhu, J. (2012). Partial correlation estimation b
 
 \author{
 Yang, J. and Peng, J.
+}
+
+\seealso{
+\link{LGGM.cv} for learning time-varying graphical models via cross validation, \link{LGGM.cv.h} for learning time-varying graphical models via cross validation (with h selection), \link{LGGM.cv.select} for model selection based on cross validation results, and \link{LGGM.refit} for model refitting based on estimated graphs.
 }
 
 \examples{
