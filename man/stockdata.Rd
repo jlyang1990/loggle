@@ -27,7 +27,7 @@ This dataset can be used to perform high-dimensional graph estimation to analyze
 }
 
 \source{
-It is publicly available at www.yahoo.com, and R package \code{quantmod} can be used to extract the information. The source code can be found in \link{stockdata_source}.
+It is publicly available at www.yahoo.com, and R package \code{quantmod} can be used to extract the stock information. The source code can be found in \link{stockdata_source}.
 }
 
 \references{
