@@ -233,6 +233,8 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   
   cv.score <- cv.result$cv.score
   cv.score[is.na(cv.score)] <- Inf
+  cv.score[is.nan(cv.score)] <- Inf
+  cv.score[is.infinite(cv.score)] <- Inf
   cv.result.list <- cv.result$cv.result.list
   
   L <- dim(cv.score)[1]
