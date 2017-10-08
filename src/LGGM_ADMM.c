@@ -248,8 +248,8 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 	int p = *P, L = *LL, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
-	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, i, j, k, m, index_ijk;
-	double vl = -1, vu= -1, abstol = pow(10, -6), coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2;
+	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, i, j, k, index_ijk;
+	double vl = -1, vu= -1, abstol = pow(10, -6), one = 1, zero = 0, coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2;
 	int *isuppz = (int *) malloc(2*p*sizeof(int));
 	double *work = (double *) malloc(lwork*sizeof(double));
 	int *iwork = (int *) malloc(liwork*sizeof(int));
@@ -270,19 +270,19 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 				}
 			}
 			
-			F77_CALL(dsyevr)("V", "A", "L", &p, A, &p, &vl, &vu, &il, &iu, &abstol, &num, eig_val, eig_vec, &p, isuppz, work, 
+			F77_CALL(dsyevr)("V", "A", "L", P, A, P, &vl, &vu, &il, &iu, &abstol, &num, eig_val, eig_vec, P, isuppz, work, 
 				&lwork, iwork, &liwork, &info);
 			
 			for(j=0; j<p; j++){
 				eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho)) / (2*rho);
+				for(k=0; k<p; k++){
+					eig_vec[p*j+k] *= sqrt(eig_val[j]);
+				}
 			}
+			F77_CALL(dsyrk)("L", "N", P, P, &one, eig_vec, P, &zero, (Omega+p*p*i), P);
 			for(j=0; j<p; j++){
 				for(k=j; k<p; k++){
 					index_ijk = p*p*i+p*j+k;
-					Omega[index_ijk] = 0;
-					for(m=0; m<p; m++){
-						Omega[index_ijk] += eig_val[m] * eig_vec[p*m+j] * eig_vec[p*m+k];
-					}
 					U[index_ijk] += alpha * Omega[index_ijk] + (1-alpha) * Z[index_ijk];
 				}
 				index_ijk = p*p*i+p*j+j;
