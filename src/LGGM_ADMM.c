@@ -368,8 +368,8 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	int p = *P, L = *LL, p_1 = p-1, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
-	int nrhs = 1, info, i, j, k, index_ijk, index_ikj;
-	double coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2, alp = 1;
+	int one = 1, info, i, j, k, index_ijk, index_ikj;
+	double coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2;
 	double *Omega = (double *) malloc(p_1*p*L*sizeof(double));
 	double *Chol = (double *) malloc(p*p*L*sizeof(double));
 	double *Chol_ij = (double *) malloc(p_1*p_1*sizeof(double));
@@ -403,8 +403,8 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 				for(k=j; k<p_1; k++){
 					C[k] = rho * (Z[p_1*p*i+p_1*j+k] - U[p_1*p*i+p_1*j+k]) + Sigma[p*p*i+p*j+k+1];
 				}
-				F77_CALL(dtrsm)("L", "L", "N", "N", &p_1, &nrhs, &alp, Chol_ij, &p_1, C, &p_1);
-				F77_CALL(dtrsm)("L", "L", "T", "N", &p_1, &nrhs, &alp, Chol_ij, &p_1, C, &p_1);
+				F77_CALL(dtrsv)("L", "N", "N", &p_1, Chol_ij, &p_1, C, &one);
+				F77_CALL(dtrsv)("L", "T", "N", &p_1, Chol_ij, &p_1, C, &one);
 				for(k=0; k<p_1; k++){
 					index_ijk = p_1*p*i+p_1*j+k;
 					Omega[index_ijk] = C[k];
