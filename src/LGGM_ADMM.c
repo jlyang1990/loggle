@@ -5,9 +5,10 @@
 #include <math.h>
 #include <R_ext/Lapack.h>
 #include "LGGM_ADMM.h"
+#include <sys/time.h>
 
 void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
-	double *Lambda, int *Lambda_Len, int *pseudo_fit, double *thres, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
+	double *Lambda, int *Lambda_Len, int *pseudo_fit, double *thres, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step, double *record){
 
 	int i, j, k, m, p = *P, L = *LL, Pos_L = *Pos_Len, Lambda_L = *Lambda_Len, no_sum = 0, S_L = 0;
 
@@ -32,7 +33,7 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 		}
 
 		ADMM_cluster(Corr, Z_i, U_i, P, LL, (member_ind+p*i), (csize_ind+no_sum), (No+i), (Lambda+i), pseudo_fit, (Rho+i), 
-			Epi_abs, Epi_rel, Max_step);
+			Epi_abs, Epi_rel, Max_step, record);
 
 		S_L = 0;
 
@@ -57,7 +58,7 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 
 
 void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *member_ind, int *csize_ind, int *No, double *Lambda, 
-	int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
+	int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step, double *record){
 
 	int p = *P, no = *No, L = *LL, p_n, n, i, j, k;
 	int *member_ind_n;
@@ -72,7 +73,7 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *memb
 		if(p_n == 1){
 			if(*pseudo_fit == 0){
 				for(i=0; i<L; i++){
-					Z[p*p*i+p*(*member_ind_n)+(*member_ind_n)] = 1/Corr[p*p*i+p*(*member_ind_n)+(*member_ind_n)];
+					Z[p*p*i+p*member_ind_n[0]+member_ind_n[0]] = 1/Corr[p*p*i+p*member_ind_n[0]+member_ind_n[0]];
 				}
 			}
 		}
@@ -85,19 +86,19 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *memb
 			for(i=0; i<L; i++){
 				for(j=0; j<p_n; j++){
 					for(k=0; k<p_n; k++){
-						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
-						Z_n[p_n*p_n*i+p_n*j+k] = Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
-						U_n[p_n*p_n*i+p_n*j+k] = U[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
+						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*member_ind_n[j]+member_ind_n[k]];
+						Z_n[p_n*p_n*i+p_n*j+k] = Z[p*p*i+p*member_ind_n[j]+member_ind_n[k]];
+						U_n[p_n*p_n*i+p_n*j+k] = U[p*p*i+p*member_ind_n[j]+member_ind_n[k]];
 					}
 				}
 			}
 
 			//model fitting
 			if(*pseudo_fit == 0){
-				ADMM_local_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_local_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step, record);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_pseudo_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step, record);
 			}
 			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
@@ -118,8 +119,8 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *memb
 			for(i=0; i<L; i++){
 				for(j=0; j<p_n; j++){
 					for(k=0; k<p_n; k++){
-						Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*i+p_n*j+k];
-						U[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = U_n[p_n*p_n*i+p_n*j+k];
+						Z[p*p*i+p*member_ind_n[j]+member_ind_n[k]] = Z_n[p_n*p_n*i+p_n*j+k];
+						U[p*p*i+p*member_ind_n[j]+member_ind_n[k]] = U_n[p_n*p_n*i+p_n*j+k];
 					}
 				}
 			}
@@ -134,11 +135,13 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *LL, int *memb
 
 
 void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, int *No, 
-	double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
+	double *Lambda, int *pseudo_fit, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step, double *record){
   
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k;
 	int *member_ind_n;
-  
+	struct timeval t1, t2;
+
+	gettimeofday(&t1, NULL);
 	//iteration across block diagonals
 	for(n=0; n<no; n++){
     
@@ -149,7 +152,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 		if(p_n==1){
 			if(*pseudo_fit == 0){
 				for(i=0; i<Pos_L; i++){
-					Z[p*p*i+p*(*member_ind_n)+(*member_ind_n)] = 1/Corr[p*p*Pos[i]+p*(*member_ind_n)+(*member_ind_n)];
+					Z[p*p*i+p*member_ind_n[0]+member_ind_n[0]] = 1/Corr[p*p*Pos[i]+p*member_ind_n[0]+member_ind_n[0]];
 				}
 			}
 		}
@@ -162,7 +165,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 			for(i=0; i<L; i++){
 				for(j=0; j<p_n; j++){
 					for(k=0; k<p_n; k++){
-						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))];
+						Corr_n[p_n*p_n*i+p_n*j+k] = Corr[p*p*i+p*member_ind_n[j]+member_ind_n[k]];
 						Z_n[p_n*p_n*i+p_n*j+k] = 0;
 						U_n[p_n*p_n*i+p_n*j+k] = 0;
 					}
@@ -171,10 +174,10 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
       
 			//model fitting
 			if(*pseudo_fit == 0){
-				ADMM_local_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_local_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step, record);
 			}
 			else if(*pseudo_fit == 1){
-				ADMM_pseudo_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step);
+				ADMM_pseudo_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step, record);
 			}
 			else if(*pseudo_fit == 2){
 				double *d_n = (double *) malloc(p_n*L*sizeof(double));
@@ -195,7 +198,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 			for(j=0; j<p_n; j++){
 				for(k=0; k<p_n; k++){
 					for(i=0; i<Pos_L; i++){
-						Z[p*p*i+p*(*(member_ind_n+j))+(*(member_ind_n+k))] = Z_n[p_n*p_n*Pos[i]+p_n*j+k];
+						Z[p*p*i+p*member_ind_n[j]+member_ind_n[k]] = Z_n[p_n*p_n*Pos[i]+p_n*j+k];
 					}
 				}
 			}
@@ -205,12 +208,14 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 			free(U_n);		
 		}
 	}//end iteration across block diagonals
+	gettimeofday(&t2, NULL);
+	record[0] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 }
 
 
 
 void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
-	double *Epi_rel, int *Max_step){
+	double *Epi_rel, int *Max_step, double *record){
  
 	int p = *P, L = *LL, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
@@ -330,7 +335,7 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 
 
 void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, double *Lambda, double *Rho, double *Epi_abs, 
-	double *Epi_rel, int *Max_step){ 
+	double *Epi_rel, int *Max_step, double *record){ 
 
 	int p = *P, L = *LL, p_1 = p-1, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
@@ -341,7 +346,10 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	double *Chol = (double *) malloc(p*p*L*sizeof(double));
 	double *Chol_ij = (double *) malloc(p_1*p_1*sizeof(double));
 	double *C = (double *) malloc(p_1*sizeof(double));
+	double *Omega_ij, *Z_ij, *U_ij, *Sigma_ij;
+	struct timeval t1, t2;
 
+	gettimeofday(&t1, NULL);
 	for(i=0; i<L; i++){
 		for(j=0; j<p; j++){
 			for(k=0; k<p_1; k++){
@@ -355,6 +363,8 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		}
 		F77_CALL(dpotrf)("L", P, (Chol+p*p*i), P, &info);
 	}
+	gettimeofday(&t2, NULL);
+	record[1] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 
 	//ADMM iteration
 	while((prd>0 || drd>0) && max_step>0){
@@ -363,31 +373,48 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 
 		for(i=0; i<L; i++){
 			for(j=0; j<p; j++){
+				Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j, U_ij = U+p_1*p*i+p_1*j, Sigma_ij = Sigma+p*p*i+p*j;
+				gettimeofday(&t1, NULL);
 				Givens_rotation(Chol_ij, (Chol+p*p*i), P, &j);
+				gettimeofday(&t2, NULL);
+				record[2] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+				gettimeofday(&t1, NULL);
 				for(k=0; k<j; k++){
-					C[k] = rho * (Z[p_1*p*i+p_1*j+k] - U[p_1*p*i+p_1*j+k]) + Sigma[p*p*i+p*j+k];
+					C[k] = rho * (Z_ij[k] - U_ij[k]) + Sigma_ij[k];
 				}
 				for(k=j; k<p_1; k++){
-					C[k] = rho * (Z[p_1*p*i+p_1*j+k] - U[p_1*p*i+p_1*j+k]) + Sigma[p*p*i+p*j+k+1];
+					C[k] = rho * (Z_ij[k] - U_ij[k]) + Sigma_ij[k+1];
 				}
+				gettimeofday(&t2, NULL);
+				record[3] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+				gettimeofday(&t1, NULL);
 				F77_CALL(dtrsv)("L", "N", "N", &p_1, Chol_ij, &p_1, C, &one);
 				F77_CALL(dtrsv)("L", "T", "N", &p_1, Chol_ij, &p_1, C, &one);
+				gettimeofday(&t2, NULL);
+				record[4] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+				gettimeofday(&t1, NULL);
 				for(k=0; k<p_1; k++){
-					index_ijk = p_1*p*i+p_1*j+k;
-					Omega[index_ijk] = C[k];
-					U[index_ijk] += alpha * C[k] + (1-alpha) * Z[index_ijk];
+					Omega_ij[k] = C[k];
+					U_ij[k] += alpha * C[k] + (1-alpha) * Z_ij[k];
 				}
+				gettimeofday(&t2, NULL);
+				record[5] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 			}
 		}
 
+		
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
+				gettimeofday(&t1, NULL);
 				temp_1 = 0, temp_2 = 0;
 				for(i=0; i<L; i++){
 					temp_1 += (pow(U[p_1*p*i+p_1*j+k], 2) + pow(U[p_1*p*i+p_1*k+j-1], 2));
 					temp_2 += (pow(Omega[p_1*p*i+p_1*j+k], 2) + pow(Omega[p_1*p*i+p_1*k+j-1], 2));
 				}
 				coef = 1 - sqrt(2) * lambda / (rho * sqrt(temp_1));
+				gettimeofday(&t2, NULL);
+				record[6] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+				gettimeofday(&t1, NULL);
 				if(coef <= 0){
 					for(i=0; i<L; i++){
 						index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
@@ -412,10 +439,13 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 						epi_dual += (pow(U[index_ijk], 2) + pow(U[index_ikj], 2));
 					}
 				}
-				epi_pri_1 += temp_2;	
+				epi_pri_1 += temp_2;
+				gettimeofday(&t2, NULL);
+				record[7] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;	
 			}
 		}
 		
+		gettimeofday(&t1, NULL);
 		r = sqrt(r);
 		s = rho * sqrt(s);
 		epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
@@ -424,12 +454,15 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		prd = (r>epi_pri);
 		drd = (s>epi_dual);
 		max_step--;
+		gettimeofday(&t2, NULL);
+		record[8] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 	}//end ADMM iteration
 
 	if(max_step == 0){
 		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
 	}
 
+	gettimeofday(&t1, NULL);
 	for(i=L-1; i>=0; i--){
 		for(j=p-1; j>=0; j--){
 			for(k=p_1-1; k>=j; k--){
@@ -449,6 +482,8 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	free(Chol);
 	free(Chol_ij);
 	free(C);
+	gettimeofday(&t2, NULL);
+	record[9] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 }
 
 
@@ -622,8 +657,10 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J){
 
 	for(k=0; k<j; k++){
 		U[p_1*k+j-1] = Chol[p*k+j-1];
-		for(m=j; m<p_1; m++){
-			U[p_1*k+m] = Chol[p*k+m+1];
+		if(k == j-1){
+			for(m=j; m<p_1; m++){
+				U[p_1*k+m] = Chol[p*k+m+1];
+			}
 		}
 	}
 	for(m=j; m<p_1; m++){
