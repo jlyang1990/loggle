@@ -498,6 +498,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	free(Chol);
 	free(Chol_ij);
 	free(C);
+	free(temp);
 	gettimeofday(&t2, NULL);
 	record[10] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 }
@@ -639,6 +640,7 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 	free(Chol);
 	free(Chol_ij);
 	free(C);
+	free(temp);
 }
 
 
