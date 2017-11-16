@@ -355,6 +355,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	double *Chol = (double *) malloc(p*p*L*sizeof(double));
 	double *Chol_ij = (double *) malloc(p_1*p_1*sizeof(double));
 	double *C = (double *) malloc(p_1*sizeof(double));
+	double *temp = (double *) malloc(p_1*p*sizeof(double));
 	double *Omega_ij, *Z_ij, *U_ij, *Sigma_ij;
 	struct timeval t1, t2;
 
@@ -405,43 +406,50 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 			}
 		}
 
-		
+		gettimeofday(&t1, NULL);
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
-				gettimeofday(&t1, NULL);
-				temp_1 = 0;
-				for(i=0; i<L; i++){
-					temp_1 += (pow(U[p_1*p*i+p_1*j+k], 2) + pow(U[p_1*p*i+p_1*k+j-1], 2));
+				temp[p_1*j+k] = 0;
+			}
+		}
+		for(i=0; i<L; i++){
+			for(j=1; j<p; j++){
+				for(k=0; k<j; k++){
+					temp[p_1*j+k] += (pow(U[p_1*p*i+p_1*j+k], 2) + pow(U[p_1*p*i+p_1*k+j-1], 2));
 				}
-				coef = 1 - sqrt(2) * lambda / (rho * sqrt(temp_1));
-				gettimeofday(&t2, NULL);
-				record[7] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
-				gettimeofday(&t1, NULL);
-				if(coef <= 0){
-					for(i=0; i<L; i++){
-						index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
+			}
+		}
+		for(j=1; j<p; j++){
+			for(k=0; k<j; k++){
+				temp[p_1*j+k] = 1 - sqrt(2) * lambda / (rho * sqrt(temp[p_1*j+k]));
+			}
+		}
+		gettimeofday(&t2, NULL);
+		record[7] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+		gettimeofday(&t1, NULL);
+		for(i=0; i<L; i++){
+			for(j=1; j<p; j++){
+				for(k=0; k<j; k++){
+					coef = temp[p_1*j+k], index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
+					if(coef <= 0){
 						s += (pow(Z[index_ijk], 2) + pow(Z[index_ikj], 2));
 						Z[index_ijk] = 0;
 						Z[index_ikj] = 0;
 					}
-					epi_dual += temp_1;
-				}
-				else{
-					for(i=0; i<L; i++){
-						index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
+					else{
 						temp_1 = Z[index_ijk], temp_2 = Z[index_ikj];
 						Z[index_ijk] = U[index_ijk] * coef;
 						Z[index_ikj] = U[index_ikj] * coef;
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
 						s += (pow(Z[index_ijk] - temp_1, 2) + pow(Z[index_ikj] - temp_2, 2));
-						epi_dual += (pow(U[index_ijk], 2) + pow(U[index_ikj], 2));
 					}
+					epi_dual += (pow(U[index_ijk], 2) + pow(U[index_ikj], 2));
 				}
-				gettimeofday(&t2, NULL);
-				record[8] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;	
 			}
 		}
+		gettimeofday(&t2, NULL);
+		record[8] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 		
 		gettimeofday(&t1, NULL);
 		s = rho * sqrt(s);
