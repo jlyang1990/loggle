@@ -671,18 +671,23 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J){
 	int p = *P, j = *J, p_1 = p-1, k, m;
 	double r, c, s;
 
+	//inherit from previous upper triangular matrix with j-1
+	//restore (j-1)th column
 	for(k=0; k<j; k++){
 		U[p_1*k+j-1] = Chol[p*k+j-1];
-		if(k == j-1){
-			for(m=j; m<p_1; m++){
-				U[p_1*k+m] = Chol[p*k+m+1];
-			}
+	}
+	//restore (j-1)th row
+	if(j >= 1){
+		for(m=j; m<p_1; m++){
+			U[p_1*(j-1)+m] = Chol[p*(j-1)+m+1];
 		}
 	}
+	//restore jth row
 	for(m=j; m<p_1; m++){
 		U[p_1*j+m] = Chol[p*j+m+1];
 	}
 
+	//implement Givens rotation from jth row to the last row
 	for(k=j; k<p_1; k++){
 		r = sqrt(pow(U[p_1*k+k], 2) + pow(Chol[p*(k+1)+k+1], 2));
 		c = U[p_1*k+k] / r;
