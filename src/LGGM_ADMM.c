@@ -465,11 +465,10 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 					}
 				}
 			}
+			r = sqrt(r);
+			epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+			prd = r - epi_pri;
 		}
-		r = sqrt(r);
-		epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
-		prd = r - epi_pri;
-
 		max_step--;
 		gettimeofday(&t2, NULL);
 		record[9] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
