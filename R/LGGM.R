@@ -36,7 +36,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
   
   record <- rep(0, 3)
   record.list <- matrix(0, 6, K)
-  record.c.list <- matrix(0, 10, K)
+  record.c.list <- matrix(0, 11, K)
   
   if(fit.type == "likelihood") {
     fit.type <- 0
@@ -200,7 +200,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   N <- dim(Corr)[3]
   
   record <- rep(0, 6)
-  record.c <- rep(0, 10)
+  record.c <- rep(0, 11)
   
   t1 <- proc.time()
   Nd.index <- max(1, ceiling(((pos-1)/(N-1) - d) * (N-1) - 1e-5) + 1) : min(N, floor(((pos-1)/(N-1) + d) * (N-1) + 1e-5) + 1)

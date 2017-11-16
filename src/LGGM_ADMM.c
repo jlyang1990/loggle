@@ -139,9 +139,9 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
   
 	int p = *P, no = *No, L = *LL, Pos_L = *Pos_Len, p_n, n, i, j, k;
 	int *member_ind_n;
-	struct timeval t1, t2;
+	struct timeval t_start, t_end, t1, t2;
 
-	gettimeofday(&t1, NULL);
+	gettimeofday(&t_start, NULL);
 	//iteration across block diagonals
 	for(n=0; n<no; n++){
     
@@ -158,6 +158,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 		}
 		//block diagonal with dimension larger than one
 		else{
+			gettimeofday(&t1, NULL);
 			double *Corr_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *Z_n = (double *) malloc(p_n*p_n*L*sizeof(double));
 			double *U_n = (double *) malloc(p_n*p_n*L*sizeof(double));
@@ -171,8 +172,11 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 					}
 				}
 			}
+			gettimeofday(&t2, NULL);
+			record[1] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
       
 			//model fitting
+			gettimeofday(&t1, NULL);
 			if(*pseudo_fit == 0){
 				ADMM_local_glasso(Corr_n, Z_n, U_n, &p_n, LL, Lambda, Rho, Epi_abs, Epi_rel, Max_step, record);
 			}
@@ -194,10 +198,13 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
 				}
 				free(d_n);
 			}
-      
-			for(j=0; j<p_n; j++){
-				for(k=0; k<p_n; k++){
-					for(i=0; i<Pos_L; i++){
+			gettimeofday(&t2, NULL);
+			record[2] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+      		
+      		gettimeofday(&t1, NULL);
+      		for(i=0; i<Pos_L; i++){
+				for(j=0; j<p_n; j++){
+					for(k=0; k<p_n; k++){
 						Z[p*p*i+p*member_ind_n[j]+member_ind_n[k]] = Z_n[p_n*p_n*Pos[i]+p_n*j+k];
 					}
 				}
@@ -205,11 +212,13 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *LL, int *Pos, int *Pos_Le
       
 			free(Corr_n);
 			free(Z_n);
-			free(U_n);		
+			free(U_n);
+			gettimeofday(&t2, NULL);
+			record[3] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;		
 		}
 	}//end iteration across block diagonals
-	gettimeofday(&t2, NULL);
-	record[0] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+	gettimeofday(&t_end, NULL);
+	record[0] += (t_end.tv_sec - t_start.tv_sec) + (t_end.tv_usec - t_start.tv_usec)/1000000.0;
 }
 
 
@@ -364,7 +373,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		F77_CALL(dpotrf)("L", P, (Chol+p*p*i), P, &info);
 	}
 	gettimeofday(&t2, NULL);
-	record[1] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+	record[4] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 
 	//ADMM iteration
 	while((prd>0 || drd>0) && max_step>0){
@@ -373,12 +382,9 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 
 		for(i=0; i<L; i++){
 			for(j=0; j<p; j++){
+				gettimeofday(&t1, NULL);
 				Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j, U_ij = U+p_1*p*i+p_1*j, Sigma_ij = Sigma+p*p*i+p*j;
-				gettimeofday(&t1, NULL);
 				Givens_rotation(Chol_ij, (Chol+p*p*i), P, &j);
-				gettimeofday(&t2, NULL);
-				record[2] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
-				gettimeofday(&t1, NULL);
 				for(k=0; k<j; k++){
 					C[k] = rho * (Z_ij[k] - U_ij[k]) + Sigma_ij[k];
 				}
@@ -386,19 +392,16 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 					C[k] = rho * (Z_ij[k] - U_ij[k]) + Sigma_ij[k+1];
 				}
 				gettimeofday(&t2, NULL);
-				record[3] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+				record[5] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 				gettimeofday(&t1, NULL);
 				F77_CALL(dtrsv)("L", "N", "N", &p_1, Chol_ij, &p_1, C, &one);
 				F77_CALL(dtrsv)("L", "T", "N", &p_1, Chol_ij, &p_1, C, &one);
-				gettimeofday(&t2, NULL);
-				record[4] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
-				gettimeofday(&t1, NULL);
 				for(k=0; k<p_1; k++){
 					Omega_ij[k] = C[k];
 					U_ij[k] += alpha * C[k] + (1-alpha) * Z_ij[k];
 				}
 				gettimeofday(&t2, NULL);
-				record[5] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+				record[6] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 			}
 		}
 
@@ -413,7 +416,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 				}
 				coef = 1 - sqrt(2) * lambda / (rho * sqrt(temp_1));
 				gettimeofday(&t2, NULL);
-				record[6] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+				record[7] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 				gettimeofday(&t1, NULL);
 				if(coef <= 0){
 					for(i=0; i<L; i++){
@@ -441,7 +444,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 				}
 				epi_pri_1 += temp_2;
 				gettimeofday(&t2, NULL);
-				record[7] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;	
+				record[8] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;	
 			}
 		}
 		
@@ -455,7 +458,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		drd = (s>epi_dual);
 		max_step--;
 		gettimeofday(&t2, NULL);
-		record[8] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+		record[9] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 	}//end ADMM iteration
 
 	if(max_step == 0){
@@ -483,7 +486,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	free(Chol_ij);
 	free(C);
 	gettimeofday(&t2, NULL);
-	record[9] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+	record[10] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 }
 
 
