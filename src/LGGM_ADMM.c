@@ -377,6 +377,7 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 	free(A);
 	free(eig_vec);
 	free(eig_val);
+	free(coef);
 }
 
 
@@ -388,12 +389,12 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
 	int one = 1, info, i, j, k, index_ijk, index_ikj;
-	double coef, temp_1, temp_2, epi_pri_1, epi_pri_2;
+	double temp_1, temp_2, epi_pri_1, epi_pri_2;
 	double *Omega = (double *) malloc(p_1*p*L*sizeof(double));
 	double *Chol = (double *) malloc(p*p*L*sizeof(double));
 	double *Chol_ij = (double *) malloc(p_1*p_1*sizeof(double));
 	double *C = (double *) malloc(p_1*sizeof(double));
-	double *temp = (double *) malloc(p_1*p*sizeof(double));
+	double *coef = (double *) malloc(p_1*p*sizeof(double));
 	double *Omega_ij, *Z_ij, *U_ij, *Sigma_ij;
 	struct timeval t1, t2;
 
@@ -447,19 +448,19 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		gettimeofday(&t1, NULL);
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
-				temp[p_1*j+k] = 0;
+				coef[p_1*j+k] = 0;
 			}
 		}
 		for(i=0; i<L; i++){
 			for(j=1; j<p; j++){
 				for(k=0; k<j; k++){
-					temp[p_1*j+k] += (pow(U[p_1*p*i+p_1*j+k], 2) + pow(U[p_1*p*i+p_1*k+j-1], 2));
+					coef[p_1*j+k] += (pow(U[p_1*p*i+p_1*j+k], 2) + pow(U[p_1*p*i+p_1*k+j-1], 2));
 				}
 			}
 		}
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
-				temp[p_1*j+k] = 1 - sqrt(2) * lambda / (rho * sqrt(temp[p_1*j+k]));
+				coef[p_1*j+k] = 1 - sqrt(2) * lambda / (rho * sqrt(coef[p_1*j+k]));
 			}
 		}
 		gettimeofday(&t2, NULL);
@@ -468,16 +469,16 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		for(i=0; i<L; i++){
 			for(j=1; j<p; j++){
 				for(k=0; k<j; k++){
-					coef = temp[p_1*j+k], index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
-					if(coef <= 0){
+					index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
+					if(coef[p_1*j+k] <= 0){
 						s += (pow(Z[index_ijk], 2) + pow(Z[index_ikj], 2));
 						Z[index_ijk] = 0;
 						Z[index_ikj] = 0;
 					}
 					else{
 						temp_1 = Z[index_ijk], temp_2 = Z[index_ikj];
-						Z[index_ijk] = U[index_ijk] * coef;
-						Z[index_ikj] = U[index_ikj] * coef;
+						Z[index_ijk] = U[index_ijk] * coef[p_1*j+k];
+						Z[index_ikj] = U[index_ikj] * coef[p_1*j+k];
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
 						s += (pow(Z[index_ijk] - temp_1, 2) + pow(Z[index_ikj] - temp_2, 2));
@@ -496,10 +497,11 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 		if(drd < 0){
 			for(i=0; i<L; i++){
 				for(j=0; j<p; j++){
+					Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j;
 					for(k=0; k<p_1; k++){
-						r += pow(Omega[p_1*p*i+p_1*j+k]-Z[p_1*p*i+p_1*j+k], 2);
-						epi_pri_1 += pow(Omega[p_1*p*i+p_1*j+k], 2);
-						epi_pri_2 += pow(Z[p_1*p*i+p_1*j+k], 2);
+						r += pow(Omega_ij[k]-Z_ij[k], 2);
+						epi_pri_1 += pow(Omega_ij[k], 2);
+						epi_pri_2 += pow(Z_ij[k], 2);
 					}
 				}
 			}
@@ -536,7 +538,7 @@ void ADMM_pseudo_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, do
 	free(Chol);
 	free(Chol_ij);
 	free(C);
-	free(temp);
+	free(coef);
 	gettimeofday(&t2, NULL);
 	record[10] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 }
@@ -550,12 +552,12 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
 	int one = 1, info, i, j, k, index_ijk, index_ikj;
-	double coef, temp_1, temp_2, epi_pri_1, epi_pri_2;
+	double temp_1, temp_2, epi_pri_1, epi_pri_2;
 	double *Omega = (double *) malloc(p_1*p*L*sizeof(double));
 	double *Chol = (double *) malloc(p*p*L*sizeof(double));
 	double *Chol_ij = (double *) malloc(p_1*p_1*sizeof(double));
 	double *C = (double *) malloc(p_1*sizeof(double));
-	double *temp = (double *) malloc(p_1*p*sizeof(double));
+	double *coef = (double *) malloc(p_1*p*sizeof(double));
 	double *Omega_ij, *Z_ij, *U_ij, *Sigma_ij;
 
 	for(i=0; i<L; i++){
@@ -598,33 +600,33 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
-				temp[p_1*j+k] = 0;
+				coef[p_1*j+k] = 0;
 			}
 		}
 		for(i=0; i<L; i++){
 			for(j=1; j<p; j++){
 				for(k=0; k<j; k++){
-					temp[p_1*j+k] += pow((U[p_1*p*i+p_1*j+k] + U[p_1*p*i+p_1*k+j-1])/2, 2);
+					coef[p_1*j+k] += pow((U[p_1*p*i+p_1*j+k] + U[p_1*p*i+p_1*k+j-1])/2, 2);
 				}
 			}
 		}
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
-				temp[p_1*j+k] = 1 - lambda / (rho * sqrt(temp[p_1*j+k]));
+				coef[p_1*j+k] = 1 - lambda / (rho * sqrt(coef[p_1*j+k]));
 			}
 		}
 		for(i=0; i<L; i++){
 			for(j=1; j<p; j++){
 				for(k=0; k<j; k++){
-					coef = temp[p_1*j+k], index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
-					if(coef <= 0){
+					index_ijk = p_1*p*i+p_1*j+k, index_ikj = p_1*p*i+p_1*k+j-1;
+					if(coef[p_1*j+k] <= 0){
 						s += (pow(Z[index_ijk], 2) + pow(Z[index_ikj], 2));
 						Z[index_ijk] = 0;
 						Z[index_ikj] = 0;
 					}
 					else{
 						temp_1 = Z[index_ijk], temp_2 = Z[index_ikj];
-						Z[index_ijk] = coef * (U[index_ijk] + U[index_ikj])/2;
+						Z[index_ijk] = coef[p_1*j+k] * (U[index_ijk] + U[index_ikj])/2;
 						Z[index_ikj] = Z[index_ijk];
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
@@ -641,10 +643,11 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 		if(drd < 0){
 			for(i=0; i<L; i++){
 				for(j=0; j<p; j++){
+					Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j;
 					for(k=0; k<p_1; k++){
-						r += pow(Omega[p_1*p*i+p_1*j+k]-Z[p_1*p*i+p_1*j+k], 2);
-						epi_pri_1 += pow(Omega[p_1*p*i+p_1*j+k], 2);
-						epi_pri_2 += pow(Z[p_1*p*i+p_1*j+k], 2);
+						r += pow(Omega_ij[k]-Z_ij[k], 2);
+						epi_pri_1 += pow(Omega_ij[k], 2);
+						epi_pri_2 += pow(Z_ij[k], 2);
 					}
 				}
 			}
@@ -678,7 +681,7 @@ void ADMM_SPACE_rho(double *Sigma, double *d, double *Z, double *U, int *P, int 
 	free(Chol);
 	free(Chol_ij);
 	free(C);
-	free(temp);
+	free(coef);
 }
 
 
