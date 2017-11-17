@@ -740,7 +740,7 @@ void ADMM_SPACE_d(double *Corr, double *d, double *Z, int *P, int *Len){
 void Givens_rotation(double *U, double *Chol, int *P, int *J){
 
 	int p = *P, j = *J, p_1 = p-1, k, m;
-	double r, c, s;
+	double r, c, s, temp_1, temp_2;
 	double *U_k, *Chol_k;
 
 	//inherit from previous upper triangular matrix with j-1
@@ -761,14 +761,15 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J){
 
 	//implement Givens rotation from jth row to the last row
 	for(k=j; k<p_1; k++){
-		U_k = U+p_1*k, Chol_k = Chol+p*(k+1);
-		r = sqrt(pow(U_k[k], 2) + pow(Chol_k[k+1], 2));
-		c = U_k[k] / r;
-		s = -Chol_k[k+1] / r;
-		U_k[k] = r;	
-		for(m=k+1; m<p_1; m++){
-			U_k[m+p_1] = s * U_k[m] + c * Chol_k[m+1];
-			U_k[m] = c * U_k[m] - s * Chol_k[m+1];
+		U_k = U+p_1*k+k, Chol_k = Chol+p*(k+1)+k+1;
+		r = sqrt(pow(U_k[0], 2) + pow(Chol_k[0], 2));
+		c = U_k[0] / r;
+		s = -Chol_k[0] / r;
+		U_k[0] = r;	
+		for(m=1; m<p_1-k; m++){
+			temp_1 = U_k[m], temp_2 = Chol_k[m];
+			U_k[m] = c * temp_1 - s * temp_2;
+			U_k[m+p_1] = s * temp_1 + c * temp_2;
 		}
 	}
 }
