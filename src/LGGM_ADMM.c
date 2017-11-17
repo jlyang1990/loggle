@@ -230,7 +230,7 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
 	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, i, j, k, index_ijk;
-	double vl = -1, vu= -1, abstol = pow(10, -6), one = 1, zero = 0, coef, temp, temp_1, temp_2, epi_pri_1, epi_pri_2;
+	double vl = -1, vu= -1, abstol = pow(10, -6), one = 1, zero = 0, coef, temp_1, epi_pri_1, epi_pri_2;
 	int *isuppz = (int *) malloc(2*p*sizeof(int));
 	double *work = (double *) malloc(lwork*sizeof(double));
 	int *iwork = (int *) malloc(liwork*sizeof(int));
@@ -238,6 +238,8 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 	double *A = (double *) malloc(p*p*sizeof(double));
 	double *eig_vec = (double *) malloc(p*p*sizeof(double));
 	double *eig_val = (double *) malloc(p*sizeof(double));
+	double *temp = (double *) malloc(p*p*sizeof(double));
+	struct timeval t1, t2;
 
 	//ADMM iteration
 	while((prd>0 || drd>0) && max_step>0){
@@ -245,15 +247,22 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 		r = 0, s = 0, epi_dual = 0, epi_pri_1 = 0, epi_pri_2 = 0;
 
 		for(i=0; i<L; i++){
+			gettimeofday(&t1, NULL);
 			for(j=0; j<p; j++){
 				for(k=j; k<p; k++){
 					A[p*j+k] = Sigma[p*p*i+p*j+k] - rho*(Z[p*p*i+p*j+k] - U[p*p*i+p*j+k]);
 				}
 			}
+			gettimeofday(&t2, NULL);
+			record[4] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 			
+			gettimeofday(&t1, NULL);
 			F77_CALL(dsyevr)("V", "A", "L", P, A, P, &vl, &vu, &il, &iu, &abstol, &num, eig_val, eig_vec, P, isuppz, work, 
 				&lwork, iwork, &liwork, &info);
+			gettimeofday(&t2, NULL);
+			record[5] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 			
+			gettimeofday(&t1, NULL);
 			for(j=0; j<p; j++){
 				eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho)) / (2*rho);
 				for(k=0; k<p; k++){
@@ -261,6 +270,9 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 				}
 			}
 			F77_CALL(dsyrk)("L", "N", P, P, &one, eig_vec, P, &zero, (Omega+p*p*i), P);
+			gettimeofday(&t2, NULL);
+			record[6] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+			gettimeofday(&t1, NULL);
 			for(j=0; j<p; j++){
 				for(k=j; k<p; k++){
 					index_ijk = p*p*i+p*j+k;
@@ -270,53 +282,77 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 				s += pow((U[index_ijk] - Z[index_ijk]), 2)/2;
 				Z[index_ijk] = U[index_ijk];
 				U[index_ijk] = 0;
-				r += pow((Omega[index_ijk] - Z[index_ijk]), 2)/2;
-				epi_pri_1 += pow(Omega[index_ijk], 2)/2;
-				epi_pri_2 += pow(Z[index_ijk], 2)/2;
 			}
+			gettimeofday(&t2, NULL);
+			record[7] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 		}
 
+		gettimeofday(&t1, NULL);
 		for(j=0; j<p; j++){
 			for(k=j+1; k<p; k++){
-				temp_1 = 0, temp_2 = 0;
-				for(i=0; i<L; i++){
-					temp_1 += pow(U[p*p*i+p*j+k], 2);
-					temp_2 += pow(Omega[p*p*i+p*j+k], 2);
+				temp[p*j+k] = 0;
+			}
+		}
+		for(i=0; i<L; i++){
+			for(j=0; j<p; j++){
+				for(k=j+1; k<p; k++){
+					temp[p*j+k] += pow(U[p*p*i+p*j+k], 2);
 				}
-				coef = 1 - lambda / (rho * sqrt(temp_1));
-				if(coef <= 0){
-					for(i=0; i<L; i++){
-						index_ijk = p*p*i+p*j+k;
+			}
+		}
+		for(j=0; j<p; j++){
+			for(k=j+1; k<p; k++){
+				temp[p*j+k] = 1 - lambda / (rho * sqrt(temp[p*j+k]));
+			}
+		}
+		gettimeofday(&t2, NULL);
+		record[8] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
+		gettimeofday(&t1, NULL);
+		for(i=0; i<L; i++){
+			for(j=0; j<p; j++){
+				for(k=j+1; k<p; k++){
+					coef = temp[p*j+k], index_ijk = p*p*i+p*j+k;
+					if(coef <= 0){
 						s += pow(Z[index_ijk], 2);
 						Z[index_ijk] = 0;
 					}
-					r += temp_2;
-					epi_dual += temp_1;
-				}
-				else{
-					for(i=0; i<L; i++){
-						index_ijk = p*p*i+p*j+k;
-						temp = Z[index_ijk];
+					else{
+						temp_1 = Z[index_ijk];
 						Z[index_ijk] = U[index_ijk] * coef;
 						U[index_ijk] -= Z[index_ijk];
-						r += pow((Omega[index_ijk] - Z[index_ijk]), 2);
-						s += pow(Z[index_ijk] - temp, 2);
-						epi_pri_2 += pow(Z[index_ijk], 2);
-						epi_dual += pow(U[index_ijk], 2);
+						s += pow(Z[index_ijk] - temp_1, 2);
 					}
+					epi_dual += pow(U[index_ijk], 2);
 				}
-				epi_pri_1 += temp_2;	
 			}
 		}
+		gettimeofday(&t2, NULL);
+		record[9] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;	
 
-		r = sqrt(2*r);
+		gettimeofday(&t1, NULL);
 		s = rho * sqrt(2*s);
-		epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
 		epi_dual = sqrt(L*p) * epi_abs + epi_rel * rho * sqrt(2*epi_dual);
-		
-		prd = (r>epi_pri);
-		drd = (s>epi_dual);
+		drd = s - epi_dual;
+		if(drd < 0){
+			for(i=0; i<L; i++){
+				for(j=0; j<p; j++){
+					r += pow(Omega[p*p*i+p*j+j]-Z[p*p*i+p*j+j], 2)/2;
+					epi_pri_1 += pow(Omega[p*p*i+p*j+j], 2)/2;
+					epi_pri_2 += pow(Z[p*p*i+p*j+j], 2)/2;
+					for(k=j+1; k<p; k++){
+						r += pow(Omega[p*p*i+p*j+k]-Z[p*p*i+p*j+k], 2);
+						epi_pri_1 += pow(Omega[p*p*i+p*j+k], 2);
+						epi_pri_2 += pow(Z[p*p*i+p*j+k], 2);
+					}
+				}
+			}
+			r = sqrt(2*r);
+			epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+			prd = r - epi_pri;
+		}
 		max_step--;
+		gettimeofday(&t2, NULL);
+		record[10] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;	
 	}//end ADMM iteration
 
 	if(max_step == 0){
