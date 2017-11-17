@@ -407,9 +407,13 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 	gettimeofday(&t1, NULL);
 	for(i=0; i<L; i++){
 		for(j=0; j<p; j++){
-			for(k=0; k<p_1; k++){
-				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+((k>=j)?(k+1):k)];
-				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+((k>=j)?(k+1):k)];
+			for(k=0; k<j; k++){
+				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+k];
+				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+k];
+			}
+			for(k=j; k<p_1; k++){
+				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+k+1];
+				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+k+1];
 			}
 			for(k=j; k<p; k++){
 				Chol[p*p*i+p*j+k] = Corr[p*p*i+p*j+k];
@@ -485,8 +489,8 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 					}
 					else{
 						temp_1 = Z[index_ijk], temp_2 = Z[index_ikj];
-						Z[index_ijk] = U[index_ijk] * coef[p_1*j+k];
-						Z[index_ikj] = U[index_ikj] * coef[p_1*j+k];
+						Z[index_ijk] = coef[p_1*j+k] * U[index_ijk];
+						Z[index_ikj] = coef[p_1*j+k] * U[index_ikj];
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
 						s += (pow(Z[index_ijk] - temp_1, 2) + pow(Z[index_ikj] - temp_2, 2));
@@ -570,9 +574,13 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 
 	for(i=0; i<L; i++){
 		for(j=0; j<p; j++){
-			for(k=0; k<p_1; k++){
-				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+((k>=j)?(k+1):k)];
-				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+((k>=j)?(k+1):k)];
+			for(k=0; k<j; k++){
+				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+k];
+				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+k];
+			}
+			for(k=j; k<p_1; k++){
+				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+k+1];
+				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+k+1];
 			}
 			for(k=j; k<p; k++){
 				Chol[p*p*i+p*j+k] = Corr[p*p*i+p*j+k] * sqrt(d[p*i+j] * d[p*i+k]);
@@ -710,10 +718,10 @@ void ADMM_SPACE_d(double *Corr, double *d, double *Z, int *P, int *Len){
 				rho[k] = Z[p*p*i+p*j+k];
 			}
 			for(k=0; k<p; k++){
-				if(rho[k]!=0){
+				if(rho[k] != 0){
 					d_new[j] += pow(rho[k], 2) * d[p*i+k] * Corr[p*p*i+p*k+k];
 					for(m=k+1; m<p; m++){
-						if(rho[m]!=0){
+						if(rho[m] != 0){
 							d_new[j] += 2 * rho[k] * rho[m] * sqrt(d[p*i+k] * d[p*i+m]) * Corr[p*p*i+p*k+m];
 						}
 					}
@@ -762,7 +770,7 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J){
 		s = -Chol_k[k+1] / r;
 		U_k[k] = r;	
 		for(m=k+1; m<p_1; m++){
-			U_k[p_1+m] = s * U_k[m] + c * Chol_k[m+1];
+			U_k[m+p_1] = s * U_k[m] + c * Chol_k[m+1];
 			U_k[m] = c * U_k[m] - s * Chol_k[m+1];
 		}
 	}
