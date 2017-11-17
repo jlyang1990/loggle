@@ -229,8 +229,9 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 	int p = *P, L = *LL, max_step = *Max_step;
 	double lambda = *Lambda, rho = *Rho, epi_abs = *Epi_abs, epi_rel = *Epi_rel, alpha = 1.5;
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
-	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, i, j, k, index_ijk;
-	double vl = -1, vu= -1, abstol = pow(10, -6), one = 1, zero = 0, coef, temp_1, epi_pri_1, epi_pri_2;
+	int il = -1, iu = -1, num, lwork = 26*p, liwork = 10*p, info, i, j, k;
+	double vl = -1, vu= -1, abstol = pow(10, -6), one = 1, zero = 0, temp_1, epi_pri_1, epi_pri_2;
+	double *Omega_ij, *Z_ij, *U_ij, *Sigma_ij;
 	int *isuppz = (int *) malloc(2*p*sizeof(int));
 	double *work = (double *) malloc(lwork*sizeof(double));
 	int *iwork = (int *) malloc(liwork*sizeof(int));
@@ -238,7 +239,7 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 	double *A = (double *) malloc(p*p*sizeof(double));
 	double *eig_vec = (double *) malloc(p*p*sizeof(double));
 	double *eig_val = (double *) malloc(p*sizeof(double));
-	double *temp = (double *) malloc(p*p*sizeof(double));
+	double *coef = (double *) malloc(p*p*sizeof(double));
 	struct timeval t1, t2;
 
 	//ADMM iteration
@@ -249,8 +250,9 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 		for(i=0; i<L; i++){
 			gettimeofday(&t1, NULL);
 			for(j=0; j<p; j++){
+				Sigma_ij = Sigma+p*p*i+p*j, Z_ij = Z+p*p*i+p*j, U_ij = U+p*p*i+p*j;
 				for(k=j; k<p; k++){
-					A[p*j+k] = Sigma[p*p*i+p*j+k] - rho*(Z[p*p*i+p*j+k] - U[p*p*i+p*j+k]);
+					A[p*j+k] = Sigma_ij[k] - rho*(Z_ij[k] - U_ij[k]);
 				}
 			}
 			gettimeofday(&t2, NULL);
@@ -274,14 +276,13 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 			record[6] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
 			gettimeofday(&t1, NULL);
 			for(j=0; j<p; j++){
+				Omega_ij = Omega+p*p*i+p*j, Z_ij = Z+p*p*i+p*j, U_ij = U+p*p*i+p*j;
 				for(k=j; k<p; k++){
-					index_ijk = p*p*i+p*j+k;
-					U[index_ijk] += alpha * Omega[index_ijk] + (1-alpha) * Z[index_ijk];
+					U_ij[k] += alpha * Omega_ij[k] + (1-alpha) * Z_ij[k];
 				}
-				index_ijk = p*p*i+p*j+j;
-				s += pow((U[index_ijk] - Z[index_ijk]), 2)/2;
-				Z[index_ijk] = U[index_ijk];
-				U[index_ijk] = 0;
+				s += pow((U_ij[j] - Z_ij[j]), 2)/2;
+				Z_ij[j] = U_ij[j];
+				U_ij[j] = 0;
 			}
 			gettimeofday(&t2, NULL);
 			record[7] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
@@ -290,19 +291,19 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 		gettimeofday(&t1, NULL);
 		for(j=0; j<p; j++){
 			for(k=j+1; k<p; k++){
-				temp[p*j+k] = 0;
+				coef[p*j+k] = 0;
 			}
 		}
 		for(i=0; i<L; i++){
 			for(j=0; j<p; j++){
 				for(k=j+1; k<p; k++){
-					temp[p*j+k] += pow(U[p*p*i+p*j+k], 2);
+					coef[p*j+k] += pow(U[p*p*i+p*j+k], 2);
 				}
 			}
 		}
 		for(j=0; j<p; j++){
 			for(k=j+1; k<p; k++){
-				temp[p*j+k] = 1 - lambda / (rho * sqrt(temp[p*j+k]));
+				coef[p*j+k] = 1 - lambda / (rho * sqrt(coef[p*j+k]));
 			}
 		}
 		gettimeofday(&t2, NULL);
@@ -310,19 +311,19 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 		gettimeofday(&t1, NULL);
 		for(i=0; i<L; i++){
 			for(j=0; j<p; j++){
+				Z_ij = Z+p*p*i+p*j, U_ij = U+p*p*i+p*j;
 				for(k=j+1; k<p; k++){
-					coef = temp[p*j+k], index_ijk = p*p*i+p*j+k;
-					if(coef <= 0){
-						s += pow(Z[index_ijk], 2);
-						Z[index_ijk] = 0;
+					if(coef[p*j+k] <= 0){
+						s += pow(Z_ij[k], 2);
+						Z_ij[k] = 0;
 					}
 					else{
-						temp_1 = Z[index_ijk];
-						Z[index_ijk] = U[index_ijk] * coef;
-						U[index_ijk] -= Z[index_ijk];
-						s += pow(Z[index_ijk] - temp_1, 2);
+						temp_1 = Z_ij[k];
+						Z_ij[k] = U_ij[k] * coef[p*j+k];
+						U_ij[k] -= Z_ij[k];
+						s += pow(Z_ij[k] - temp_1, 2);
 					}
-					epi_dual += pow(U[index_ijk], 2);
+					epi_dual += pow(U_ij[k], 2);
 				}
 			}
 		}
@@ -336,13 +337,14 @@ void ADMM_local_glasso(double *Sigma, double *Z, double *U, int *P, int *LL, dou
 		if(drd < 0){
 			for(i=0; i<L; i++){
 				for(j=0; j<p; j++){
-					r += pow(Omega[p*p*i+p*j+j]-Z[p*p*i+p*j+j], 2)/2;
-					epi_pri_1 += pow(Omega[p*p*i+p*j+j], 2)/2;
-					epi_pri_2 += pow(Z[p*p*i+p*j+j], 2)/2;
+					Omega_ij = Omega+p*p*i+p*j, Z_ij = Z+p*p*i+p*j;
+					r += pow(Omega_ij[j]-Z_ij[j], 2)/2;
+					epi_pri_1 += pow(Omega_ij[j], 2)/2;
+					epi_pri_2 += pow(Z_ij[j], 2)/2;
 					for(k=j+1; k<p; k++){
-						r += pow(Omega[p*p*i+p*j+k]-Z[p*p*i+p*j+k], 2);
-						epi_pri_1 += pow(Omega[p*p*i+p*j+k], 2);
-						epi_pri_2 += pow(Z[p*p*i+p*j+k], 2);
+						r += pow(Omega_ij[k]-Z_ij[k], 2);
+						epi_pri_1 += pow(Omega_ij[k], 2);
+						epi_pri_2 += pow(Z_ij[k], 2);
 					}
 				}
 			}
