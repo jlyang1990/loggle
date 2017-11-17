@@ -396,9 +396,8 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 	double prd = 1, drd = 1, r, s, epi_pri, epi_dual;
 	int one = 1, info, i, j, k, index_ijk, index_ikj;
 	double temp_1, temp_2, epi_pri_1, epi_pri_2;
-	double *Omega_ij, *Z_ij, *U_ij, *Corr_ij;
+	double *Omega_ij, *Z_ij, *U_ij, *Corr_i;
 	double *Omega = (double *) malloc(p_1*p*L*sizeof(double));
-	double *Chol = (double *) malloc(p*p*L*sizeof(double));
 	double *Chol_ij = (double *) malloc(p_1*p_1*sizeof(double));
 	double *C = (double *) malloc(p_1*sizeof(double));
 	double *coef = (double *) malloc(p_1*p*sizeof(double));
@@ -415,12 +414,10 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 				Z[p_1*p*i+p_1*j+k] = Z[p*p*i+p*j+k+1];
 				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+k+1];
 			}
-			for(k=j; k<p; k++){
-				Chol[p*p*i+p*j+k] = Corr[p*p*i+p*j+k];
-			}
-			Chol[p*p*i+p*j+j] += rho;
+			Corr[p*p*i+p*j+j] += rho;
 		}
-		F77_CALL(dpotrf)("L", P, (Chol+p*p*i), P, &info);
+		//upper triangular in Corr is used in Givens rotation, lower triangular in Corr stores original information
+		F77_CALL(dpotrf)("L", P, (Corr+p*p*i), P, &info); 
 	}
 	gettimeofday(&t2, NULL);
 	record[4] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
@@ -432,15 +429,16 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 
 		//omega-minimization
 		for(i=0; i<L; i++){
+			Corr_i = Corr+p*p*i;
 			for(j=0; j<p; j++){
 				gettimeofday(&t1, NULL);
-				Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j, U_ij = U+p_1*p*i+p_1*j, Corr_ij = Corr+p*p*i+p*j;
-				Givens_rotation(Chol_ij, (Chol+p*p*i), P, &j);
+				Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j, U_ij = U+p_1*p*i+p_1*j;
+				Givens_rotation(Chol_ij, Corr_i, P, &j);
 				for(k=0; k<j; k++){
-					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_ij[k];
+					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_i[p*j+k];
 				}
 				for(k=j; k<p_1; k++){
-					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_ij[k+1];
+					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_i[p*(k+1)+j];
 				}
 				gettimeofday(&t2, NULL);
 				record[5] += (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec)/1000000.0;
@@ -547,7 +545,6 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 	}
 
 	free(Omega);
-	free(Chol);
 	free(Chol_ij);
 	free(C);
 	free(coef);
