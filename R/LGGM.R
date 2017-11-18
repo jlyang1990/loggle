@@ -110,11 +110,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
         }
       }
       
-      result <- new.env()
-      result$Omega.list <- Omega.list
-      result$edge.num.list <- edge.num.list
-      result$edge.list <- edge.list
-      result <- as.list(result)
+      result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
     }
     
   } else{
@@ -156,14 +152,8 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       record.c.list[, k] <- result.k$record.c
     }
     
-    result <- new.env()
-    result$Omega.list <- Omega.list
-    result$edge.num.list <- edge.num.list
-    result$edge.list <- edge.list
-    result$record <- record
-    result$record.list <- record.list
-    result$record.c.list <- record.c.list
-    result <- as.list(result)
+    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list, record = record, 
+                   record.list = record.list, record.c.list = record.c.list)
   }
   
   return(result)  
@@ -284,14 +274,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
     cat("Complete: t =", round((pos-1) / (N-1), 2), "\n")
   }
   
-  result <- new.env()
-  result$Omega <- Omega
-  result$edge.num <- edge.num
-  result$edge <- edge
-  result$record <- record
-  result$record.c <- record.c
-  result <- as.list(result)
-  
+  result <- list(Omega = Omega, edge.num = edge.num, edge = edge, record = record, record.c = record.c)
   return(result)
 }
 
@@ -390,12 +373,7 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
     }
   }
   
-  result <- new.env()
-  result$Omega.list <- Omega.list
-  result$edge.num.list <- edge.num.list
-  result$edge.list <- edge.list
-  result <- as.list(result)
-  
+  result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   return(result)
 }
 
@@ -464,10 +442,6 @@ makeCorr <- function(X, pos, h, fit.corr) {
     Corr[, , i] <- X[, pos[index]] %*% diag(omega[index]) %*% t(X[, pos[index]])
   }
   
-  result <- new.env()
-  result$Corr <- Corr
-  result$sd.X <- sd.X
-  result <- as.list(result)
-  
+  result <- list(Corr = Corr, sd.X = sd.X)
   return(result)
 }

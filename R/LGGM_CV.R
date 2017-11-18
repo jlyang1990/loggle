@@ -128,10 +128,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     rm(Sigma.test)
   }
   
-  cv.result <- new.env()
-  cv.result$cv.score <- cv.score
-  cv.result$cv.result.list <- cv.result.list
-  cv.result <- as.list(cv.result)
+  cv.result <- list(cv.score = cv.score, cv.result.list = cv.result.list)
   
   if(return.select) {
     
@@ -200,12 +197,7 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), d.list 
   
   h.min <- h.list[which.min(cv.score.min.h)]
   
-  cv.result <- new.env()
-  cv.result$h.min <- h.min
-  cv.result$cv.score.min.h <- cv.score.min.h
-  cv.result$cv.result.list <- cv.result.list
-  cv.result <- as.list(cv.result)
-  
+  cv.result <- list(h.min = h.min, cv.score.min.h = cv.score.min.h, cv.result.list = cv.result.list)
   return(cv.result)
 }
 
@@ -251,7 +243,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
   edge.list.min <- vector("list", K)
   Omega.edge.list.min <- vector("list", K)
   
-  cv.score.fold <- apply(cv.score, c(1, 2, 3), mean)
+  cv.score.fold <- rowMeans(cv.score, dims = 3)
   
   d.index <- rep(0, K)
   lambda.index <- rep(0, K)
@@ -272,7 +264,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
     
   } else if(select.type == "all_fixed") {
     
-    cv.score.fold.avg <- apply(cv.score.fold, c(1, 2), mean)
+    cv.score.fold.avg <- rowMeans(cv.score.fold, dims = 2)
     index <- which(cv.score.fold.avg == min(cv.score.fold.avg), arr.ind = T)
     index <- index[nrow(index), ]
     d.index <- rep(index[2], K)
@@ -294,7 +286,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
     }
   }
   
-  Omega.edge.list <- apply(Omega.edge.list != 0, c(1, 2, 3), sum) >= cv.fold * cv.vote.thres
+  Omega.edge.list <- rowSums(Omega.edge.list != 0, dims = 3) >= cv.fold * cv.vote.thres
   
   for(k in 1:K) {
     
@@ -304,16 +296,9 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
     Omega.edge.list.min[[k]] <- Matrix(as.numeric(Omega.edge.list[, , k]), p, p, sparse = TRUE)
   }
   
-  result <- new.env()
-  result$d.min <- d.min
-  result$lambda.min <- lambda.min
-  result$cv.score.min <- cv.score.min
-  result$cv.score.min.sd <- cv.score.min.sd
-  result$edge.num.list.min <- edge.num.list.min
-  result$edge.list.min <- edge.list.min
-  result$Omega.edge.list.min <- Omega.edge.list.min
-  result <- as.list(result)
-  
+  result <- list(d.min = d.min, lambda.min = lambda.min, cv.score.min = cv.score.min, cv.score.min.sd = cv.score.min.sd,
+                 edge.num.list.min = edge.num.list.min, edge.list.min = edge.list.min, 
+                 Omega.edge.list.min = Omega.edge.list.min)
   return(result)
 }
 
@@ -508,11 +493,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
       cat(sprintf("Complete: d = %.3f, t = %.2f\n", d, round((pos-1)/(N-1), 2)))
     }
     
-    result <- new.env()
-    result$Omega.list <- Omega.list
-    result$edge.num.list <- edge.num.list
-    result$edge.list <- edge.list
-    result <- as.list(result)
+    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   }
   
   return(result)
@@ -656,12 +637,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
     cat("Complete: d = 1", "\n")
   }
   
-  result <- new.env()
-  result$Omega.list <- Omega.list
-  result$edge.num.list <- edge.num.list
-  result$edge.list <- edge.list
-  result <- as.list(result)
-  
+  result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   return(result)
 }
 
@@ -778,11 +754,7 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       }
     }
     
-    result <- new.env()
-    result$Omega.list <- Omega.list
-    result$edge.num.list <- edge.num.list
-    result$edge.list <- edge.list
-    result <- as.list(result)
+    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   }
 
   return(result)  
