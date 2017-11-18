@@ -409,7 +409,8 @@ makeCorr <- function(X, pos, h, fit.corr) {
     Kh <- pmax(3/4 * (1 - ((pos - i) / ((N - 1) * h))^2), 0)
     omega <- Kh / sum(Kh)
     index <- which(omega != 0)
-    Corr[, , i] <- X[, pos[index]] %*% diag(omega[index]) %*% t(X[, pos[index]])
+    X_pos <- X[, pos[index]]
+    Corr[, , i] <- (X_pos * rep(omega[index], rep(p, length(index)))) %*% t(X_pos)
   }
   
   result <- list(Corr = Corr, sd.X = sd.X)
