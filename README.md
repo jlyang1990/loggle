@@ -14,14 +14,16 @@ LGGM is a set of methods that learn time-varying graphical models with structure
 ## Installation
 Go to the directory that contains package directory.
 * Build
+In command line
 ```bash
 R CMD build Time_Varying_Graphical_Model/
 ```
 * Install
+In command line
 ```bash
 R CMD install LGGM_1.1.tar.gz
 ```
-or
+or in R console
 ```r
 install.packages("LGGM_1.1.tar.gz")
 ```
