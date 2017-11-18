@@ -386,8 +386,6 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
   D <- length(d.list)
   L <- length(lambda.list)
   
-  record.c <- rep(0, 11)
-  
   Omega.list <- matrix(vector("list", 1), L, D)
   edge.num.list <- matrix(0, L, D)
   edge.list <- matrix(vector("list", 1), L, D)
@@ -450,8 +448,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
                  as.double(rho),
                  as.double(epi.abs.d),
                  as.double(epi.rel.d),
-                 as.integer(max.step),
-                 record.c = as.double(record.c)
+                 as.integer(max.step)
     )
       
     Z.vec <- result$Z.vec
@@ -530,8 +527,6 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   K <- length(pos)
   L <- length(lambda.list)
   
-  record.c <- rep(0, 11)
-  
   Omega.list <- array(vector("list", 1), c(L, 1, K))
   edge.num.list <- array(0, c(L, 1, K))
   edge.list <- array(vector("list", 1), c(L, 1, K))
@@ -585,8 +580,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
                as.double(rho),
                as.double(epi.abs),
                as.double(epi.rel),
-               as.integer(max.step),
-               record.c = as.double(record.c)
+               as.integer(max.step)
   )
   
   Z.vec <- result$Z.vec

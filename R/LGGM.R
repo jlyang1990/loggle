@@ -34,10 +34,6 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
   N <- dim(X)[2]
   K <- length(pos)
   
-  record <- rep(0, 3)
-  record.list <- matrix(0, 6, K)
-  record.c.list <- matrix(0, 11, K)
-  
   if(fit.type == "likelihood") {
     fit.type <- 0
   } else if(fit.type == "pseudo") {
@@ -62,17 +58,13 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
   }
   
   cat("Detrending each variable in data matrix...\n")
-  t1 <- proc.time()
   X <- dataDetrend(X, detrend)
-  record[1] <- (proc.time() - t1)[3]
   
   cat("Generating sample covariance/correlation matrices...\n")
-  t1 <- proc.time()
   result.Corr <- makeCorr(X, 1:N, h, fit.corr)
   Corr <- result.Corr$Corr
   sd.X <- result.Corr$sd.X
   rm(result.Corr)
-  record[2] <- (proc.time() - t1)[3]
   
   cat("Estimating graphs...\n")
   
@@ -132,13 +124,11 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
     } else {
       
-      t1 <- proc.time()
       result <- vector("list", K)
       for(k in 1:K) {
         result[[k]] <- LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, 
                                   print.detail)
       }
-      record[3] <- (proc.time() - t1)[3]
     }
     
     for(k in 1:K) {
@@ -148,12 +138,9 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       Omega.list[[k]] <- result.k$Omega
       edge.num.list[[k]] <- result.k$edge.num
       edge.list[[k]] <- result.k$edge
-      record.list[, k] <- result.k$record
-      record.c.list[, k] <- result.k$record.c
     }
     
-    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list, record = record, 
-                   record.list = record.list, record.c.list = record.c.list)
+    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   }
   
   return(result)  
@@ -189,28 +176,20 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
   
-  record <- rep(0, 6)
-  record.c <- rep(0, 11)
-  
-  t1 <- proc.time()
   Nd.index <- max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1) : min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
   Nd <- length(Nd.index)
   Nd.pos <- which(Nd.index == pos)
   Nd.pos.c <- Nd.pos - 1
   Nd.pos.l <- 1
-  record[1] <- (proc.time() - t1)[3]
   
-  t1 <- proc.time()
   Corr.sq <- rowSums(Corr[, , Nd.index, drop = FALSE]^2, dims = 2)
   
   Z.vec <- rep(0, p*p)
   
   lambda <- sqrt(Nd) * lambda
   rho <- lambda
-  record[2] <- (proc.time() - t1)[3]
   
   #detect block diagonal structure
-  t1 <- proc.time()
   adj.mat <- (Corr.sq > lambda^2)
   diag(adj.mat) <- 1
   graph <- graph.adjacency(adj.mat)
@@ -220,9 +199,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   no <- cluster$no
   member.index <- sort(member, index.return = T)$ix - 1
   csize.index <- c(0, cumsum(csize))
-  record[3] <- (proc.time() - t1)[3]
   
-  t1 <- proc.time()
   result <- .C("ADMM_simple",
                as.double(Corr[, , Nd.index]),
                Z.vec = as.double(Z.vec),
@@ -238,21 +215,15 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
                as.double(rho),
                as.double(epi.abs),
                as.double(epi.rel),
-               as.integer(max.step),
-               record.c = as.double(record.c)
+               as.integer(max.step)
   )
-  record[4] <- (proc.time() - t1)[3]
   
-  t1 <- proc.time()
   Omega <- Matrix(result$Z.vec, p, p, sparse = T)
-  record.c <- result$record.c
   
   edge <- which(as.matrix(Omega) != 0, arr.ind = T)
   edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
   edge.num <- nrow(edge)
-  record[5] <- (proc.time() - t1)[3]
   
-  t1 <- proc.time()
   if(refit) {
     
     edge.zero <- which(as.matrix(Omega) == 0, arr.ind = T)
@@ -268,13 +239,12 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
     }
     Omega <- Matrix(Omega, sparse = T)
   }
-  record[6] <- (proc.time() - t1)[3]
   
   if(print.detail) {
     cat("Complete: t =", round((pos-1) / (N-1), 2), "\n")
   }
   
-  result <- list(Omega = Omega, edge.num = edge.num, edge = edge, record = record, record.c = record.c)
+  result <- list(Omega = Omega, edge.num = edge.num, edge = edge)
   return(result)
 }
 
