@@ -1,6 +1,6 @@
 
-# Graph estimation function for LGGM ##########################################################################################
-###############################################################################################################################
+# Graph estimation function for LGGM ###################################################################################
+########################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
@@ -15,7 +15,7 @@
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
+# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # num.thread: number of threads
 # print.detail: whether to print details in model fitting procedure
@@ -131,7 +131,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       registerDoParallel(num.thread)
       
-      result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local")) %dopar%
+      result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("LGGM.local")) %dopar%
         LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, print.detail)
       
     } else {
@@ -170,8 +170,8 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 }
 
 
-# Graph estimation function for local LGGM ####################################################################################
-###############################################################################################################################
+# Graph estimation function for local LGGM #############################################################################
+########################################################################################################################
 
 # Input ###
 # pos: position of time point where graph is estimated
@@ -203,7 +203,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   record.c <- rep(0, 11)
   
   t1 <- proc.time()
-  Nd.index <- max(1, ceiling(((pos-1)/(N-1) - d) * (N-1) - 1e-5) + 1) : min(N, floor(((pos-1)/(N-1) + d) * (N-1) + 1e-5) + 1)
+  Nd.index <- max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1) : min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
   Nd <- length(Nd.index)
   Nd.pos <- which(Nd.index == pos)
   Nd.pos.c <- Nd.pos - 1
@@ -211,7 +211,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   record[1] <- (proc.time() - t1)[3]
   
   t1 <- proc.time()
-  Corr.sq <- rowSums(Corr[, , Nd.index] ^ 2, dims = 2)
+  Corr.sq <- rowSums(Corr[, , Nd.index, drop = FALSE]^2, dims = 2)
   
   Z.vec <- rep(0, p*p)
   
@@ -221,7 +221,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
   
   #detect block diagonal structure
   t1 <- proc.time()
-  adj.mat <- (Corr.sq > lambda ^ 2)
+  adj.mat <- (Corr.sq > lambda^2)
   diag(adj.mat) <- 1
   graph <- graph.adjacency(adj.mat)
   cluster <- clusters(graph)
@@ -296,8 +296,8 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
 }
 
 
-# Graph estimation function for global LGGM ###################################################################################
-###############################################################################################################################
+# Graph estimation function for global LGGM ############################################################################
+########################################################################################################################
 
 # Input ###
 # pos: position of time points where graphs are estimated
@@ -328,7 +328,7 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
   N.index.c <- 0:(N-1)
   pos.c <- pos - 1
   
-  Corr.sq <- rowSums(Corr ^ 2, dims = 2)
+  Corr.sq <- rowSums(Corr^2, dims = 2)
   
   Z.vec <- rep(0, p*p*K)
   
@@ -336,7 +336,7 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
   rho <- lambda
   
   #detect block diagonal structure
-  adj.mat <- (Corr.sq > lambda ^ 2)
+  adj.mat <- (Corr.sq > lambda^2)
   diag(adj.mat) <- 1
   graph <- graph.adjacency(adj.mat)
   cluster <- clusters(graph)
@@ -400,12 +400,12 @@ LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.r
 }
 
 
-# Data detrending function ####################################################################################################
-###############################################################################################################################
+# Data detrending function #############################################################################################
+########################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
-# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average 
+# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average 
 
 # Output ###
 # X: a p by N matrix containing list of observations after detrending
@@ -427,8 +427,8 @@ dataDetrend <- function(X, detrend) {
 }
 
 
-# Covariance/Correlation matrix generation function ###########################################################################
-###############################################################################################################################
+# Covariance/Correlation matrix generation function ####################################################################
+########################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
@@ -458,7 +458,7 @@ makeCorr <- function(X, pos, h, fit.corr) {
   Corr <- array(0, c(p, p, N))
   
   for(i in 1:N) {
-    Kh <- pmax(3/4 * (1 - ((pos - i) / ((N - 1) * h)) ^ 2), 0)
+    Kh <- pmax(3/4 * (1 - ((pos - i) / ((N - 1) * h))^2), 0)
     omega <- Kh / sum(Kh)
     index <- which(omega != 0)
     Corr[, , i] <- X[, pos[index]] %*% diag(omega[index]) %*% t(X[, pos[index]])

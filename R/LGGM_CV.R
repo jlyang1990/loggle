@@ -1,6 +1,6 @@
 
-# Cross validation function for LGGM ##########################################################################################
-###############################################################################################################################
+# Cross validation function for LGGM ###################################################################################
+########################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
@@ -21,7 +21,7 @@
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
+# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads
@@ -87,7 +87,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   X <- dataDetrend(X, detrend)
   
   if(h.correct) {
-    h.test <- h * (cv.fold-1) ^ (1/5)
+    h.test <- h * (cv.fold-1)^(1/5)
   } else {
     h.test <- h
   }
@@ -144,8 +144,8 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 }
 
 
-# Cross validation function for LGGM (including h selection) ##################################################################
-###############################################################################################################################
+# Cross validation function for LGGM (including h selection) ###########################################################
+########################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
@@ -165,7 +165,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# detrend: whether to detrend each variable in data matrix by subtracting kernel weighted moving average or overall average
+# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
 # h.correct: whether to apply h correction based on kernel smoothing theorem
 # num.thread: number of threads
@@ -210,8 +210,8 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), d.list 
 }
 
 
-# Selection function for cross validation result ##############################################################################
-###############################################################################################################################
+# Selection function for cross validation result #######################################################################
+########################################################################################################################
 
 # Input ###
 # cv.result: results of cross validation for LGGM 
@@ -318,8 +318,8 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 }
 
 
-# Model refitting function for given graph structures #########################################################################
-###############################################################################################################################
+# Model refitting function for given graph structures ##################################################################
+########################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
@@ -370,8 +370,8 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 }
 
 
-# Cross validation function for local LGGM ####################################################################################
-###############################################################################################################################
+# Cross validation function for local LGGM #############################################################################
+########################################################################################################################
 
 # Input ###
 # pos: position of time point where graph is estimated
@@ -401,6 +401,8 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
   D <- length(d.list)
   L <- length(lambda.list)
   
+  record.c <- rep(0, 11)
+  
   Omega.list <- matrix(vector("list", 1), L, D)
   edge.num.list <- matrix(0, L, D)
   edge.list <- matrix(vector("list", 1), L, D)
@@ -411,13 +413,13 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
     epi.abs.d <- epi.abs[j]
     epi.rel.d <- epi.rel[j]
     
-    Nd.index <- max(1, ceiling(((pos-1)/(N-1) - d) * (N-1) - 1e-5) + 1) : min(N, floor(((pos-1)/(N-1) + d) * (N-1) + 1e-5) + 1)
+    Nd.index <- max(1, ceiling(((pos-1)/(N-1)-d)*(N-1)-1e-5)+1) : min(N, floor(((pos-1)/(N-1)+d)*(N-1)+1e-5)+1)
     Nd <- length(Nd.index)
     Nd.pos <- which(Nd.index == pos)
     Nd.pos.c <- Nd.pos - 1
     Nd.pos.l <- 1
     
-    Corr.sq <- apply(Corr[, , Nd.index] ^ 2, c(1, 2), sum)
+    Corr.sq <- rowSums(Corr[, , Nd.index, drop = FALSE]^2, dims = 2)
     
     Z.vec <- rep(0, p*p*L)
     
@@ -431,7 +433,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
     
     for(l in L:1) {
       
-      adj.mat <- (Corr.sq > lambda[l] ^ 2)
+      adj.mat <- (Corr.sq > lambda[l]^2)
       diag(adj.mat) <- 1
       graph <- graph.adjacency(adj.mat)
       cluster <- clusters(graph)
@@ -463,7 +465,8 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
                  as.double(rho),
                  as.double(epi.abs.d),
                  as.double(epi.rel.d),
-                 as.integer(max.step)
+                 as.integer(max.step),
+                 record.c = as.double(record.c)
     )
       
     Z.vec <- result$Z.vec
@@ -516,8 +519,8 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
 }
 
 
-# Cross validation function for global LGGM ###################################################################################
-###############################################################################################################################
+# Cross validation function for global LGGM ############################################################################
+########################################################################################################################
 
 # Input ###
 # pos: position of time points where graphs are estimated
@@ -546,6 +549,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   K <- length(pos)
   L <- length(lambda.list)
   
+  record.c <- rep(0, 11)
+  
   Omega.list <- array(vector("list", 1), c(L, 1, K))
   edge.num.list <- array(0, c(L, 1, K))
   edge.list <- array(vector("list", 1), c(L, 1, K))
@@ -553,7 +558,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   N.index.c <- 0:(N-1)
   pos.c <- pos - 1
   
-  Corr.sq <- apply(Corr ^ 2, c(1, 2), sum)
+  Corr.sq <- rowSums(Corr^2, dims = 2)
   
   Z.vec <- rep(0, p*p*K*L)
   
@@ -567,7 +572,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
   
   for(l in L:1) {
     
-    adj.mat <- (Corr.sq > lambda[l] ^ 2)
+    adj.mat <- (Corr.sq > lambda[l]^2)
     diag(adj.mat) <- 1
     graph <- graph.adjacency(adj.mat)
     cluster <- clusters(graph)
@@ -599,7 +604,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
                as.double(rho),
                as.double(epi.abs),
                as.double(epi.rel),
-               as.integer(max.step)
+               as.integer(max.step),
+               record.c = as.double(record.c)
   )
   
   Z.vec <- result$Z.vec
@@ -660,8 +666,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
 }
 
 
-# Cross validation function for local&global LGGM #############################################################################
-###############################################################################################################################
+# Cross validation function for local&global LGGM ######################################################################
+########################################################################################################################
 
 # Input ###
 # X: a p by N matrix containing list of observations
@@ -718,15 +724,15 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
       if(num.thread > 1) {
         
-        result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
-          LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], epi.rel[-D], 
-                        max.step, print.detail)
+        result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("LGGM.local.cv")) %dopar%
+          LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], 
+                        epi.rel[-D], max.step, print.detail)
       } else {
         
         result <- vector("list", K)
         for(k in 1:K) {
-          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D],
-                                       epi.rel[-D], max.step, print.detail)
+          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, 
+                                       epi.abs[-D], epi.rel[-D], max.step, print.detail)
         }
       }
       
@@ -739,8 +745,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
         edge.list[, -D, k] <- result.k$edge.list
       }
       
-      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs[D], epi.rel[D], max.step,
-                               print.detail)
+      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs[D], epi.rel[D], 
+                               max.step, print.detail)
       
       Omega.list[, D, ] <- result$Omega.list
       edge.num.list[, D, ] <- result$edge.num.list
@@ -750,15 +756,15 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
       if(num.thread > 1) {
         
-        result <- foreach(k = 1:K, .combine = "list", .multicombine = TRUE, .maxcombine = K, .export = c("LGGM.local.cv")) %dopar%
+        result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("LGGM.local.cv")) %dopar%
           LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                         print.detail)
       } else {
         
         result <- vector("list", K)
         for(k in 1:K) {
-          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel,
-                                       max.step, print.detail)
+          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, 
+                                       epi.rel, max.step, print.detail)
         }
       }
       
