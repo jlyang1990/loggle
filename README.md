@@ -1,7 +1,7 @@
-# LGGM, a R package for learning time-varying graphical models with structure smoothness
+# loggle (LOcal Group Graphical Lasso Estimation)
 
 ## Description
-LGGM is a set of methods that learn time-varying graphical models with structure smoothness.
+loggle is a set of methods that learn time-varying graphical models with structure smoothness.
 
 ## Dependencies
 * R (>= 3.0.2),
@@ -17,18 +17,18 @@ Go to the directory that contains package directory.
 
 In command line
 ```bash
-R CMD build Time_Varying_Graphical_Model/
+R CMD build loggle/
 ```
 
 * Install
 
 In command line
 ```bash
-R CMD install LGGM_1.1.tar.gz
+R CMD install loggle_1.1.tar.gz
 ```
 or in R console
 ```r
-install.packages("LGGM_1.1.tar.gz")
+install.packages("loggle_1.1.tar.gz")
 ```
 
 ## Main functions
