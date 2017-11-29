@@ -59,7 +59,7 @@ result <- loggle.cv(X, pos = pos.example, h = 0.2,
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type 
 = "pseudo", refit.type = "glasso", cv.vote.thres = 1,
-num.thread = 2)
+num.thread = 1)
 
 # conduct model selection using cross-validation results
 cv.select.result <- loggle.cv.select(cv.result = result, 

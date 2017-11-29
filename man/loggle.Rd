@@ -71,9 +71,14 @@ pos.example <- round(seq(0.02, 0.98, length=49)
 *(ncol(X)-1)+1, 0)
 K <- length(pos.example)
 # estimate time-varying graphs
+# num.thread can be set as large as number of cores 
+# on multi-core machine
+ts <- proc.time()
 result <- loggle(X, pos = pos.example, h = 0.1, 
 d = 0.15, lambda = 0.225, fit.type = "pseudo", 
-refit = TRUE, num.thread = 2)
+refit = TRUE, num.thread = 1)
+te <- proc.time()
+sprintf("Time used for loggle: \%.2fs", (te-ts)[3])
 
 # numbers of edges at each position of time point
 print(cbind("time" = seq(0.02, 0.98, length=49),

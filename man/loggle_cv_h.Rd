@@ -89,10 +89,15 @@ K <- length(pos.example)
 h.list <- c(0.15, 0.2, 0.25, 0.3)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
+# num.thread can be set as large as number of cores 
+# on multi-core machine
+ts <- proc.time()
 result <- loggle.cv.h(X, pos = pos.example, h.list = h.list, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type = "pseudo", 
-cv.vote.thres = 1, num.thread = 2)
+cv.vote.thres = 1, num.thread = 1)
+te <- proc.time()
+sprintf("Time used for loggle.cv.h: \%.2fs", (te-ts)[3])
 
 # optimal value of h
 print(result$h.min)
