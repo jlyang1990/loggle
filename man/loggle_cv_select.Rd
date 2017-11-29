@@ -1,5 +1,5 @@
-\name{LGGM.cv.select}
-\alias{LGGM.cv.select}
+\name{loggle.cv.select}
+\alias{loggle.cv.select}
 \title{A function to conduct model selection based on cross validation results}
 
 \description{
@@ -7,13 +7,13 @@ This function is to conduct model selection based on cross validation results fo
 }
 
 \usage{
-LGGM.cv.select <- function(cv.result, 
+loggle.cv.select <- function(cv.result, 
 select.type = c("all_flexible", "d_fixed", "all_fixed"), 
 cv.vote.thres = 0.8)
 }
 
 \arguments{
-  \item{cv.result}{a list: results from the function \link{LGGM.cv}}
+  \item{cv.result}{a list: results from the function \link{loggle.cv}}
   \item{select.type}{a string: "all_flexible" -- optimal d and lambda can vary at each position where graph is estimated, "d_fixed" -- optimal d is fixed and optimal lambda can vary at each position where graph is estimated, "all_fixed" -- optimal d and lambda are fixed at each position where graph is estimated, default = "all_flexible"}
   \item{cv.vote.thres}{a scalar (between 0 and 1): an edge is retained in cv vote if and only if it exists in no less than \code{cv.vote.thres}*\code{num.fold} cv folds, default = 0.8}
 }
@@ -43,7 +43,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{LGGM} for learning time-varying graphical models, \link{LGGM.cv} for learning time-varying graphical models via cross validation, \link{LGGM.cv.h} for learning time-varying graphical models via cross validation (with h selection), and \link{LGGM.refit} for model refitting based on estimated graphs.
+\link{loggle} for learning time-varying graphical models, \link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with h selection), and \link{loggle.refit} for model refitting based on estimated graphs.
 }
 
 \examples{
@@ -55,14 +55,14 @@ pos.example <- round(seq(0.02, 0.98, length=25)
 *(ncol(X)-1)+1, 0)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
-result <- LGGM.cv(X, pos = pos.example, h = 0.2, 
+result <- loggle.cv(X, pos = pos.example, h = 0.2, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type 
 = "pseudo", refit.type = "glasso", cv.vote.thres = 1,
 num.thread = 2)
 
 # conduct model selection using cross-validation results
-cv.select.result <- LGGM.cv.select(cv.result = result, 
+cv.select.result <- loggle.cv.select(cv.result = result, 
 select.type = "all_flexible", cv.vote.thres = 0.8)
 
 # optimal values of d, lambda and number of selected edges

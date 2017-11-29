@@ -1,5 +1,5 @@
-\name{LGGM}
-\alias{LGGM}
+\name{loggle}
+\alias{loggle}
 \title{A function to learn time-varying graphical models with structure smoothness}
 
 \description{
@@ -7,7 +7,7 @@ This function is to efficiently implement the ADMM (alternating directions metho
 }
 
 \usage{
-LGGM(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
+loggle(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
 d = 0.2, lambda = 0.25, fit.type = c("likelihood", 
 "pseudo", "space"), refit = TRUE, epi.abs = 1e-5, 
 epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
@@ -58,7 +58,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{LGGM.cv} for learning time-varying graphical models via cross validation, \link{LGGM.cv.h} for learning time-varying graphical models via cross validation (with h selection), \link{LGGM.cv.select} for model selection based on cross validation results, and \link{LGGM.refit} for model refitting based on estimated graphs.
+\link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with h selection), \link{loggle.cv.select} for model selection based on cross validation results, and \link{loggle.refit} for model refitting based on estimated graphs.
 }
 
 \examples{
@@ -71,7 +71,7 @@ pos.example <- round(seq(0.02, 0.98, length=49)
 *(ncol(X)-1)+1, 0)
 K <- length(pos.example)
 # estimate time-varying graphs
-result <- LGGM(X, pos = pos.example, h = 0.1, 
+result <- loggle(X, pos = pos.example, h = 0.1, 
 d = 0.15, lambda = 0.225, fit.type = "pseudo", 
 refit = TRUE, num.thread = 2)
 

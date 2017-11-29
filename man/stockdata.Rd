@@ -69,7 +69,7 @@ pos.example <- round(seq(0.005, 0.995, length=25)
 *(ncol(X)-1)+1, 0)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
-result <- LGGM.cv(X, pos = pos.example, h = 0.1, 
+result <- loggle.cv(X, pos = pos.example, h = 0.1, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = 10 ^ seq(-0.8, -0.2, length = 4), 
 fit.type = "pseudo", num.thread = 2)

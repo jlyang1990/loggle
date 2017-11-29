@@ -1,13 +1,13 @@
-\name{LGGM.cv.h}
-\alias{LGGM.cv.h}
+\name{loggle.cv.h}
+\alias{loggle.cv.h}
 \title{A function to learn time-varying graphical models with structure smoothness via cross validation (with h selection)}
 
 \description{
-This function is to efficiently conduct model selection via cross validation for learning time-varying graphical models through a local group-Lasso type penalty. Compared with the function \link{LGGM.cv}, the bandwidth in kernel estimated sample covariance/correlation matrix can be automatically selected in model selection.
+This function is to efficiently conduct model selection via cross validation for learning time-varying graphical models through a local group-Lasso type penalty. Compared with the function \link{loggle.cv}, the bandwidth in kernel estimated sample covariance/correlation matrix can be automatically selected in model selection.
 }
 
 \usage{
-LGGM.cv.h <- function(X, pos = 1:ncol(X), 
+loggle.cv.h <- function(X, pos = 1:ncol(X), 
 h.list = seq(0.1, 0.35, 0.05), 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = seq(0.15, 0.3, 0.05), cv.fold = 5, 
@@ -41,7 +41,7 @@ num.thread = 1, print.detail = TRUE)
 }
   
 \details{
-This function conducts grid search for optimal \code{h}, \code{d} and \code{lambda} selection. It calls the function \link{LGGM.cv} for each candidate \code{h}.
+This function conducts grid search for optimal \code{h}, \code{d} and \code{lambda} selection. It calls the function \link{loggle.cv} for each candidate \code{h}.
 
 The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "likelihood"}), with similar (or sometimes even better) model fitting performance.
 
@@ -61,7 +61,7 @@ If no pre-processing has been done to the data matrix \code{X}, \code{detrend = 
 \value{
   \item{h.min}{optimal value of h}
   \item{cv.score.min.h}{optimal cv scores for each h}
-  \item{cv.result.list}{a list of results from the function \link{LGGM.cv} for each h}
+  \item{cv.result.list}{a list of results from the function \link{loggle.cv} for each h}
 }
 
 \references{
@@ -73,7 +73,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{LGGM} for learning time-varying graphical models, \link{LGGM.cv} for learning time-varying graphical models via cross validation, \link{LGGM.cv.select} for model selection based on cross validation results, and \link{LGGM.refit} for model refitting based on estimated graphs.
+\link{loggle} for learning time-varying graphical models, \link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, and \link{loggle.refit} for model refitting based on estimated graphs.
 }
 
 \examples{
@@ -89,7 +89,7 @@ K <- length(pos.example)
 h.list <- c(0.15, 0.2, 0.25, 0.3)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
-result <- LGGM.cv.h(X, pos = pos.example, h.list = h.list, 
+result <- loggle.cv.h(X, pos = pos.example, h.list = h.list, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type = "pseudo", 
 cv.vote.thres = 1, num.thread = 2)

@@ -1,2 +1,2 @@
-useDynLib(LGGM)
-export(LGGM, LGGM.cv, LGGM.cv.h, LGGM.cv.select, LGGM.refit)
+useDynLib(loggle)
+export(loggle, loggle.cv, loggle.cv.h, loggle.cv.select, loggle.refit)

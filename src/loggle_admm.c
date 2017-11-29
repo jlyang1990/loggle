@@ -4,7 +4,7 @@
 #include <Rmath.h>
 #include <math.h>
 #include <R_ext/Lapack.h>
-#include "LGGM_ADMM.h"
+#include "loggle_admm.h"
 
 
 //apply ADMM across lambda's when h and d are fixed

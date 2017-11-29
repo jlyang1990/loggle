@@ -1,5 +1,5 @@
 
-# Graph estimation function for LGGM ###################################################################################
+# Graph estimation function for loggle #################################################################################
 ########################################################################################################################
 
 # Input ###
@@ -26,9 +26,9 @@
 # edge.num.list: list of detected edge numbers of length K
 # edge.list: list of detected edges of length K
 
-LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
-                 refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
-                 fit.corr = TRUE, num.thread = 1, print.detail = TRUE) {
+loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
+                   refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
+                   fit.corr = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -76,7 +76,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
     
     if(length(lambda) == 1) {
       
-      result <- LGGM.global(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step)
+      result <- loggle.global(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step)
       
       if(print.detail) {
         cat("Complete all!\n")
@@ -88,7 +88,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       for(lambda.l in lambda.list) {
         
-        result.l <- LGGM.global(pos, Corr, sd.X, lambda.l, fit.type, refit, epi.abs, epi.rel, max.step)
+        result.l <- loggle.global(pos, Corr, sd.X, lambda.l, fit.type, refit, epi.abs, epi.rel, max.step)
         idx <- which(lambda == lambda.l)
         
         for(i in idx) {
@@ -119,15 +119,15 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
       
       registerDoParallel(num.thread)
       
-      result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("LGGM.local")) %dopar%
-        LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, print.detail)
+      result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("loggle.local")) %dopar%
+        loggle.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, print.detail)
       
     } else {
       
       result <- vector("list", K)
       for(k in 1:K) {
-        result[[k]] <- LGGM.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, 
-                                  print.detail)
+        result[[k]] <- loggle.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, 
+                                    print.detail)
       }
     }
     
@@ -147,7 +147,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 }
 
 
-# Graph estimation function for local LGGM #############################################################################
+# Graph estimation function for local loggle ###########################################################################
 ########################################################################################################################
 
 # Input ###
@@ -171,7 +171,7 @@ LGGM <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0
 # edge.num: detected edge number
 # edge: detected edges
 
-LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi.rel, max.step, print.detail) {
+loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi.rel, max.step, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -249,7 +249,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
 }
 
 
-# Graph estimation function for global LGGM ############################################################################
+# Graph estimation function for global loggle ##########################################################################
 ########################################################################################################################
 
 # Input ###
@@ -272,7 +272,7 @@ LGGM.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi
 # edge.num: list of detected edge numbers of length K
 # edge: list of detected edges of length K
 
-LGGM.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step) {
+loggle.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]

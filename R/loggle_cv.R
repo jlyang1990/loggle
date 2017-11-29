@@ -1,5 +1,5 @@
 
-# Cross validation function for LGGM ###################################################################################
+# Cross validation function for loggle #################################################################################
 ########################################################################################################################
 
 # Input ###
@@ -12,7 +12,7 @@
 # fit.type: 0: graphical Lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# return.select: whether to return results from LGGM.cv.select
+# return.select: whether to return results from loggle.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
@@ -29,15 +29,15 @@
 
 # Output ###
 # cv.score: L (number of lambda's) by D (number of d's) by K (number of time points) by cv.fold array of cv scores 
-# cv.result.list: list of results from LGGM.combine.cv of length cv.fold
-# cv.select.result: results from LGGM.cv.select if return.select is TRUE
+# cv.result.list: list of results from loggle.combine.cv of length cv.fold
+# cv.select.result: results from loggle.cv.select if return.select is TRUE
 
-LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
-                    d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
-                    lambda.list = seq(0.15, 0.35, 0.02), cv.fold = 5, fit.type = "pseudo",
-                    return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
-                    epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
-                    num.thread = 1, print.detail = TRUE) {
+loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
+                      d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
+                      lambda.list = seq(0.15, 0.35, 0.02), cv.fold = 5, fit.type = "pseudo",
+                      return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
+                      epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+                      h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -108,8 +108,8 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     pos.test <- seq(i, N, cv.fold)
     pos.train <- (1:N)[-pos.test]
     
-    result.i <- LGGM.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
-                                max.step, fit.corr, num.thread, print.detail)
+    result.i <- loggle.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, 
+                                  epi.rel, max.step, fit.corr, num.thread, print.detail)
     cv.result.list[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
@@ -133,7 +133,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   if(return.select) {
     
     cat(sprintf("\nSelecting models based on %d-fold cross-validation results...\n", cv.fold))
-    cv.select.result <- LGGM.cv.select(cv.result, select.type, cv.vote.thres)
+    cv.select.result <- loggle.cv.select(cv.result, select.type, cv.vote.thres)
     cv.result$cv.select.result <- cv.select.result
   }
   
@@ -141,7 +141,7 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 }
 
 
-# Cross validation function for LGGM (including h selection) ###########################################################
+# Cross validation function for loggle (including h selection) #########################################################
 ########################################################################################################################
 
 # Input ###
@@ -171,12 +171,13 @@ LGGM.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # Output ###
 # h.min: optimal h
 # cv.score.min.h: optimal cv scores across h's
-# cv.result.list: list of results from LGGM.cv of length H (number of h's)
+# cv.result.list: list of results from loggle.cv of length H (number of h's)
 
-LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
-                      lambda.list = seq(0.15, 0.3, 0.05), cv.fold = 5, fit.type = "pseudo", select.type = "all_flexible", 
-                      cv.vote.thres = 0.8, early.stop.thres = 5, epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, 
-                      detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
+loggle.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), 
+                        d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = seq(0.15, 0.3, 0.05), 
+                        cv.fold = 5, fit.type = "pseudo", select.type = "all_flexible", cv.vote.thres = 0.8, 
+                        early.stop.thres = 5, epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, 
+                        fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   N <- dim(X)[2]
   H <- length(h.list)
@@ -188,9 +189,9 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), d.list 
   for(h in 1:H) {
     
     cat("\nRunning h =", h.list[h], "...\n")
-    cv.result.h <- LGGM.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, return.select = TRUE, select.type, 
-                           cv.vote.thres, early.stop.thres, epi.abs, epi.rel, max.step, detrend, fit.corr, h.correct, 
-                           num.thread, print.detail)
+    cv.result.h <- loggle.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, return.select = TRUE, 
+                             select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, max.step, detrend, 
+                             fit.corr, h.correct, num.thread, print.detail)
     cv.result.list[[h]] <- cv.result.h
     cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
   }
@@ -206,7 +207,7 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), d.list 
 ########################################################################################################################
 
 # Input ###
-# cv.result: results of cross validation for LGGM 
+# cv.result: results of cross validation for loggle 
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
@@ -221,7 +222,7 @@ LGGM.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), d.list 
 # edge.list.min: optimal list of edges across time points
 # Omega.edge.list.min: optimal graph structures across time points
 
-LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
+loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
   cv.score <- cv.result$cv.score
   cv.score[is.na(cv.score)] <- Inf
@@ -315,7 +316,7 @@ LGGM.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thre
 # Output ###
 # Omega.list: list of refitted precision matrices of length K
 
-LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
+loggle.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -355,7 +356,7 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 }
 
 
-# Cross validation function for local LGGM #############################################################################
+# Cross validation function for local loggle ###########################################################################
 ########################################################################################################################
 
 # Input ###
@@ -378,8 +379,8 @@ LGGM.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # edge.num: L by D list of edge numbers
 # edge: L by D list of edges
 
-LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
-                          print.detail) {
+loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
+                            max.step, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -497,7 +498,7 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
 }
 
 
-# Cross validation function for global LGGM ############################################################################
+# Cross validation function for global loggle ##########################################################################
 ########################################################################################################################
 
 # Input ###
@@ -519,8 +520,8 @@ LGGM.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.
 # edge.num: L by K list of edge numbers
 # edge: L by K list of edges
 
-LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
-                           print.detail) {
+loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
+                             print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -636,7 +637,7 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
 }
 
 
-# Cross validation function for local&global LGGM ######################################################################
+# Cross validation function for local&global loggle ####################################################################
 ########################################################################################################################
 
 # Input ###
@@ -662,8 +663,8 @@ LGGM.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.th
 # edge.num: L by D by K list of edge numbers
 # edge: L by D by K list of edges
 
-LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
-                            max.step, fit.corr, num.thread, print.detail) {
+loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
+                              max.step, fit.corr, num.thread, print.detail) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -681,8 +682,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
   
   if(d.list[1] == 1) {
 
-    result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
-                             print.detail)
+    result <- loggle.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
+                               print.detail)
     
   } else {
     
@@ -694,15 +695,15 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
       if(num.thread > 1) {
         
-        result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("LGGM.local.cv")) %dopar%
-          LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], 
-                        epi.rel[-D], max.step, print.detail)
+        result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("loggle.local.cv")) %dopar%
+          loggle.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, epi.abs[-D], 
+                          epi.rel[-D], max.step, print.detail)
       } else {
         
         result <- vector("list", K)
         for(k in 1:K) {
-          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, 
-                                       epi.abs[-D], epi.rel[-D], max.step, print.detail)
+          result[[k]] <- loggle.local.cv(pos[k], Corr, sd.X, d.list[-D], lambda.list, fit.type, early.stop.thres, 
+                                         epi.abs[-D], epi.rel[-D], max.step, print.detail)
         }
       }
       
@@ -715,8 +716,8 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
         edge.list[, -D, k] <- result.k$edge.list
       }
       
-      result <- LGGM.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs[D], epi.rel[D], 
-                               max.step, print.detail)
+      result <- loggle.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs[D], epi.rel[D], 
+                                 max.step, print.detail)
       
       Omega.list[, D, ] <- result$Omega.list
       edge.num.list[, D, ] <- result$edge.num.list
@@ -726,15 +727,15 @@ LGGM.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type,
       
       if(num.thread > 1) {
         
-        result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("LGGM.local.cv")) %dopar%
-          LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
-                        print.detail)
+        result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("loggle.local.cv")) %dopar%
+          loggle.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
+                          max.step, print.detail)
       } else {
         
         result <- vector("list", K)
         for(k in 1:K) {
-          result[[k]] <- LGGM.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, 
-                                       epi.rel, max.step, print.detail)
+          result[[k]] <- loggle.local.cv(pos[k], Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, 
+                                         epi.rel, max.step, print.detail)
         }
       }
       

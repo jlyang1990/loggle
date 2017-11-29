@@ -1,10 +1,9 @@
 Package: loggle
-Type: Package
 Title: LOcal Group Graphical Lasso Estimation
-Version: 1.1
-Date: 2016-10-06
+Version: 1.0
+Date: 2017-11-17
 Author: Jilei Yang, Jie Peng
-Maintainer: Jie Peng <jiepeng@ucdavis.edu>
+Maintainer: Jilei Yang <jlyang@ucdavis.edu>
 Description: loggle is a set of methods that learn time-varying graphical models with structure smoothness. 
 Depends:
   R (>= 3.0.2),
@@ -16,4 +15,4 @@ Imports:
   sm
 License: GPL (>= 2)
 NeedsCompilation: yes
-Packaged: 2016-10-06 10:58:06 UTC; jiepeng
+URL: https://github.com/jlyang1990/loggle

@@ -1,5 +1,5 @@
-\name{LGGM.cv}
-\alias{LGGM.cv}
+\name{loggle.cv}
+\alias{loggle.cv}
 \title{A function to learn time-varying graphical models with structure smoothness via cross validation}
 
 \description{
@@ -7,7 +7,7 @@ This function is to efficiently conduct model selection via cross validation for
 }
 
 \usage{
-LGGM.cv <- function(X, pos = 1:ncol(X), 
+loggle.cv <- function(X, pos = 1:ncol(X), 
 h = 0.8*ncol(X)^(-1/5), d.list = c(0, 0.001, 0.01, 
 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
 lambda.list = seq(0.15, 0.35, 0.02), 
@@ -43,7 +43,7 @@ num.thread = 1, print.detail = TRUE)
 }
   
 \details{
-This function conducts grid search for optimal \code{d} and \code{lambda} selection, while \code{h} is fixed and pre-specified. To figure out the optimal \code{h} as well, one can apply this function to different candidate \code{h}'s or use the function \link{LGGM.cv.h}.
+This function conducts grid search for optimal \code{d} and \code{lambda} selection, while \code{h} is fixed and pre-specified. To figure out the optimal \code{h} as well, one can apply this function to different candidate \code{h}'s or use the function \link{loggle.cv.h}.
 
 The model fitting method based on pseudo log-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than the model fitting method based on negative log-likelihood (\code{fit.type = "likelihood"}), with similar (or sometimes even better) model fitting performance.
 
@@ -62,8 +62,8 @@ If no pre-processing has been done to the data matrix \code{X}, \code{detrend = 
 
 \value{
   \item{cv.score}{an array of cv scores for each combination of d, lambda, position of time point and cv fold}
-  \item{cv.result.list}{a list of model fitting results (of the same format as the results from the function \link{LGGM}) for each cv fold}
-  \item{cv.select.result}{results from the function \link{LGGM.cv.select} if \code{return.select = TRUE}}
+  \item{cv.result.list}{a list of model fitting results (of the same format as the results from the function \link{loggle}) for each cv fold}
+  \item{cv.select.result}{results from the function \link{loggle.cv.select} if \code{return.select = TRUE}}
 }
 
 \references{
@@ -75,7 +75,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{LGGM} for learning time-varying graphical models, \link{LGGM.cv.h} for learning time-varying graphical models via cross validation (with h selection), \link{LGGM.cv.select} for model selection based on cross validation results, and \link{LGGM.refit} for model refitting based on estimated graphs.
+\link{loggle} for learning time-varying graphical models, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with h selection), \link{loggle.cv.select} for model selection based on cross validation results, and \link{loggle.refit} for model refitting based on estimated graphs.
 }
 
 \examples{
@@ -89,7 +89,7 @@ pos.example <- round(seq(0.02, 0.98, length=25)
 K <- length(pos.example)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
-result <- LGGM.cv(X, pos = pos.example, h = 0.2, 
+result <- loggle.cv(X, pos = pos.example, h = 0.2, 
 d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), 
 lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type 
 = "pseudo", cv.vote.thres = 1, num.thread = 2)
