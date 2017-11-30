@@ -11,7 +11,8 @@ loggle(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 d = 0.2, lambda = 0.25, fit.type = c("likelihood", 
 "pseudo", "space"), refit = TRUE, epi.abs = 1e-5, 
 epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
-fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
+fit.corr = TRUE, pos.corr = 1:ncol(X), 
+num.thread = 1, print.detail = TRUE)
 }
 
 \arguments{
@@ -27,6 +28,7 @@ fit.corr = TRUE, num.thread = 1, print.detail = TRUE)
   \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
   \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centralization), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
+  \item{pos.corr}{a vector which is a subset of 1, 2, ..., N: positions of time points used to generate sample covariance matrix or sample correlation matrix}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
   \item{print.detail}{logic: if TRUE, print details in model fitting procedure, default = TRUE}
 }

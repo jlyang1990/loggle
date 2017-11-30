@@ -17,6 +17,7 @@
 # max.step: maximum steps in ADMM iteration
 # detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
 # fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
+# pos.corr: position of observations used to generate correlation matrices
 # num.thread: number of threads
 # print.detail: whether to print details in model fitting procedure
 
@@ -28,7 +29,7 @@
 
 loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
                    refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
-                   fit.corr = TRUE, num.thread = 1, print.detail = TRUE) {
+                   fit.corr = TRUE, pos.corr = 1:ncol(X), num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -61,7 +62,7 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
   X <- dataDetrend(X, detrend)
   
   cat("Generating sample covariance/correlation matrices...\n")
-  result.Corr <- makeCorr(X, 1:N, h, fit.corr)
+  result.Corr <- makeCorr(X, pos.corr, h, fit.corr)
   Corr <- result.Corr$Corr
   sd.X <- result.Corr$sd.X
   rm(result.Corr)
