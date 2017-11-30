@@ -169,7 +169,7 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# h.min: optimal h
+# h.min: optimal value of h
 # cv.score.min.h: optimal cv scores across h's
 # cv.result.list: list of results from loggle.cv of length H (number of h's)
 
@@ -179,7 +179,6 @@ loggle.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05),
                         early.stop.thres = 5, epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, 
                         fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
-  N <- dim(X)[2]
   H <- length(h.list)
   
   cv.result.list <- vector("list", H)
@@ -207,7 +206,7 @@ loggle.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05),
 ########################################################################################################################
 
 # Input ###
-# cv.result: results of cross validation for loggle 
+# cv.result: results of cross validation from loggle.cv
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
@@ -300,6 +299,49 @@ loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.th
   result <- list(d.min = d.min, lambda.min = lambda.min, cv.score.min = cv.score.min, cv.score.min.sd = cv.score.min.sd,
                  edge.num.list.min = edge.num.list.min, edge.list.min = edge.list.min, 
                  Omega.edge.list.min = Omega.edge.list.min)
+  return(result)
+}
+
+
+# Selection function for cross validation result (including h selection) ###############################################
+########################################################################################################################
+
+# Input ###
+# cv.result: results of cross validation from loggle.cv.h
+# select.type: "all_flexible": d and lambda can vary across time points, 
+#              "d_fixed": d is fixed and lambda can vary across time points, 
+#              "all_fixed": d and lambda are fixed across time points
+# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
+
+# Output ###
+# h.min: optimal value of h
+# d.min: optimal values of d across time points
+# lambda.min: optimal values of lambda across time points
+# cv.score.min.h: optimal cv scores across h's
+# cv.score.min: optimal cv score (averaged over time points and cv folds)
+# cv.score.min.sd: standard deviation of optimal cv scores across cv folds
+# edge.num.list.min: optimal edge numbers across time points
+# edge.list.min: optimal list of edges across time points
+# Omega.edge.list.min: optimal graph structures across time points
+
+loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
+  
+  h.list <- as.numeric(names(cv.result$cv.score.min.h))
+  H <- length(h.list)
+  
+  cv.select.result.list <- vector("list", H)
+  cv.score.min.h <- rep(NA, H)
+  
+  for(h in 1:H) {
+    cv.select.result.list[[h]] <- loggle.cv.select(cv.result$cv.result.list[[h]], select.type, cv.vote.thres)
+    cv.score.min.h[h] <- cv.select.result.list[[h]]$cv.score.min
+  }
+  
+  h.min <- h.list[which.min(cv.score.min.h)]
+  result <- cv.select.result.list[[which.min(cv.score.min.h)]]
+  result$h.min <- h.min
+  result$cv.score.min.h <- cv.score.min.h
+
   return(result)
 }
 

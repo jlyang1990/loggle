@@ -1,2 +1,2 @@
 useDynLib(loggle)
-export(loggle, loggle.cv, loggle.cv.h, loggle.cv.select, loggle.refit)
+export(loggle, loggle.cv, loggle.cv.h, loggle.cv.select, loggle.cv.select.h, loggle.refit)
