@@ -1,5 +1,5 @@
 
-# Cross validation function for loggle #################################################################################
+# Cross validation function for loggle (with h fixed) ##################################################################
 ########################################################################################################################
 
 # Input ###
@@ -7,12 +7,12 @@
 # pos: position of time points where graphs are estimated
 # h: bandwidth in kernel function used to generate correlation matrices
 # d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of Lasso penalty
+# lambda.list: list of tuning parameters of lasso penalty
 # cv.fold: number of cv folds
-# fit.type: 0: graphical Lasso estimation, 
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# return.select: whether to return results from loggle.cv.select
+# return.select: whether to return results from loggle.cv.select.h
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
@@ -29,15 +29,15 @@
 
 # Output ###
 # cv.score: L (number of lambda's) by D (number of d's) by K (number of time points) by cv.fold array of cv scores 
-# cv.result.list: list of results from loggle.combine.cv of length cv.fold
-# cv.select.result: results from loggle.cv.select if return.select is TRUE
+# cv.result.fold: list of results from loggle.combine.cv of length cv.fold
+# cv.select.result: results from loggle.cv.select.h if return.select is TRUE
 
-loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
-                      d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 1), 
-                      lambda.list = seq(0.15, 0.35, 0.02), cv.fold = 5, fit.type = "pseudo",
-                      return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
-                      epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, fit.corr = TRUE, 
-                      h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
+loggle.cv.h <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
+                        d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 1), 
+                        lambda.list = seq(0.15, 0.35, 0.02), cv.fold = 5, fit.type = "pseudo",
+                        return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5, 
+                        epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+                        h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -95,7 +95,7 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   cv.score <- array(NA, c(L, D, K, cv.fold))
   rownames(cv.score) <- lambda.list
   colnames(cv.score) <- d.list
-  cv.result.list <- vector("list", cv.fold)
+  cv.result.fold <- vector("list", cv.fold)
   
   if(d.list[1] != 1 && num.thread > 1) {
     registerDoParallel(num.thread)
@@ -110,7 +110,7 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     
     result.i <- loggle.combine.cv(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, 
                                   epi.rel, max.step, fit.corr, num.thread, print.detail)
-    cv.result.list[[i]] <- result.i
+    cv.result.fold[[i]] <- result.i
     
     cat("Calculating cross-validation scores for testing dataset...\n")
     
@@ -119,7 +119,7 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     for(d in 1:D) {
       for(l in 1:L) {
         for(k in 1:K) {
-          Omega <- as.matrix(result.i$Omega.list[[l, d, k]])
+          Omega <- as.matrix(result.i$Omega[[l, d, k]])
           cv.score[l, d, k, i] <- sum(c(t(Sigma.test[, , pos[k]]))*c(Omega)) - log(det(Omega))
         }
       }
@@ -128,12 +128,12 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
     rm(Sigma.test)
   }
   
-  cv.result <- list(cv.score = cv.score, cv.result.list = cv.result.list)
+  cv.result <- list(cv.score = cv.score, cv.result.fold = cv.result.fold)
   
   if(return.select) {
     
     cat(sprintf("\nSelecting models based on %d-fold cross-validation results...\n", cv.fold))
-    cv.select.result <- loggle.cv.select(cv.result, select.type, cv.vote.thres)
+    cv.select.result <- loggle.cv.select.h(cv.result, select.type, cv.vote.thres)
     cv.result$cv.select.result <- cv.select.result
   }
   
@@ -141,7 +141,7 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 }
 
 
-# Cross validation function for loggle (including h selection) #########################################################
+# Cross validation function for loggle #################################################################################
 ########################################################################################################################
 
 # Input ###
@@ -149,11 +149,12 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # pos: position of time points where graphs are estimated
 # h.list: list of bandwidths in kernel function used to generate correlation matrices
 # d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of Lasso penalty
+# lambda.list: list of tuning parameters of lasso penalty
 # cv.fold: number of cv folds
-# fit.type: 0: graphical Lasso estimation, 
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
+# return.select: whether to return results from loggle.cv.select
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
@@ -169,79 +170,81 @@ loggle.cv <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# h.min: optimal value of h
-# cv.score.min.h: optimal cv scores across h's
-# cv.result.list: list of results from loggle.cv of length H (number of h's)
+# cv.result.h: list of results from loggle.cv of length H (number of h's)
+# cv.select.result: results from loggle.cv.select if return.select is TRUE
 
-loggle.cv.h <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.35, 0.05), 
-                        d.list = c(0, 0.01, 0.05, 0.15, 0.25, 0.35, 1), lambda.list = seq(0.15, 0.3, 0.05), 
-                        cv.fold = 5, fit.type = "pseudo", select.type = "all_flexible", cv.vote.thres = 0.8, 
-                        early.stop.thres = 5, epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, 
-                        fit.corr = TRUE, h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
+loggle.cv <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.3, 0.05), 
+                      d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 1), 
+                      lambda.list = seq(0.15, 0.35, 0.02), cv.fold = 5, fit.type = "pseudo", 
+                      return.select = TRUE, select.type = "all_flexible", cv.vote.thres = 0.8, early.stop.thres = 5,
+                      epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+                      h.correct = TRUE, num.thread = 1, print.detail = TRUE) {
   
   H <- length(h.list)
-  
-  cv.result.list <- vector("list", H)
-  cv.score.min.h <- rep(NA, H)
-  names(cv.score.min.h) <- h.list
+  cv.result.h <- vector("list", H)
   
   for(h in 1:H) {
     
     cat("\nRunning h =", h.list[h], "...\n")
-    cv.result.h <- loggle.cv(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, return.select = TRUE, 
-                             select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, max.step, detrend, 
-                             fit.corr, h.correct, num.thread, print.detail)
-    cv.result.list[[h]] <- cv.result.h
-    cv.score.min.h[h] <- cv.result.h$cv.select.result$cv.score.min
+    cv.result.h[[h]] <- loggle.cv.h(X, pos, h.list[h], d.list, lambda.list, cv.fold, fit.type, return.select = FALSE, 
+                                    select.type, cv.vote.thres, early.stop.thres, epi.abs, epi.rel, max.step, detrend, 
+                                    fit.corr, h.correct, num.thread, print.detail)
+    cv.result.h[[h]]$h <- h.list[h]
   }
   
-  h.min <- h.list[which.min(cv.score.min.h)]
+  cv.result <- list(cv.result.h = cv.result.h)
   
-  cv.result <- list(h.min = h.min, cv.score.min.h = cv.score.min.h, cv.result.list = cv.result.list)
+  if(return.select) {
+    
+    cat(sprintf("\nSelecting models based on %d-fold cross-validation results...\n", cv.fold))
+    cv.select.result <- loggle.cv.select(cv.result, select.type, cv.vote.thres)
+    cv.result$cv.select.result <- cv.select.result
+  }
+  
   return(cv.result)
 }
 
 
-# Selection function for cross validation result #######################################################################
+# Selection function for cross validation result (with h fixed) ########################################################
 ########################################################################################################################
 
 # Input ###
-# cv.result: results of cross validation from loggle.cv
+# cv.result: results of cross validation from loggle.cv.h
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
 # cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
 
 # Output ###
-# d.min: optimal values of d across time points
-# lambda.min: optimal values of lambda across time points
-# cv.score.min: optimal cv score (averaged over time points and cv folds)
-# cv.score.min.sd: standard deviation of optimal cv scores across cv folds
-# edge.num.list.min: optimal edge numbers across time points
-# edge.list.min: optimal list of edges across time points
-# Omega.edge.list.min: optimal graph structures across time points
+# d.opt: optimal values of d across time points
+# lambda.opt: optimal values of lambda across time points
+# cv.score.opt: optimal cv score (averaged over time points and cv folds)
+# cv.score.opt.sd: standard deviation of optimal cv scores across cv folds
+# edge.num.opt: optimal edge numbers across time points
+# edge.opt: optimal list of edges across time points
+# adj.mat.opt: optimal graph structures across time points
 
-loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
+loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
   cv.score <- cv.result$cv.score
   cv.score[is.na(cv.score)] <- Inf
   cv.score[is.nan(cv.score)] <- Inf
   cv.score[is.infinite(cv.score)] <- Inf
-  cv.result.list <- cv.result$cv.result.list
+  cv.result.fold <- cv.result$cv.result.fold
   
   L <- dim(cv.score)[1]
   D <- dim(cv.score)[2]
   K <- dim(cv.score)[3]
   cv.fold <- dim(cv.score)[4]
-  p <- dim(cv.result.list[[1]]$Omega.list[[L, D, K]])[1]
+  p <- dim(cv.result.fold[[1]]$Omega[[L, D, K]])[1]
   
   lambda.list <- as.numeric(rownames(cv.score))
   d.list <- as.numeric(colnames(cv.score))
   
-  Omega.edge.list <- array(NA, c(p, p, K, cv.fold))
-  edge.num.list.min <- rep(NA, K)
-  edge.list.min <- vector("list", K)
-  Omega.edge.list.min <- vector("list", K)
+  adj.mat <- array(NA, c(p, p, K, cv.fold))
+  edge.num.opt <- rep(NA, K)
+  edge.opt <- vector("list", K)
+  adj.mat.opt <- vector("list", K)
   
   cv.score.fold <- rowMeans(cv.score, dims = 3)
   
@@ -271,76 +274,75 @@ loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.th
     lambda.index <- rep(index[1], K)
   }
   
-  d.min <- d.list[d.index]
-  lambda.min <- lambda.list[lambda.index]
+  d.opt <- d.list[d.index]
+  lambda.opt <- lambda.list[lambda.index]
   
   cv.temp <- sapply(1:cv.fold, function(i) mean(sapply(1:K, function(k) cv.score[lambda.index[k], d.index[k], k, i])))
-  cv.score.min <- mean(cv.temp)
-  cv.score.min.sd <- sd(cv.temp)
+  cv.score.opt <- mean(cv.temp)
+  cv.score.opt.sd <- sd(cv.temp)
   
   for(i in 1:cv.fold) {
     
-    Omega.list <- cv.result.list[[i]]$Omega.list
+    Omega <- cv.result.fold[[i]]$Omega
     for(k in 1:K) {
-      Omega.edge.list[, , k, i] <- as.matrix(Omega.list[[lambda.index[k], d.index[k], k]])
+      adj.mat[, , k, i] <- as.matrix(Omega[[lambda.index[k], d.index[k], k]])
     }
   }
   
-  Omega.edge.list <- rowSums(Omega.edge.list != 0, dims = 3) >= cv.fold * cv.vote.thres
+  adj.mat <- rowSums(adj.mat != 0, dims = 3) >= cv.fold * cv.vote.thres
   
   for(k in 1:K) {
     
-    edge <- which(Omega.edge.list[, , k] != 0, arr.ind = T)
-    edge.list.min[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
-    edge.num.list.min[k] <- nrow(edge.list.min[[k]])
-    Omega.edge.list.min[[k]] <- Matrix(as.numeric(Omega.edge.list[, , k]), p, p, sparse = TRUE)
+    edge <- which(adj.mat[, , k] != 0, arr.ind = T)
+    edge.opt[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+    edge.num.opt[k] <- nrow(edge.opt[[k]])
+    adj.mat.opt[[k]] <- Matrix(as.numeric(adj.mat[, , k]), p, p, sparse = TRUE)
   }
   
-  result <- list(d.min = d.min, lambda.min = lambda.min, cv.score.min = cv.score.min, cv.score.min.sd = cv.score.min.sd,
-                 edge.num.list.min = edge.num.list.min, edge.list.min = edge.list.min, 
-                 Omega.edge.list.min = Omega.edge.list.min)
+  result <- list(d.opt = d.opt, lambda.opt = lambda.opt, cv.score.opt = cv.score.opt, cv.score.opt.sd = cv.score.opt.sd,
+                 edge.num.opt = edge.num.opt, edge.opt = edge.opt, adj.mat.opt = adj.mat.opt)
   return(result)
 }
 
 
-# Selection function for cross validation result (including h selection) ###############################################
+# Selection function for cross validation result #######################################################################
 ########################################################################################################################
 
 # Input ###
-# cv.result: results of cross validation from loggle.cv.h
+# cv.result: results of cross validation from loggle.cv
 # select.type: "all_flexible": d and lambda can vary across time points, 
 #              "d_fixed": d is fixed and lambda can vary across time points, 
 #              "all_fixed": d and lambda are fixed across time points
 # cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
 
 # Output ###
-# h.min: optimal value of h
-# d.min: optimal values of d across time points
-# lambda.min: optimal values of lambda across time points
-# cv.score.min.h: optimal cv scores across h's
-# cv.score.min: optimal cv score (averaged over time points and cv folds)
-# cv.score.min.sd: standard deviation of optimal cv scores across cv folds
-# edge.num.list.min: optimal edge numbers across time points
-# edge.list.min: optimal list of edges across time points
-# Omega.edge.list.min: optimal graph structures across time points
+# h.opt: optimal value of h
+# d.opt: optimal values of d across time points
+# lambda.opt: optimal values of lambda across time points
+# cv.score.opt.h: optimal cv scores across h's
+# cv.score.opt: optimal cv score (averaged over time points and cv folds)
+# cv.score.opt.sd: standard deviation of optimal cv scores across cv folds
+# edge.num.opt: optimal edge numbers across time points
+# edge.opt: optimal list of edges across time points
+# adj.mat.opt: optimal graph structures across time points
 
-loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
+loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
-  h.list <- as.numeric(names(cv.result$cv.score.min.h))
-  H <- length(h.list)
-  
-  cv.select.result.list <- vector("list", H)
-  cv.score.min.h <- rep(NA, H)
+  H <- length(cv.result$cv.result.h)
+  h.list <- sapply(1:H, function(h) cv.result$cv.result.h[[h]]$h)
+  cv.select.result.h <- vector("list", H)
+  cv.score.opt.h <- rep(NA, H)
+  names(cv.score.opt.h) <- h.list
   
   for(h in 1:H) {
-    cv.select.result.list[[h]] <- loggle.cv.select(cv.result$cv.result.list[[h]], select.type, cv.vote.thres)
-    cv.score.min.h[h] <- cv.select.result.list[[h]]$cv.score.min
+    cv.select.result.h[[h]] <- loggle.cv.select.h(cv.result$cv.result.h[[h]], select.type, cv.vote.thres)
+    cv.score.opt.h[h] <- cv.select.result.h[[h]]$cv.score.opt
   }
   
-  h.min <- h.list[which.min(cv.score.min.h)]
-  result <- cv.select.result.list[[which.min(cv.score.min.h)]]
-  result$h.min <- h.min
-  result$cv.score.min.h <- cv.score.min.h
+  h.opt <- h.list[which.min(cv.score.opt.h)]
+  result <- cv.select.result.h[[which.min(cv.score.opt.h)]]
+  result$h.opt <- h.opt
+  result$cv.score.opt.h <- cv.score.opt.h
 
   return(result)
 }
@@ -352,13 +354,13 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
 # Input ###
 # X: a p by N matrix containing list of observations
 # pos: position of observations used to generate correlation matrices
-# Omega.edge.list: graph structures across time points
+# adj.mat: graph structures across time points
 # h: bandwidth in kernel function used to generate correlation matrices
 
 # Output ###
-# Omega.list: list of refitted precision matrices of length K
+# Omega: list of refitted precision matrices of length K
 
-loggle.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
+loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -367,8 +369,8 @@ loggle.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   if(any(!pos %in% 1:N)) {
     stop("pos must be a subset of 1, 2, ..., N!")
   }
-  if(length(Omega.edge.list) != K) {
-    stop("Omega.edge.list must have the same length as pos!")
+  if(length(adj.mat) != K) {
+    stop("adj.mat must have the same length as pos!")
   }
   
   cat("Generating sample covariance matrices for training dataset...\n")
@@ -376,25 +378,25 @@ loggle.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
   
   cat("Estimating graphs...\n")
   
-  Omega.list <- vector("list", K)
+  Omega <- vector("list", K)
   
   for(k in 1:K) {
     
-    edge.zero <- which(as.matrix(Omega.edge.list[[k]]) == 0, arr.ind = T)
+    edge.zero <- which(as.matrix(adj.mat[[k]]) == 0, arr.ind = T)
     edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
     if(nrow(edge.zero) == 0) {
       edge.zero = NULL
     }
     
-    Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero)$wi
-    if(det(Omega.list[[k]]) < 0) {
-      Omega.list[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+    Omega[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero)$wi
+    if(det(Omega[[k]]) < 0) {
+      Omega[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
     
     cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
   }
   
-  return(Omega.list)
+  return(Omega)
 }
 
 
@@ -406,8 +408,8 @@ loggle.refit <- function(X, pos, Omega.edge.list, h = 0.8*ncol(X)^(-1/5)) {
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
 # d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 
+# lambda.list: list of tuning parameters of lasso penalty
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
@@ -547,8 +549,8 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
 # pos: position of time points where graphs are estimated
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
-# lambda.list: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 
+# lambda.list: list of tuning parameters of lasso penalty
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
@@ -688,8 +690,8 @@ loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.
 # pos: position of time points where graphs are estimated
 # h: bandwidth in kernel function used to generate correlation matrices
 # d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 
+# lambda.list: list of tuning parameters of lasso penalty
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
 # early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
@@ -714,7 +716,11 @@ loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.typ
   D <- length(d.list)
   L <- length(lambda.list)
   
-  cat("Generating sample covariance/correlation matrices for training dataset...\n")
+  if(fit.corr) {
+    cat("Generating sample correlation matrices for training dataset...\n")
+  } else {
+    cat("Generating sample covariance matrices for training dataset...\n")
+  }
   result.Corr <- makeCorr(X, pos.train, h, fit.corr)
   Corr <- result.Corr$Corr
   sd.X <- result.Corr$sd.X
@@ -791,7 +797,7 @@ loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.typ
       }
     }
     
-    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
+    result <- list(Omega = Omega.list, edge.num = edge.num.list, edge = edge.list)
   }
 
   return(result)  

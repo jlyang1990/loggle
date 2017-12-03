@@ -4,7 +4,7 @@
 \title{Source code for stock prices of S&P 500 companies from 2007 to 2017}
 
 \description{
-This is the source code for the dataset which contains stock closing prices and company information.
+This is the source code for the dataset which contains stock closing prices and company information of S&P 500 companies.
 }
 
 \references{

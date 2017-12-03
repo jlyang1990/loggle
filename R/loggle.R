@@ -7,8 +7,8 @@
 # pos: position of time points where graphs are estimated
 # h: bandwidth in kernel function used to generate correlation matrices
 # d: list of widths of neighborhood
-# lambda: list of tuning parameters of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 
+# lambda: list of tuning parameters of lasso penalty
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
 # refit: whether to conduct model refitting
@@ -22,10 +22,10 @@
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
-# Omega.list: if refit = TRUE: list of refitted precision matrices of length K (number of time points)
-#             if refit = FALSE: list of estimated precision matrices of length K (number of time points)
-# edge.num.list: list of detected edge numbers of length K
-# edge.list: list of detected edges of length K
+# Omega: if refit = TRUE: list of refitted precision matrices of length K (number of time points)
+#        if refit = FALSE: list of estimated precision matrices of length K (number of time points)
+# edge.num: list of detected edge numbers of length K
+# edge: list of detected edges of length K
 
 loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
                    refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
@@ -61,7 +61,11 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
   cat("Detrending each variable in data matrix...\n")
   X <- dataDetrend(X, detrend)
   
-  cat("Generating sample covariance/correlation matrices...\n")
+  if(fit.corr) {
+    cat("Generating sample correlation matrices...\n")
+  } else {
+    cat("Generating sample covariance matrices...\n")
+  }
   result.Corr <- makeCorr(X, pos.corr, h, fit.corr)
   Corr <- result.Corr$Corr
   sd.X <- result.Corr$sd.X
@@ -141,7 +145,7 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
       edge.list[[k]] <- result.k$edge
     }
     
-    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
+    result <- list(Omega = Omega.list, edge.num = edge.num.list, edge = edge.list)
   }
   
   return(result)  
@@ -156,8 +160,8 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
 # d: width of neighborhood
-# lambda: tuning parameter of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 
+# lambda: tuning parameter of lasso penalty
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
 # refit: whether to conduct model refitting
@@ -258,8 +262,8 @@ loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, e
 # Corr: list of kernel estimators of correlation matrices
 # sd.X: list of standard deviations of variables
 # d: width of neighborhood
-# lambda: tuning parameter of Lasso penalty
-# fit.type: 0: graphical Lasso estimation, 
+# lambda: tuning parameter of lasso penalty
+# fit.type: 0: graphical lasso estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
 # refit: whether to conduct model refitting

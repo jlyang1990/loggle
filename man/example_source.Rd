@@ -4,7 +4,7 @@
 \title{Source code for generating underlying true time-varying graphs}
 
 \description{
-This is the source code for generating underlying true time-varying graphs (covariance matrices and observed samples).
+This is the source code for generating underlying true time-varying graphs including covariance matrices and observed samples.
 }
 
 \references{
@@ -34,7 +34,7 @@ geneData <- function(p, N, alpha = 0.28) {
     B4 <- matrix(rnorm(p^2, 0, 1/2), p, p); B4[upper.tri(B4)] <- 0
     uni <- runif(4, -0.5, 0.5)
     
-    Omega.true.list <- vector("list", N)
+    Omega.true <- vector("list", N)
     X <- matrix(0, p, N)
     
     for(i in 1:N) {
@@ -42,8 +42,8 @@ geneData <- function(p, N, alpha = 0.28) {
       # generate raw precision matrix at time point i
       G <- (B1*sin(pi*t[i]/2+uni[1]) + B2*cos(pi*t[i]/2+uni[2]) 
             + B3*sin(pi*t[i]/4+uni[3]) + B4*cos(pi*t[i]/4+uni[4]))/2
-      Omega <- G %*% t(G)
-      Omega <- Omega %*% diag(1/sqrt((1:p)))
+      Omega <- G \%*\% t(G)
+      Omega <- Omega \%*\% diag(1/sqrt((1:p)))
       Omega[upper.tri(Omega)] <- 0
       Omega <- Omega + t(Omega)
       Omega.diag <- diag(Omega)/(2*sqrt(1:p)) + log(p, 10)/4
@@ -58,10 +58,10 @@ geneData <- function(p, N, alpha = 0.28) {
         break
       }
       
-      Omega.true.list[[i]] <- Matrix(Omega, sparse = T)
+      Omega.true[[i]] <- Matrix(Omega, sparse = T)
       
       # generate observed sample from precision matrix
-      X[, i] <- rmvn.sparse(1, rep(0, p), Cholesky(Omega.true.list[[i]]))
+      X[, i] <- rmvn.sparse(1, rep(0, p), Cholesky(Omega.true[[i]]))
       
       if(i == N) {
         done = TRUE
@@ -69,20 +69,16 @@ geneData <- function(p, N, alpha = 0.28) {
     }
   }
   
-  result <- new.env()
-  result$Omega.true.list <- Omega.true.list
-  result$X <- X
-  result <- as.list(result)
-  
+  result <- list(Omega.true = Omega.true, X = X)
   return(result)
 }
 
 # implement geneData function
 set.seed(1)
 result.data <- geneData(p = 50, N = 2001)
-Omega.true.list <- result.data$Omega.true.list[seq(1, 2001, 2)]
+Omega.true <- result.data$Omega.true[seq(1, 2001, 2)]
 X <- result.data$X[, seq(1, 2001, 2)]
 
-# save Omega.true.list and X
-save(Omega.true.list, X, file = "example.rda")
+# save Omega.true and X
+save(Omega.true, X, file = "example.rda")
 }
