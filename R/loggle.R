@@ -71,81 +71,96 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
   sd.X <- result.Corr$sd.X
   rm(result.Corr)
   
+  if(length(d) == 1) {
+    d <- rep(d, K)
+  }
+  
+  if(length(lambda) == 1) {
+    lambda <- rep(lambda, K)
+  }
+  
+  ind.local <- which(d < 0.5)
+  ind.global <- which(d >= 0.5)
+  K.local <- length(ind.local)
+  K.global <- length(ind.global)
+  
   cat("Estimating graphs...\n")
   
   Omega.list <- vector("list", K)
   edge.num.list <- rep(0, K)
   edge.list <- vector("list", K)
   
-  if(length(d) == 1 && d >= 0.5) {
-    
-    if(length(lambda) == 1) {
-      
-      result <- loggle.global(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step)
-      
-      if(print.detail) {
-        cat("Complete all!\n")
-      }
-      
-    } else {
-      
-      lambda.list <- unique(lambda)
-      
-      for(lambda.l in lambda.list) {
-        
-        result.l <- loggle.global(pos, Corr, sd.X, lambda.l, fit.type, refit, epi.abs, epi.rel, max.step)
-        idx <- which(lambda == lambda.l)
-        
-        for(i in idx) {
-          Omega.list[[i]] <- result.l$Omega.list[[i]]
-          edge.num.list[i] <- result.l$edge.num.list[i]
-          edge.list[[i]] <- result.l$edge.list[[i]]
-        }
-        
-        if(print.detail) {
-          cat("Complete: t =", round((pos[idx]-1) / (N-1), 2), "\n")
-        }
-      }
-      
-      result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
-    }
-    
-  } else{
-    
-    if(length(d) == 1) {
-      d <- rep(d, K)
-    }
-    
-    if(length(lambda) == 1) {
-      lambda <- rep(lambda, K)
-    }
+  if(K.local > 0) {
     
     if(num.thread > 1) {
       
       registerDoParallel(num.thread)
       
-      result <- foreach(k=1:K, .combine="list", .multicombine=TRUE, .maxcombine=K, .export=c("loggle.local")) %dopar%
-        loggle.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, print.detail)
+      result <- foreach(k=1:K.local, .combine="list", .multicombine=TRUE, .maxcombine=K.local, .export=c("loggle.local")) %dopar%
+        loggle.local(pos[ind.local[k]], Corr, sd.X, d[ind.local[k]], lambda[ind.local[k]], fit.type, refit, epi.abs, 
+                     epi.rel, max.step, print.detail)
       
     } else {
       
-      result <- vector("list", K)
-      for(k in 1:K) {
-        result[[k]] <- loggle.local(pos[k], Corr, sd.X, d[k], lambda[k], fit.type, refit, epi.abs, epi.rel, max.step, 
-                                    print.detail)
+      result <- vector("list", K.local)
+      for(k in 1:K.local) {
+        result[[k]] <- loggle.local(pos[ind.local[k]], Corr, sd.X, d[ind.local[k]], lambda[ind.local[k]], fit.type,
+                                    refit, epi.abs, epi.rel, max.step, print.detail)
       }
     }
     
-    for(k in 1:K) {
+    for(k in 1:K.local) {
       
       result.k <- result[[k]]
-      
-      Omega.list[[k]] <- result.k$Omega
-      edge.num.list[[k]] <- result.k$edge.num
-      edge.list[[k]] <- result.k$edge
+      Omega.list[[ind.local[k]]] <- result.k$Omega
+      edge.num.list[[ind.local[k]]] <- result.k$edge.num
+      edge.list[[ind.local[k]]] <- result.k$edge
     }
     
     result <- list(Omega = Omega.list, edge.num = edge.num.list, edge = edge.list)
+  }
+  
+  if(K.global > 0) {
+      
+    lambda.list <- unique(lambda[ind.global])
+    K.lambda <- length(lambda.list)
+    
+    if(num.thread > 1) {
+      
+      registerDoParallel(num.thread)
+      
+      result <- foreach(k=1:K.lambda, .combine="list", .multicombine=TRUE, .maxcombine=K.lambda, .export=c("loggle.global")) %dopar%
+        loggle.global(pos[ind.global], Corr, sd.X, lambda.list[k], fit.type, refit, epi.abs, epi.rel, max.step)
+      
+    } else {
+      
+      result <- vector("list", K.lambda)
+      for(k in 1:K.lambda) {
+        result[[k]] <- loggle.global(pos[ind.global], Corr, sd.X, lambda.list[k], fit.type, refit, epi.abs, epi.rel, 
+                                     max.step)
+      }
+      
+      if(print.detail) {
+        cat("Complete: t =", round((pos[ind.global[lambda[ind.global] == lambda.list[k]]]-1) / (N-1), 2), "\n")
+      }
+    }
+    
+    for(k in 1:K.lambda) {
+      
+      idx <- which(lambda[ind.global] == lambda.list[k])
+      
+      for(i in idx) {
+        Omega.list[[ind.global[i]]] <- result[[k]]$Omega.list[[i]]
+        edge.num.list[ind.global[i]] <- result[[k]]$edge.num.list[i]
+        edge.list[[ind.global[i]]] <- result[[k]]$edge.list[[i]]
+      }
+      
+      if(print.detail && num.thread > 1) {
+        cat("Complete: t =", round((pos[ind.global[idx]-1) / (N-1), 2), "\n")
+      }
+    }
+    
+    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   }
   
   return(result)  
