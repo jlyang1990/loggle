@@ -75,7 +75,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{loggle} for learning time-varying graphical models, \link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs.
+\link{loggle} for learning time-varying graphical models, \link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.refit} for model refitting based on estimated graphs.
 }
 
 \examples{

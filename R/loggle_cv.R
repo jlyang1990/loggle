@@ -392,11 +392,96 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
     if(det(Omega[[k]]) < 0) {
       Omega[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
+    Omega[[k]] <- Matrix(Omega[[k]], sparse = T)
     
     cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
   }
   
   return(Omega)
+}
+
+
+# Graph estimation function for loggle using cv.vote ###################################################################
+########################################################################################################################
+
+# Input ###
+# X: a p by N matrix containing list of observations
+# pos: position of time points where graphs are estimated
+# h: bandwidth in kernel function used to generate correlation matrices
+# d: list of widths of neighborhood
+# lambda: list of tuning parameters of Lasso penalty
+# cv.fold: number of cv folds
+# fit.type: 0: graphical Lasso estimation, 
+#           1: pseudo likelihood estimation, 
+#           2: sparse partial correlation estimation
+# refit: whether to conduct model refitting
+# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
+# epi.abs: absolute tolerance in ADMM stopping criterion
+# epi.rel: relative tolerance in ADMM stopping criterion
+# max.step: maximum steps in ADMM iteration
+# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
+# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
+# num.thread: number of threads
+# print.detail: whether to print details in model fitting procedure
+
+# Output ###
+# result.fold: list of results from loggle for each cv fold
+# Omega: if refit = TRUE: list of refitted precision matrices across time points
+#        if refit = FALSE: list of detected graph structures across time points
+# edge.num: list of detected edge numbers across time points
+# edge: list of detected edges across time points
+
+loggle.cv.vote <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, cv.fold = 5, 
+                           fit.type = "pseudo", refit = TRUE, cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, 
+                           max.step = 500, detrend = TRUE, fit.corr = TRUE, num.thread = 1, print.detail = TRUE) {
+  
+  p <- dim(X)[1]
+  N <- dim(X)[2]
+  K <- length(pos)
+  
+  result.fold <- vector("list", cv.fold)
+  adj.mat <- array(NA, c(p, p, K, cv.fold))
+  edge.num.list <- rep(NA, K)
+  edge.list <- vector("list", K)
+  Omega.list <- vector("list", K)
+  
+  for(i in 1:cv.fold) {
+    
+    cat("\nRunning fold", i, "out of", cv.fold, "folds...\n")
+    
+    pos.test <- seq(i, N, cv.fold)
+    pos.train <- (1:N)[-pos.test]
+    
+    result.fold[[i]] <- loggle(X, pos, h, d, lambda, fit.type, refit = TRUE, epi.abs, epi.rel, max.step, detrend, 
+                               fit.corr, pos.train, num.thread, print.detail)
+  }
+  
+  cat(sprintf("\nSelecting models based on %d-fold cross-validation results...\n", cv.fold))
+  
+  for(i in 1:cv.fold) {
+    
+    Omega <- result.fold[[i]]$Omega
+    for(k in 1:K) {
+      adj.mat[, , k, i] <- as.matrix(Omega[[k]])
+    }
+  }
+  
+  adj.mat <- rowSums(adj.mat != 0, dims = 3) >= cv.fold * cv.vote.thres
+  
+  for(k in 1:K) {
+    
+    edge <- which(adj.mat[, , k] != 0, arr.ind = T)
+    edge.list[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+    edge.num.list[k] <- nrow(edge.list[[k]])
+    Omega.list[[k]] <- Matrix(as.numeric(adj.mat[, , k]), p, p, sparse = TRUE)
+  }
+  
+  if(refit) {
+    Omega.list <- loggle.refit(X, pos, Omega.list, h)
+  }
+  
+  result <- list(result.fold = result.fold, Omega = Omega.list, edge.num = edge.num.list, edge = edge.list)
+  return(result)
 }
 
 
