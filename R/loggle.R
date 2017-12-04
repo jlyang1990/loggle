@@ -92,7 +92,7 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
   
   if(K.local > 0) {
     
-    if(num.thread > 1) {
+    if(num.thread > 1 && K.local > 1) {
       
       registerDoParallel(num.thread)
       
@@ -125,7 +125,7 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
     lambda.list <- unique(lambda[ind.global])
     K.lambda <- length(lambda.list)
     
-    if(num.thread > 1) {
+    if(num.thread > 1 && K.lambda > 1) {
       
       registerDoParallel(num.thread)
       
@@ -155,7 +155,7 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
         edge.list[[ind.global[i]]] <- result[[k]]$edge.list[[i]]
       }
       
-      if(print.detail && num.thread > 1) {
+      if(print.detail && num.thread > 1 && K.lambda > 1) {
         cat("Complete: t =", round((pos[ind.global[idx]]-1) / (N-1), 2), "\n")
       }
     }
