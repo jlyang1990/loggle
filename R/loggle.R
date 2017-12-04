@@ -156,7 +156,7 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
       }
       
       if(print.detail && num.thread > 1) {
-        cat("Complete: t =", round((pos[ind.global[idx]-1) / (N-1), 2), "\n")
+        cat("Complete: t =", round((pos[ind.global[idx]]-1) / (N-1), 2), "\n")
       }
     }
     
