@@ -373,7 +373,7 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
     stop("adj.mat must have the same length as pos!")
   }
   
-  cat("Generating sample covariance matrices for training dataset...\n")
+  cat("Generating sample covariance matrices...\n")
   Sigma <- makeCorr(X, 1:N, h, fit.corr = FALSE)$Corr
   
   cat("Estimating graphs...\n")
