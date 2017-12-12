@@ -97,7 +97,7 @@ loggle.cv.h <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
   colnames(cv.score) <- d.list
   cv.result.fold <- vector("list", cv.fold)
   
-  if(d.list[1] != 1 && num.thread > 1) {
+  if(num.thread > 1) {
     registerDoParallel(num.thread)
   }
   
@@ -642,6 +642,7 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
+# num.thread: number of threads
 # print.detail: whether to print details in model fitting procedure
 
 # Output ###
@@ -650,7 +651,7 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
 # edge: L by K list of edges
 
 loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
-                             print.detail) {
+                             num.thread, print.detail) {
   
   p <- dim(Corr)[1]
   N <- dim(Corr)[3]
@@ -666,93 +667,199 @@ loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.
   
   Corr.sq <- rowSums(Corr^2, dims = 2)
   
-  Z.vec <- rep(0, p*p*K*L)
-  
   lambda <- sqrt(N) * lambda.list
   rho <- lambda
   
-  # detect block diagonal structure
-  member.index.list <- rep(0, p*L)
-  no.list <- rep(0, L)
-  csize.index.list <- c()
-  
-  for(l in L:1) {
+  if(num.thread == 1) {
     
-    adj.mat <- (Corr.sq > lambda[l]^2)
-    diag(adj.mat) <- 1
-    graph <- graph.adjacency(adj.mat)
-    cluster <- clusters(graph)
-    member <- cluster$membership
-    csize <- cluster$csize
-    no <- cluster$no
-    member.index <- sort(member, index.return = T)$ix - 1
-    csize.index <- c(0, cumsum(csize))
+    Z.vec <- rep(0, p*p*K*L)
     
-    member.index.list[(p*(l-1)+1) : (p*l)] <- member.index
-    no.list[l] <- no
-    csize.index.list <- c(csize.index.list, csize.index)
-  }
-  
-  result <- .C("ADMM_lambda",
-               as.double(Corr),
-               Z.vec = as.double(Z.vec),
-               as.integer(p),
-               as.integer(N),
-               as.integer(pos.c),
-               as.integer(K),
-               as.integer(member.index.list),
-               as.integer(csize.index.list),
-               as.integer(no.list),
-               as.double(lambda),
-               as.integer(L),
-               as.integer(fit.type),
-               as.double(early.stop.thres),
-               as.double(rho),
-               as.double(epi.abs),
-               as.double(epi.rel),
-               as.integer(max.step)
-  )
-  
-  Z.vec <- result$Z.vec
-  
-  for(l in L:1) {
+    # detect block diagonal structure
+    member.index.list <- rep(0, p*L)
+    no.list <- rep(0, L)
+    csize.index.list <- c()
     
-    if(Z.vec[p*p*K*l] != -1) {
-    
-      Omega <- array(Z.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
+    for(l in L:1) {
       
-      edge <- which(Omega[, , 1] != 0, arr.ind = T)
-      edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
-      edge.num <- nrow(edge)
+      adj.mat <- (Corr.sq > lambda[l]^2)
+      diag(adj.mat) <- 1
+      graph <- graph.adjacency(adj.mat)
+      cluster <- clusters(graph)
+      member <- cluster$membership
+      csize <- cluster$csize
+      no <- cluster$no
+      member.index <- sort(member, index.return = T)$ix - 1
+      csize.index <- c(0, cumsum(csize))
+      
+      member.index.list[(p*(l-1)+1) : (p*l)] <- member.index
+      no.list[l] <- no
+      csize.index.list <- c(csize.index.list, csize.index)
+    }
+    
+    result <- .C("ADMM_lambda",
+                 as.double(Corr),
+                 Z.vec = as.double(Z.vec),
+                 as.integer(p),
+                 as.integer(N),
+                 as.integer(pos.c),
+                 as.integer(K),
+                 as.integer(member.index.list),
+                 as.integer(csize.index.list),
+                 as.integer(no.list),
+                 as.double(lambda),
+                 as.integer(L),
+                 as.integer(fit.type),
+                 as.double(early.stop.thres),
+                 as.double(rho),
+                 as.double(epi.abs),
+                 as.double(epi.rel),
+                 as.integer(max.step)
+    )
+    
+    Z.vec <- result$Z.vec
+    
+    for(l in L:1) {
+      
+      if(Z.vec[p*p*K*l] != -1) {
+      
+        Omega <- array(Z.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
         
-      edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
-      edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
-      if(nrow(edge.zero) == 0) {
-        edge.zero = NULL
+        edge <- which(Omega[, , 1] != 0, arr.ind = T)
+        edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+        edge.num <- nrow(edge)
+          
+        edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
+        edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+        if(nrow(edge.zero) == 0) {
+          edge.zero = NULL
+        }
+        
+        Omega <- array(0, c(p, p, K))
+        for(k in 1:K) {
+          Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
+          Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
+          if(det(Omega[, , k]) < 0) {
+            Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+          }
+        }
+        
+        edge.num.list[l, 1, ] <- edge.num
+      
+        for(k in 1:K) {
+        
+          Omega.list[[l, 1, k]] <- Matrix(Omega[, , k], sparse = T)
+          edge.list[[l, 1, k]] <- edge
+        }
+      } else {
+        
+        edge.num.list[l, 1, ] <- NA
+        for(k in 1:K) {
+          Omega.list[[l, 1, k]] <- NA
+          edge.list[[l, 1, k]] <- NA
+        }
+      }
+    }
+  } else {
+    
+    num.thread <- min(num.thread, 4)
+    num.round <- ceiling(L/num.thread)
+    
+    Z.vec <- rep(0, p*p*K)
+    
+    # detect block diagonal structure
+    member.index.list <- vector("list", L)
+    no.list <- rep(NA, L)
+    csize.index.list <- vector("list", L)
+    
+    for(l in L:1) {
+      
+      adj.mat <- (Corr.sq > lambda[l]^2)
+      diag(adj.mat) <- 1
+      graph <- graph.adjacency(adj.mat)
+      cluster <- clusters(graph)
+      member <- cluster$membership
+      csize <- cluster$csize
+      no <- cluster$no
+      member.index <- sort(member, index.return = T)$ix - 1
+      csize.index <- c(0, cumsum(csize))
+      
+      member.index.list[[l]] <- member.index
+      no.list[l] <- no
+      csize.index.list[[l]] <- csize.index
+    }
+    
+    for(i in 1:num.round) {
+      
+      ind.round <- L+1-num.thread*(i-1)
+      num.j <- min(num.thread, L-num.thread*(i-1))
+      
+      result <- foreach(j=1:num.j, .combine="list", .multicombine=TRUE, .maxcombine=num.thread) %dopar%
+        .C("ADMM_simple",
+           as.double(Corr),
+           Z.vec = as.double(Z.vec),
+           as.integer(p),
+           as.integer(N),
+           as.integer(pos.c),
+           as.integer(K),
+           as.integer(member.index.list[[ind.round-j]]),
+           as.integer(csize.index.list[[ind.round-j]]),
+           as.integer(no.list[ind.round-j]),
+           as.double(lambda[ind.round-j]),
+           as.integer(fit.type),
+           as.double(rho[ind.round-j]),
+           as.double(epi.abs),
+           as.double(epi.rel),
+           as.integer(max.step)
+        )
+      
+      if(num.j == 1) {
+        result <- list(result)
       }
       
-      Omega <- array(0, c(p, p, K))
-      for(k in 1:K) {
-        Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-        Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
-        if(det(Omega[, , k]) < 0) {
-          Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+      for(j in 1:num.j) {
+        Z.vec <- result[[j]]$Z.vec
+        Omega <- array(Z.vec, c(p, p, K))
+        
+        edge <- which(Omega[, , 1] != 0, arr.ind = T)
+        edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+        edge.num <- nrow(edge)
+        
+        edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
+        edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+        if(nrow(edge.zero) == 0) {
+          edge.zero = NULL
+        }
+        
+        Omega <- array(0, c(p, p, K))
+        for(k in 1:K) {
+          Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
+          Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
+          if(det(Omega[, , k]) < 0) {
+            Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+          }
+        }
+        
+        edge.num.list[ind.round-j, 1, ] <- edge.num
+        
+        for(k in 1:K) {
+          
+          Omega.list[[ind.round-j, 1, k]] <- Matrix(Omega[, , k], sparse = T)
+          edge.list[[ind.round-j, 1, k]] <- edge
         }
       }
       
-      edge.num.list[l, 1, ] <- edge.num
-    
-      for(k in 1:K) {
-      
-        Omega.list[[l, 1, k]] <- Matrix(Omega[, , k], sparse = T)
-        edge.list[[l, 1, k]] <- edge
+      if(edge.num > early.stop.thres*p) {
+        break
       }
-    } else {
-      
-      edge.num.list[l, 1, ] <- NA
-      for(k in 1:K) {
-        Omega.list[[l, 1, k]] <- NA
-        edge.list[[l, 1, k]] <- NA
+    }
+    
+    if(i < num.round) {
+      for(l in (num.thread*i+1):L) {
+        edge.num.list[L+1-l, 1, ] <- NA
+        for(k in 1:K) {
+          Omega.list[[L+1-l, 1, k]] <- NA
+          edge.list[[L+1-l, 1, k]] <- NA
+        }
       }
     }
   }
@@ -816,7 +923,7 @@ loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.typ
   if(d.list[1] == 1) {
 
     result <- loggle.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
-                               print.detail)
+                               num.thread, print.detail)
     
   } else {
     
@@ -850,7 +957,7 @@ loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.typ
       }
       
       result <- loggle.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs[D], epi.rel[D], 
-                                 max.step, print.detail)
+                                 max.step, num.thread, print.detail)
       
       Omega.list[, D, ] <- result$Omega.list
       edge.num.list[, D, ] <- result$edge.num.list
