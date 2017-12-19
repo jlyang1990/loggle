@@ -163,7 +163,7 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
     result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   }
   
-  return(result)  
+  return(result)
 }
 
 

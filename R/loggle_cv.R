@@ -817,6 +817,7 @@ loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.typ
 
     result <- loggle.global.cv(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                                print.detail)
+    result <- list(Omega = result$Omega.list, edge.num = result$edge.num.list, edge = result$edge.list)
     
   } else {
     
