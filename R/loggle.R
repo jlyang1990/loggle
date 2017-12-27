@@ -74,7 +74,6 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
   if(length(d) == 1) {
     d <- rep(d, K)
   }
-  
   if(length(lambda) == 1) {
     lambda <- rep(lambda, K)
   }
@@ -116,8 +115,6 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
       edge.num.list[[ind.local[k]]] <- result.k$edge.num
       edge.list[[ind.local[k]]] <- result.k$edge
     }
-    
-    result <- list(Omega = Omega.list, edge.num = edge.num.list, edge = edge.list)
   }
   
   if(K.global > 0) {
@@ -159,10 +156,9 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
         cat("Complete: t =", round((pos[ind.global[idx]]-1) / (N-1), 2), "\n")
       }
     }
-    
-    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   }
   
+  result <- list(Omega = Omega.list, edge.num = edge.num.list, edge = edge.list)
   return(result)
 }
 
@@ -217,7 +213,7 @@ loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, e
   member <- cluster$membership
   csize <- cluster$csize
   no <- cluster$no
-  member.index <- sort(member, index.return = T)$ix - 1
+  member.index <- sort(member, index.return = TRUE)$ix - 1
   csize.index <- c(0, cumsum(csize))
   
   result <- .C("ADMM_simple",
@@ -238,16 +234,16 @@ loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, e
                as.integer(max.step)
   )
   
-  Omega <- Matrix(result$Z.vec, p, p, sparse = T)
+  Omega <- Matrix(result$Z.vec, p, p, sparse = TRUE)
   
-  edge <- which(as.matrix(Omega) != 0, arr.ind = T)
-  edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+  edge <- which(as.matrix(Omega) != 0, arr.ind = TRUE)
+  edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = FALSE]
   edge.num <- nrow(edge)
   
   if(refit) {
     
-    edge.zero <- which(as.matrix(Omega) == 0, arr.ind = T)
-    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    edge.zero <- which(as.matrix(Omega) == 0, arr.ind = TRUE)
+    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = FALSE]
     if(nrow(edge.zero) == 0) {
       edge.zero = NULL
     }
@@ -257,7 +253,7 @@ loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, e
     if(det(Omega) < 0) {
       Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
-    Omega <- Matrix(Omega, sparse = T)
+    Omega <- Matrix(Omega, sparse = TRUE)
   }
   
   if(print.detail) {
@@ -316,7 +312,7 @@ loggle.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi
   member <- cluster$membership
   csize <- cluster$csize
   no <- cluster$no
-  member.index <- sort(member, index.return = T)$ix - 1
+  member.index <- sort(member, index.return = TRUE)$ix - 1
   csize.index <- c(0, cumsum(csize))
   
   result <- .C("ADMM_simple",
@@ -337,17 +333,17 @@ loggle.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi
                as.integer(max.step)
   )
   
-  Omega.list <- sapply(1:K, function(k) Matrix(result$Z.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = T))
+  Omega.list <- sapply(1:K, function(k) Matrix(result$Z.vec[(p*p*(k-1) + 1) : (p*p*k)], p, p, sparse = TRUE))
   
-  edge <- which(as.matrix(Omega.list[[1]]) != 0, arr.ind = T)
-  edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+  edge <- which(as.matrix(Omega.list[[1]]) != 0, arr.ind = TRUE)
+  edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = FALSE]
   edge.list <- rep(list(edge), K)
   edge.num.list <- rep(nrow(edge), K)
   
   if(refit) {
     
-    edge.zero <- which(as.matrix(Omega.list[[1]]) == 0, arr.ind = T)
-    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    edge.zero <- which(as.matrix(Omega.list[[1]]) == 0, arr.ind = TRUE)
+    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = FALSE]
     if(nrow(edge.zero) == 0) {
       edge.zero = NULL
     }
@@ -359,7 +355,7 @@ loggle.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi
       if(det(Omega.list[[k]]) < 0) {
         Omega.list[[k]] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
       }
-      Omega.list[[k]] <- Matrix(Omega.list[[k]], sparse = T)
+      Omega.list[[k]] <- Matrix(Omega.list[[k]], sparse = TRUE)
     }
   }
   

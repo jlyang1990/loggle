@@ -254,7 +254,7 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
   if(select.type == "all_flexible") {
     
     for(k in 1:K) {
-      index <- which(cv.score.fold[, , k, drop = F] == min(cv.score.fold[, , k]), arr.ind = T)
+      index <- which(cv.score.fold[, , k, drop = FALSE] == min(cv.score.fold[, , k]), arr.ind = TRUE)
       index <- index[nrow(index), ]
       d.index[k] <- index[2]
       lambda.index[k] <- index[1]
@@ -268,7 +268,7 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
   } else if(select.type == "all_fixed") {
     
     cv.score.fold.avg <- rowMeans(cv.score.fold, dims = 2)
-    index <- which(cv.score.fold.avg == min(cv.score.fold.avg), arr.ind = T)
+    index <- which(cv.score.fold.avg == min(cv.score.fold.avg), arr.ind = TRUE)
     index <- index[nrow(index), ]
     d.index <- rep(index[2], K)
     lambda.index <- rep(index[1], K)
@@ -293,8 +293,8 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
   
   for(k in 1:K) {
     
-    edge <- which(adj.mat[, , k] != 0, arr.ind = T)
-    edge.opt[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+    edge <- which(adj.mat[, , k] != 0, arr.ind = TRUE)
+    edge.opt[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = FALSE]
     edge.num.opt[k] <- nrow(edge.opt[[k]])
     adj.mat.opt[[k]] <- Matrix(as.numeric(adj.mat[, , k]), p, p, sparse = TRUE)
   }
@@ -382,8 +382,8 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
   
   for(k in 1:K) {
     
-    edge.zero <- which(as.matrix(adj.mat[[k]]) == 0, arr.ind = T)
-    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+    edge.zero <- which(as.matrix(adj.mat[[k]]) == 0, arr.ind = TRUE)
+    edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = FALSE]
     if(nrow(edge.zero) == 0) {
       edge.zero = NULL
     }
@@ -392,7 +392,7 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
     if(det(Omega[[k]]) < 0) {
       Omega[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
-    Omega[[k]] <- Matrix(Omega[[k]], sparse = T)
+    Omega[[k]] <- Matrix(Omega[[k]], sparse = TRUE)
     
     cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
   }
@@ -470,8 +470,8 @@ loggle.cv.vote <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, 
   
   for(k in 1:K) {
     
-    edge <- which(adj.mat[, , k] != 0, arr.ind = T)
-    edge.list[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+    edge <- which(adj.mat[, , k] != 0, arr.ind = TRUE)
+    edge.list[[k]] <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = FALSE]
     edge.num.list[k] <- nrow(edge.list[[k]])
     Omega.list[[k]] <- Matrix(as.numeric(adj.mat[, , k]), p, p, sparse = TRUE)
   }
@@ -553,7 +553,7 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
       member <- cluster$membership
       csize <- cluster$csize
       no <- cluster$no
-      member.index <- sort(member, index.return=T)$ix - 1
+      member.index <- sort(member, index.return = TRUE)$ix - 1
       csize.index <- c(0, cumsum(csize))
       
       member.index.list[(p*(l-1)+1) : (p*l)] <- member.index
@@ -589,12 +589,12 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
       
         Omega <- matrix(Z.vec[(p*p*(l-1)+1) : (p*p*l)], p, p)
         
-        edge <- which(Omega != 0, arr.ind = T)
-        edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+        edge <- which(Omega != 0, arr.ind = TRUE)
+        edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = FALSE]
         edge.num <- nrow(edge)
           
-        edge.zero <- which(Omega == 0, arr.ind = T)
-        edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+        edge.zero <- which(Omega == 0, arr.ind = TRUE)
+        edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = FALSE]
         if(nrow(edge.zero) == 0) {
           edge.zero = NULL
         }
@@ -605,7 +605,7 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
           Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
         }
       
-        Omega.list[[l, j]] <- Matrix(Omega, sparse = T)
+        Omega.list[[l, j]] <- Matrix(Omega, sparse = TRUE)
         edge.num.list[l, j] <- edge.num
         edge.list[[l, j]] <- edge
       } else {
@@ -619,10 +619,9 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
     if(print.detail) {
       cat(sprintf("Complete: d = %.3f, t = %.2f\n", d, round((pos-1)/(N-1), 2)))
     }
-    
-    result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   }
   
+  result <- list(Omega.list = Omega.list, edge.num.list = edge.num.list, edge.list = edge.list)
   return(result)
 }
 
@@ -685,7 +684,7 @@ loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.
     member <- cluster$membership
     csize <- cluster$csize
     no <- cluster$no
-    member.index <- sort(member, index.return = T)$ix - 1
+    member.index <- sort(member, index.return = TRUE)$ix - 1
     csize.index <- c(0, cumsum(csize))
     
     member.index.list[(p*(l-1)+1) : (p*l)] <- member.index
@@ -721,12 +720,12 @@ loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.
     
       Omega <- array(Z.vec[(p*p*K*(l-1)+1) : (p*p*K*l)], c(p, p, K))
       
-      edge <- which(Omega[, , 1] != 0, arr.ind = T)
-      edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = F]
+      edge <- which(Omega[, , 1] != 0, arr.ind = TRUE)
+      edge <- edge[(edge[, 1] - edge[, 2]) > 0, , drop = FALSE]
       edge.num <- nrow(edge)
         
-      edge.zero <- which(Omega[, , 1] == 0, arr.ind = T)
-      edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = F]
+      edge.zero <- which(Omega[, , 1] == 0, arr.ind = TRUE)
+      edge.zero <- edge.zero[(edge.zero[, 1] - edge.zero[, 2]) > 0, , drop = FALSE]
       if(nrow(edge.zero) == 0) {
         edge.zero = NULL
       }
@@ -744,7 +743,7 @@ loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.
     
       for(k in 1:K) {
       
-        Omega.list[[l, 1, k]] <- Matrix(Omega[, , k], sparse = T)
+        Omega.list[[l, 1, k]] <- Matrix(Omega[, , k], sparse = TRUE)
         edge.list[[l, 1, k]] <- edge
       }
     } else {
@@ -844,7 +843,6 @@ loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.typ
       for(k in 1:K) {
         
         result.k <- result[[k]]
-        
         Omega.list[, -D, k] <- result.k$Omega.list
         edge.num.list[, -D, k] <- result.k$edge.num.list
         edge.list[, -D, k] <- result.k$edge.list
@@ -876,7 +874,6 @@ loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.typ
       for(k in 1:K) {
         
         result.k <- result[[k]]
-        
         Omega.list[, , k] <- result.k$Omega.list
         edge.num.list[, , k] <- result.k$edge.num.list
         edge.list[, , k] <- result.k$edge.list
