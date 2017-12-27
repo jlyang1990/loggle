@@ -4,7 +4,7 @@ Version: 1.0
 Date: 2017-11-17
 Author: Jilei Yang, Jie Peng
 Maintainer: Jilei Yang <jlyang@ucdavis.edu>
-Description: loggle is a set of methods that learn time-varying graphical models with structure smoothness. 
+Description: loggle is a set of methods that learn time-varying graphical models. 
 Depends:
   R (>= 3.0.2),
   Matrix (>= 1.2),

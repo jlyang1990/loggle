@@ -3,29 +3,31 @@
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# pos: position of time points where graphs are estimated
-# h: bandwidth in kernel function used to generate correlation matrices
-# d: list of widths of neighborhood
-# lambda: list of tuning parameters of lasso penalty
-# fit.type: 0: graphical lasso estimation, 
-#           1: pseudo likelihood estimation, 
-#           2: sparse partial correlation estimation
-# refit: whether to conduct model refitting
+# X: a p by N data matrix containing observations on a time grid
+# pos: positions of time points where graphs are estimated
+# h: bandwidth in kernel estimated sample covariance/correlation matrix
+# d: a scalar or a vector of the same length as pos - width of neighborhood centered at each position specified by pos
+# lambda: a scalar or a vector of the same length as pos - tuning parameter of lasso penalty at each position specified by pos
+# fit.type: likelihood: likelihood estimation, 
+#           pseudo: pseudo likelihood estimation, 
+#           space: sparse partial correlation estimation
+# refit: if TRUE, conduct additional model refitting after learning graph structures
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
-# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
-# pos.corr: position of observations used to generate correlation matrices
-# num.thread: number of threads
-# print.detail: whether to print details in model fitting procedure
+# detrend: if TRUE, subtract kernel weighted moving average for each variable in data matrix,
+#          if FALSE, subtract overall average for each variable in data matrix
+# fit.corr: if TRUE, use sample correlation matrix in model fitting,
+#           if FALSE, use sample covariance matrix in model fitting
+# pos.corr: positions of time points used to generate sample covariance/correlation matrix
+# num.thread: number of threads used in parallel computing
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# Omega: if refit = TRUE: list of refitted precision matrices of length K (number of time points)
-#        if refit = FALSE: list of estimated precision matrices of length K (number of time points)
-# edge.num: list of detected edge numbers of length K
-# edge: list of detected edges of length K
+# Omega: if refit = TRUE: a list of estimated precision matrices via model refitting at positions of time points specified by pos
+#        if refit = FALSE: a list of estimated precision matrices via model fitting at positions of time points specified by pos
+# edge.num: a vector of numbers of graph edges at positions of time points specified by pos
+# edge: a list of graph edges at positions of time points specified by pos
 
 loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, fit.type = "pseudo", 
                    refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
@@ -168,24 +170,25 @@ loggle <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda =
 
 # Input ###
 # pos: position of time point where graph is estimated
-# Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables
+# Corr: list of kernel estimated sample covariance/correlation matrices
+# sd.X: if fit.corr = TRUE: list of standard deviations of variables
+#       if fit.corr = FALSE: list of 1's
 # d: width of neighborhood
 # lambda: tuning parameter of lasso penalty
-# fit.type: 0: graphical lasso estimation, 
+# fit.type: 0: likelihood estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit: whether to conduct model refitting
+# refit: if TRUE, conduct additional model refitting after learning graph structures
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# print.detail: whether to print details in model fitting procedure
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# Omega: if refit = TRUE: refitted precision matrix
-#        if refit = FALSE: estimated precision matrix
-# edge.num: detected edge number
-# edge: detected edges
+# Omega: if refit = TRUE: estimated precision matrix via model refitting
+#        if refit = FALSE: estimated precision matrix via model fitting 
+# edge.num: number of detected graph edges
+# edge: detected graph edges
 
 loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, epi.rel, max.step, print.detail) {
   
@@ -269,24 +272,25 @@ loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, e
 ########################################################################################################################
 
 # Input ###
-# pos: position of time points where graphs are estimated
-# Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables
+# pos: positions of time points where graphs are estimated
+# Corr: list of kernel estimated sample covariance/correlation matrices
+# sd.X: if fit.corr = TRUE: list of standard deviations of variables
+#       if fit.corr = FALSE: list of 1's
 # d: width of neighborhood
 # lambda: tuning parameter of lasso penalty
-# fit.type: 0: graphical lasso estimation, 
+# fit.type: 0: likelihood estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# refit: whether to conduct model refitting
+# refit: if TRUE, conduct additional model refitting after learning graph structures
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
 
 # Output ###
-# Omega: if refit = TRUE: list of refitted precision matrices of length K (number of time points)
-#        if refit = FALSE: list of estimated precision matrices of length K
-# edge.num: list of detected edge numbers of length K
-# edge: list of detected edges of length K
+# Omega.list: if refit = TRUE: a list of estimated precision matrices via model refitting at positions of time points specified by pos
+#             if refit = FALSE: a list of estimated precision matrices via model fitting at positions of time points specified by pos
+# edge.num.list: a vector of numbers of graph edges at positions of time points specified by pos
+# edge.list: a list of graph edges at positions of time points specified by pos
 
 loggle.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi.rel, max.step) {
   
@@ -368,11 +372,12 @@ loggle.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average 
+# X: a p by N data matrix containing observations on a time grid
+# detrend: if TRUE, subtract kernel weighted moving average for each variable in data matrix,
+#          if FALSE, subtract overall average for each variable in data matrix
 
 # Output ###
-# X: a p by N matrix containing list of observations after detrending
+# X: a p by N data matrix containing observations on a time grid after detrending
 
 dataDetrend <- function(X, detrend) {
   
@@ -395,14 +400,16 @@ dataDetrend <- function(X, detrend) {
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# pos: position of observations used to generate correlation matrices
-# h: bandwidth in kernel function used to generate correlation matrices
-# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
+# X: a p by N data matrix containing observations on a time grid
+# pos: positions of time points used to generate sample covariance/correlation matrix
+# h: bandwidth in kernel estimated sample covariance/correlation matrix
+# fit.corr: if TRUE, use sample correlation matrix in model fitting,
+#           if FALSE, use sample covariance matrix in model fitting
 
 # Output ###
-# Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables when fit.corr = TRUE, list of 1's when fit.corr = FALSE
+# Corr: list of kernel estimated sample covariance/correlation matrices
+# sd.X: if fit.corr = TRUE: list of standard deviations of variables
+#       if fit.corr = FALSE: list of 1's
 
 makeCorr <- function(X, pos, h, fit.corr) {
   

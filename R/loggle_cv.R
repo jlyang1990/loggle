@@ -3,34 +3,36 @@
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# pos: position of time points where graphs are estimated
-# h: bandwidth in kernel function used to generate correlation matrices
-# d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of lasso penalty
-# cv.fold: number of cv folds
-# fit.type: 0: graphical lasso estimation, 
-#           1: pseudo likelihood estimation, 
-#           2: sparse partial correlation estimation
-# return.select: whether to return results from loggle.cv.select.h
-# select.type: "all_flexible": d and lambda can vary across time points, 
-#              "d_fixed": d is fixed and lambda can vary across time points, 
-#              "all_fixed": d and lambda are fixed across time points
-# cv.vote.thres: only the edges existing in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
-# early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
+# X: a p by N data matrix containing observations on a time grid
+# pos: positions of time points where graphs are estimated
+# h: bandwidth in kernel estimated sample covariance/correlation matrix 
+# d.list: a grid of widths of neighborhood centered at each position specified by pos
+# lambda.list: a grid of tuning parameters of lasso penalty at each position specified by pos
+# cv.fold: number of cross-validation folds
+# fit.type: likelihood: likelihood estimation, 
+#           pseudo: pseudo likelihood estimation, 
+#           space: sparse partial correlation estimation
+# return.select: if TRUE, return model selection result
+# select.type: "all_flexible":optimal d and lambda can vary across positions specified by pos, 
+#              "d_fixed": optimal d is fixed and optimal lambda can vary across positions specified by pos, 
+#              "all_fixed": optimal d and lambda are fixed across positions specified by pos
+# cv.vote.thres: an edge is kept after cv.vote if and only if it exists in no less than cv.vote.thres*cv.fold cv folds
+# early.stop.thres: grid search stops when the ratio between number of detected edges and number of nodes exceeds early.stop.thres
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
-# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
-# h.correct: whether to apply h correction based on kernel smoothing theorem
-# num.thread: number of threads
-# print.detail: whether to print details in model fitting procedure
+# detrend: if TRUE, subtract kernel weighted moving average for each variable in data matrix,
+#          if FALSE, subtract overall average for each variable in data matrix
+# fit.corr: if TRUE, use sample correlation matrix in model fitting,
+#           if FALSE, use sample covariance matrix in model fitting
+# h.correct: if TRUE, apply bandwidth correction to h in calculating cv scores for validation sets
+# num.thread: number of threads used in parallel computing
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# cv.score: L (number of lambda's) by D (number of d's) by K (number of time points) by cv.fold array of cv scores 
-# cv.result.fold: list of results from loggle.combine.cv of length cv.fold
-# cv.select.result: results from loggle.cv.select.h if return.select is TRUE
+# cv.score: an array of cv scores for each combination of d, lambda, position of time point and cv fold
+# cv.result.fold: a list of model fitting results (of the same format as the results from "loggle") for each cv fold
+# cv.select.result: results from loggle.cv.select.h if return.select = TRUE
 
 loggle.cv.h <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
                         d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 1), 
@@ -145,33 +147,35 @@ loggle.cv.h <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5),
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# pos: position of time points where graphs are estimated
-# h.list: list of bandwidths in kernel function used to generate correlation matrices
-# d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of lasso penalty
-# cv.fold: number of cv folds
-# fit.type: 0: graphical lasso estimation, 
-#           1: pseudo likelihood estimation, 
-#           2: sparse partial correlation estimation
-# return.select: whether to return results from loggle.cv.select
-# select.type: "all_flexible": d and lambda can vary across time points, 
-#              "d_fixed": d is fixed and lambda can vary across time points, 
-#              "all_fixed": d and lambda are fixed across time points
-# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
-# early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
+# X: a p by N data matrix containing observations on a time grid
+# pos: positions of time points where graphs are estimated
+# h.list: a grid of bandwidths in kernel estimated sample covariance/correlation matrix
+# d.list: a grid of widths of neighborhood centered at each position specified by pos
+# lambda.list: a grid of tuning parameters of lasso penalty at each position specified by pos
+# cv.fold: number of cross-validation folds
+# fit.type: likelihood: likelihood estimation, 
+#           pseudo: pseudo likelihood estimation, 
+#           space: sparse partial correlation estimation
+# return.select: if TRUE, return model selection result
+# select.type: "all_flexible":optimal d and lambda can vary across positions specified by pos, 
+#              "d_fixed": optimal d is fixed and optimal lambda can vary across positions specified by pos, 
+#              "all_fixed": optimal d and lambda are fixed across positions specified by pos
+# cv.vote.thres: an edge is kept after cv.vote if and only if it exists in no less than cv.vote.thres*cv.fold cv folds
+# early.stop.thres: grid search stops when the ratio between number of detected edges and number of nodes exceeds early.stop.thres
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
-# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
-# h.correct: whether to apply h correction based on kernel smoothing theorem
-# num.thread: number of threads
-# print.detail: whether to print details in model fitting procedure
+# detrend: if TRUE, subtract kernel weighted moving average for each variable in data matrix,
+#          if FALSE, subtract overall average for each variable in data matrix
+# fit.corr: if TRUE, use sample correlation matrix in model fitting,
+#           if FALSE, use sample covariance matrix in model fitting
+# h.correct: if TRUE, apply bandwidth correction to h in calculating cv scores for validation sets
+# num.thread: number of threads used in parallel computing
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# cv.result.h: list of results from loggle.cv of length H (number of h's)
-# cv.select.result: results from loggle.cv.select if return.select is TRUE
+# cv.result.h: a list of model fitting results from loggle.cv.h for each h
+# cv.select.result: results from loggle.cv.select if return.select = TRUE
 
 loggle.cv <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.3, 0.05), 
                       d.list = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 1), 
@@ -209,20 +213,20 @@ loggle.cv <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.3, 0.05),
 ########################################################################################################################
 
 # Input ###
-# cv.result: results of cross validation from loggle.cv.h
-# select.type: "all_flexible": d and lambda can vary across time points, 
-#              "d_fixed": d is fixed and lambda can vary across time points, 
-#              "all_fixed": d and lambda are fixed across time points
-# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
+# cv.result: results from loggle.cv.h
+# select.type: "all_flexible":optimal d and lambda can vary across positions specified by pos, 
+#              "d_fixed": optimal d is fixed and optimal lambda can vary across positions specified by pos, 
+#              "all_fixed": optimal d and lambda are fixed across positions specified by pos
+# cv.vote.thres: an edge is kept after cv.vote if and only if it exists in no less than cv.vote.thres*cv.fold cv folds
 
 # Output ###
-# d.opt: optimal values of d across time points
-# lambda.opt: optimal values of lambda across time points
-# cv.score.opt: optimal cv score (averaged over time points and cv folds)
+# d.opt: a vector of optimal values of d for each estimated graph
+# lambda.opt: a vector of optimal values of lambda for each estimated graph
+# cv.score.opt: optimal cv score (averaged over positions of time points and cv folds)
 # cv.score.opt.sd: standard deviation of optimal cv scores across cv folds
-# edge.num.opt: optimal edge numbers across time points
-# edge.opt: optimal list of edges across time points
-# adj.mat.opt: optimal graph structures across time points
+# edge.num.opt: a vector of numbers of graph edges in selected model for each estimated graph
+# edge.opt: a list of graph edges in selected model for each estimated graph
+# adj.mat.opt: a list of adjacency matrices in selected model for each estimated graph
 
 loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
@@ -309,22 +313,22 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
 ########################################################################################################################
 
 # Input ###
-# cv.result: results of cross validation from loggle.cv
-# select.type: "all_flexible": d and lambda can vary across time points, 
-#              "d_fixed": d is fixed and lambda can vary across time points, 
-#              "all_fixed": d and lambda are fixed across time points
-# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
+# cv.result: results from loggle.cv
+# select.type: "all_flexible":optimal d and lambda can vary across positions specified by pos, 
+#              "d_fixed": optimal d is fixed and optimal lambda can vary across positions specified by pos, 
+#              "all_fixed": optimal d and lambda are fixed across positions specified by pos
+# cv.vote.thres: an edge is kept after cv.vote if and only if it exists in no less than cv.vote.thres*cv.fold cv folds
 
 # Output ###
 # h.opt: optimal value of h
-# d.opt: optimal values of d across time points
-# lambda.opt: optimal values of lambda across time points
-# cv.score.opt.h: optimal cv scores across h's
-# cv.score.opt: optimal cv score (averaged over time points and cv folds)
-# cv.score.opt.sd: standard deviation of optimal cv scores across cv folds
-# edge.num.opt: optimal edge numbers across time points
-# edge.opt: optimal list of edges across time points
-# adj.mat.opt: optimal graph structures across time points
+# d.opt: a vector of optimal values of d for each estimated graph
+# lambda.opt: a vector of optimal values of lambda for each estimated graph
+# cv.score.opt.h: optimal cv scores for each h (averaged over positions of time points and cv folds)
+# cv.score.opt: optimal cv score for optimal h (averaged over positions of time points and cv folds)
+# cv.score.opt.sd: standard deviation of optimal cv scores across cv folds for optimal h
+# edge.num.opt: a vector of numbers of graph edges in selected model for each estimated graph
+# edge.opt: a list of graph edges in selected model for each estimated graph
+# adj.mat.opt: a list of adjacency matrices in selected model for each estimated graph
 
 loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.thres = 0.8) {
   
@@ -352,13 +356,13 @@ loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.th
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# pos: position of observations used to generate correlation matrices
-# adj.mat: graph structures across time points
-# h: bandwidth in kernel function used to generate correlation matrices
+# X: a p by N data matrix containing observations on a time grid
+# pos: positions of time points where graphs are estimated
+# adj.mat: adjacency matrices at positions of time points specified by pos
+# h: bandwidth in kernel estimated sample covariance/correlation matrix
 
 # Output ###
-# Omega: list of refitted precision matrices of length K
+# Omega: a list of estimated precision matrices via model refitting at positions of time points specified by pos
 
 loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
   
@@ -388,9 +392,9 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
       edge.zero = NULL
     }
     
-    Omega[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero)$wi
+    Omega[[k]] <- glasso::glasso(s = Sigma[, , pos[k]], rho = 1e-10, zero = edge.zero)$wi
     if(det(Omega[[k]]) < 0) {
-      Omega[[k]] <- glasso::glasso(s = Sigma[, , k], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+      Omega[[k]] <- glasso::glasso(s = Sigma[, , pos[k]], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
     Omega[[k]] <- Matrix(Omega[[k]], sparse = TRUE)
     
@@ -405,31 +409,33 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# pos: position of time points where graphs are estimated
-# h: bandwidth in kernel function used to generate correlation matrices
-# d: list of widths of neighborhood
-# lambda: list of tuning parameters of Lasso penalty
-# cv.fold: number of cv folds
-# fit.type: 0: graphical Lasso estimation, 
-#           1: pseudo likelihood estimation, 
-#           2: sparse partial correlation estimation
-# refit: whether to conduct model refitting
-# cv.vote.thres: only the edges exsting in no less than cv.vote.thres*cv.fold cv folds are retained in cv vote
+# X: a p by N data matrix containing observations on a time grid
+# pos: positions of time points where graphs are estimated
+# h: bandwidth in kernel estimated sample covariance/correlation matrix
+# d: a scalar or a vector of the same length as pos - width of neighborhood centered at each position specified by pos
+# lambda: a scalar or a vector of the same length as pos - tuning parameter of lasso penalty at each position specified by pos
+# cv.fold: number of cross-validation folds
+# fit.type: likelihood: likelihood estimation, 
+#           pseudo: pseudo likelihood estimation, 
+#           space: sparse partial correlation estimation
+# refit: if TRUE, conduct additional model refitting after learning graph structures
+# cv.vote.thres: an edge is kept after cv.vote if and only if it exists in no less than cv.vote.thres*cv.fold cv folds
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# detrend: whether to detrend variables in data matrix by subtracting kernel weighted moving average or overall average
-# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
-# num.thread: number of threads
-# print.detail: whether to print details in model fitting procedure
+# detrend: if TRUE, subtract kernel weighted moving average for each variable in data matrix,
+#          if FALSE, subtract overall average for each variable in data matrix
+# fit.corr: if TRUE, use sample correlation matrix in model fitting,
+#           if FALSE, use sample covariance matrix in model fitting
+# num.thread: number of threads used in parallel computing
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# result.fold: list of results from loggle for each cv fold
-# Omega: if refit = TRUE: list of refitted precision matrices across time points
-#        if refit = FALSE: list of detected graph structures across time points
-# edge.num: list of detected edge numbers across time points
-# edge: list of detected edges across time points
+# result.fold: a list of model fitting results from loggle for each cv fold
+# Omega: if refit = TRUE: a list of estimated precision matrices via model refitting at positions of time points specified by pos
+#        if refit = FALSE: a list of estimated precision matrices via model fitting at positions of time points specified by pos
+# edge.num: a vector of numbers of graph edges at positions of time points specified by pos
+# edge: a list of graph edges at positions of time points specified by pos
 
 loggle.cv.vote <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, cv.fold = 5, 
                            fit.type = "pseudo", refit = TRUE, cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, 
@@ -490,23 +496,24 @@ loggle.cv.vote <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, 
 
 # Input ###
 # pos: position of time point where graph is estimated
-# Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables
-# d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of lasso penalty
-# fit.type: 0: graphical lasso estimation, 
+# Corr: list of kernel estimated sample covariance/correlation matrices
+# sd.X: if fit.corr = TRUE: list of standard deviations of variables
+#       if fit.corr = FALSE: list of 1's
+# d.list: a grid of widths of neighborhood centered at each position specified by pos
+# lambda.list: a grid of tuning parameters of lasso penalty at each position specified by pos
+# fit.type: 0: likelihood estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
+# early.stop.thres: grid search stops when the ratio between number of detected edges and number of nodes exceeds early.stop.thres
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# print.detail: whether to print details in model fitting procedure
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# Omega: L (number of lambda's) by D (number of d's) list of refitted precision matrices
-# edge.num: L by D list of edge numbers
-# edge: L by D list of edges
+# Omega.list: a list of estimated precision matrices via model refitting for each combination of d and lambda
+# edge.num.list: a matrix of numbers of graph edges for each combination of d and lambda
+# edge.list: a list of graph edges for each combination of d and lambda
 
 loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
                             max.step, print.detail) {
@@ -630,23 +637,24 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
 ########################################################################################################################
 
 # Input ###
-# pos: position of time points where graphs are estimated
-# Corr: list of kernel estimators of correlation matrices
-# sd.X: list of standard deviations of variables
-# lambda.list: list of tuning parameters of lasso penalty
-# fit.type: 0: graphical lasso estimation, 
+# pos: positions of time points where graphs are estimated
+# Corr: list of kernel estimated sample covariance/correlation matrices
+# sd.X: if fit.corr = TRUE: list of standard deviations of variables
+#       if fit.corr = FALSE: list of 1's
+# lambda.list: a grid of tuning parameters of lasso penalty at each position specified by pos
+# fit.type: 0: likelihood estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
+# early.stop.thres: grid search stops when the ratio between number of detected edges and number of nodes exceeds early.stop.thres
 # epi.abs: absolute tolerance in ADMM stopping criterion
 # epi.rel: relative tolerance in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# print.detail: whether to print details in model fitting procedure
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# Omega: L (number of lambda's) by K (number of time points) list of refitted precision matrices
-# edge.num: L by K list of edge numbers
-# edge: L by K list of edges
+# Omega.list: a list of estimated precision matrices via model refitting for each combination of lambda and position of time point
+# edge.num.list: an array of numbers of graph edges for each combination of lambda and position of time point
+# edge.list: a list of graph edges for each combination of lambda and position of time point
 
 loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, max.step, 
                              print.detail) {
@@ -769,27 +777,28 @@ loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.
 ########################################################################################################################
 
 # Input ###
-# X: a p by N matrix containing list of observations
-# pos.train: position of observations in training used to generate correlation matrices
-# pos: position of time points where graphs are estimated
-# h: bandwidth in kernel function used to generate correlation matrices
-# d.list: list of widths of neighborhood
-# lambda.list: list of tuning parameters of lasso penalty
-# fit.type: 0: graphical lasso estimation, 
+# X: a p by N data matrix containing observations on a time grid
+# pos.train: positions of time points used to generate sample covariance/correlation matrix
+# pos: positions of time points where graphs are estimated
+# h:  bandwidth in kernel estimated sample covariance/correlation matrix
+# d.list: a grid of widths of neighborhood centered at each position specified by pos
+# lambda.list: a grid of tuning parameters of lasso penalty at each position specified by pos
+# fit.type: 0: likelihood estimation, 
 #           1: pseudo likelihood estimation, 
 #           2: sparse partial correlation estimation
-# early.stop.thres: grid search stops when number of detected edges exceeds early.stop.thres times number of nodes
+# early.stop.thres: grid search stops when the ratio between number of detected edges and number of nodes exceeds early.stop.thres
 # epi.abs: list of absolute tolerances in ADMM stopping criterion
 # epi.rel: list of relative tolerances in ADMM stopping criterion
 # max.step: maximum steps in ADMM iteration
-# fit.corr: whether to use sample correlation matrix rather than sample covariance matrix in model fitting
-# num.thread: number of threads
-# print.detail: whether to print details in model fitting procedure
+# fit.corr: if TRUE, use sample correlation matrix in model fitting,
+#           if FALSE, use sample covariance matrix in model fitting
+# num.thread: number of threads used in parallel computing
+# print.detail: if TRUE, print details in model fitting procedure
 
 # Output ###
-# Omega: L (number of lambda's) by D (number of d's) by K (number of time points) list of refitted precision matrices
-# edge.num: L by D by K list of edge numbers
-# edge: L by D by K list of edges
+# Omega: a list of estimated precision matrices via model refitting for each combination of d, lambda and position of time point
+# edge.num: an array of numbers of graph edges for each combination of d, lambda and position of time point
+# edge: a list of graph edges for each combination of d, lambda and position of time point
 
 loggle.combine.cv <- function(X, pos.train, pos, h, d.list, lambda.list, fit.type, early.stop.thres, epi.abs, epi.rel, 
                               max.step, fit.corr, num.thread, print.detail) {

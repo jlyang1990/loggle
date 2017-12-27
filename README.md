@@ -1,7 +1,7 @@
 # loggle (LOcal Group Graphical Lasso Estimation)
 
 ## Description
-loggle is a set of methods that learn time-varying graphical models with structure smoothness.
+loggle is a set of methods that learn time-varying graphical models.
 
 ## Dependencies
 * R (>= 3.0.2),
