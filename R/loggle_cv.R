@@ -223,7 +223,6 @@ loggle.cv <- function(X, pos = 1:ncol(X), h.list = seq(0.1, 0.3, 0.05),
 # d.opt: a vector of optimal values of d for each estimated graph
 # lambda.opt: a vector of optimal values of lambda for each estimated graph
 # cv.score.opt: optimal cv score (averaged over positions of time points and cv folds)
-# cv.score.opt.sd: standard deviation of optimal cv scores across cv folds
 # edge.num.opt: a vector of numbers of graph edges in selected model for each estimated graph
 # edge.opt: a list of graph edges in selected model for each estimated graph
 # adj.mat.opt: a list of adjacency matrices in selected model for each estimated graph
@@ -283,7 +282,6 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
   
   cv.temp <- sapply(1:cv.fold, function(i) mean(sapply(1:K, function(k) cv.score[lambda.index[k], d.index[k], k, i])))
   cv.score.opt <- mean(cv.temp)
-  cv.score.opt.sd <- sd(cv.temp)
   
   for(i in 1:cv.fold) {
     
@@ -303,8 +301,8 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
     adj.mat.opt[[k]] <- Matrix(as.numeric(adj.mat[, , k]), p, p, sparse = TRUE)
   }
   
-  result <- list(d.opt = d.opt, lambda.opt = lambda.opt, cv.score.opt = cv.score.opt, cv.score.opt.sd = cv.score.opt.sd,
-                 edge.num.opt = edge.num.opt, edge.opt = edge.opt, adj.mat.opt = adj.mat.opt)
+  result <- list(d.opt = d.opt, lambda.opt = lambda.opt, cv.score.opt = cv.score.opt, edge.num.opt = edge.num.opt, 
+                 edge.opt = edge.opt, adj.mat.opt = adj.mat.opt)
   return(result)
 }
 
@@ -323,9 +321,7 @@ loggle.cv.select.h <- function(cv.result, select.type = "all_flexible", cv.vote.
 # h.opt: optimal value of h
 # d.opt: a vector of optimal values of d for each estimated graph
 # lambda.opt: a vector of optimal values of lambda for each estimated graph
-# cv.score.opt.h: optimal cv scores for each h (averaged over positions of time points and cv folds)
-# cv.score.opt: optimal cv score for optimal h (averaged over positions of time points and cv folds)
-# cv.score.opt.sd: standard deviation of optimal cv scores across cv folds for optimal h
+# cv.score.opt: optimal cv score (averaged over positions of time points and cv folds)
 # edge.num.opt: a vector of numbers of graph edges in selected model for each estimated graph
 # edge.opt: a list of graph edges in selected model for each estimated graph
 # adj.mat.opt: a list of adjacency matrices in selected model for each estimated graph
@@ -336,7 +332,6 @@ loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.th
   h.list <- sapply(1:H, function(h) cv.result$cv.result.h[[h]]$h)
   cv.select.result.h <- vector("list", H)
   cv.score.opt.h <- rep(NA, H)
-  names(cv.score.opt.h) <- h.list
   
   for(h in 1:H) {
     cv.select.result.h[[h]] <- loggle.cv.select.h(cv.result$cv.result.h[[h]], select.type, cv.vote.thres)
@@ -346,7 +341,6 @@ loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.th
   h.opt <- h.list[which.min(cv.score.opt.h)]
   result <- cv.select.result.h[[which.min(cv.score.opt.h)]]
   result$h.opt <- h.opt
-  result$cv.score.opt.h <- cv.score.opt.h
 
   return(result)
 }

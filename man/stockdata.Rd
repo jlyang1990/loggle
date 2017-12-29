@@ -1,10 +1,10 @@
 \name{stockdata}
 \alias{stockdata}
 \docType{data}
-\title{Stock prices of S&P 500 companies from 2007 to 2017}
+\title{Stock prices of S&P 500 companies from 2007 to 2016}
 
 \description{
-This dataset consists of stock closing prices and company information of S&P 500 companies.
+This dataset contains stock closing prices and company information of S&P 500 companies.
 }
 
 \usage{
@@ -12,26 +12,25 @@ data(stockdata)
 }
 
 \format{
-  This dataset contains two matrices:
+  This dataset consists of two matrices:
   
-  1. data - 2518x455: 455 stocks' closing prices for 2518 trading days from 2007 to 2017.
+  1. data - 2518x455: 455 stocks' closing prices for 2518 trading days from 2007 to 2016. Trading dates are represented as row name in the data matrix and company names are represented as column name in the data matrix.
   
   2. info - 455x3:
   1st column: ticker symbol for each company. 
-  2nd column: sector for each company.
+  2nd column: name of Global Industry Classification Standard (GICS) sector for each company.
   3rd column: full name of each company.
 }
 
 \details{
-This dataset can be used to perform time-varying graph estimations to reveal the dynamic relationships between S&P 500 companies.
+This dataset can be used in time-varying graph estimation to reveal the dynamic relationships between S&P 500 companies from 2007 to 2016.
 }
 
 \source{
-Data are publicly available at www.yahoo.com, and R package \code{quantmod} can be used to extract the stock information. The source code can be found in \link{stockdata_source}.
+Data are publicly available at www.yahoo.com, and R package \code{quantmod} can be used to extract the stock information. The source code for stockdata is in \link{stockdata_source}.
 }
 
 \references{
-Peng, J., Wang, P., Zhou, N., & Zhu, J. (2012). Partial correlation estimation by joint sparse regression models. Journal of the American Statistical Association.
 }
 
 \author{
@@ -73,7 +72,7 @@ d.list = c(0, 0.01, 0.05, 0.1, 0.2, 0.3, 1),
 lambda.list = 10 ^ seq(-0.8, -0.2, length = 4), 
 fit.type = "pseudo", num.thread = 1)
 
-# graphs at certain time points in selected model
+# graphs at specified time points in selected model
 pos.plot <- round(seq(2, length(pos)-1, length = 4))
 for(k in 1:length(pos.plot)) {
   adj.matrix <- 

@@ -3,7 +3,7 @@
 \title{A function to learn time-varying graphical models via cross validation (with \code{h} fixed)}
 
 \description{
-This function is to efficiently conduct model selection via cross validation for learning time-varying graphical models. Compared with \link{loggle.cv}, \code{h} (bandwidth in kernel estimated sample covariance/correlation matrix) should be pre-specified.
+This function is to efficiently conduct model selection via cross validation for learning time-varying graphical models. Different from \link{loggle.cv}, \code{h} (bandwidth in kernel smoothed sample covariance/correlation matrix) should be pre-determined.
 }
 
 \usage{
@@ -21,53 +21,52 @@ num.thread = 1, print.detail = TRUE)
 }
 
 \arguments{
-  \item{X}{a p by N data matrix containing observations on a time grid: p -- number of variables, N -- number of time points}
-  \item{pos}{a vector containing elements from 1, 2, ..., N: positions of time points where graphs are estimated}
-  \item{h}{a scalar between 0 and 1: bandwidth in kernel estimated sample covariance/correlation matrix (assume time points lie in [0, 1]), default = 0.8*ncol(X)^(-1/5)}
-  \item{d.list}{a vector with values between 0 and 1: a grid of widths of neighborhood centered at each position specified by \code{pos}, default = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 1)}
-  \item{lambda.list}{a vector: a grid of tuning parameters of lasso penalty at each position specified by \code{pos}, default = seq(0.15, 0.35, 0.02)}
+  \item{X}{a p by N data matrix containing observations on a time grid ranging from 0 to 1: p -- number of variables, N -- number of time points. The nominal time for the kth time point is (k-1)/(N-1)}
+  \item{pos}{a vector constitutes a subset of \{1, 2, ..., N\}: indices of time points where graphs are estimated, default = 1:N}
+  \item{h}{a scalar between 0 and 1: bandwidth in kernel smoothed sample covariance/correlation matrix, default = 0.8*N^(-1/5)}
+  \item{d.list}{a vector with values between 0 and 1: a grid of widths of neighborhood centered at each time point specified by \code{pos}, default = c(0, 0.001, 0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 1)}
+  \item{lambda.list}{a vector: a grid of tuning parameters of lasso penalty at each time point specified by \code{pos}, default = seq(0.15, 0.35, 0.02)}
   \item{cv.fold}{a scalar: number of cross-validation folds, default = 5}
   \item{fit.type}{a string: "likelihood" -- likelihood estimation, "pseudo" -- pseudo likelihood estimation, or "space" -- sparse partial correlation estimation, default = "pseudo"}
   \item{return.select}{logic: if TRUE, return model selection result, default = TRUE}
-  \item{select.type}{a string: "all_flexible" -- optimal \code{d} and \code{lambda} can vary across positions specified by \code{pos}, "d_fixed" -- optimal \code{d} is fixed and optimal \code{lambda} can vary across positions specified by \code{pos}, "all_fixed" -- optimal \code{d} and \code{lambda} are fixed across positions specified by \code{pos}, default = "all_flexible" (optimal \code{h} is always fixed across positions specified by \code{pos})}
+  \item{select.type}{a string: "all_flexible" -- optimal \code{d} and \code{lambda} can vary across time points specified by \code{pos}, "d_fixed" -- optimal \code{d} is fixed across time points specified by \code{pos} and optimal \code{lambda} can vary across time points specified by \code{pos}, "all_fixed" -- optimal \code{d} and \code{lambda} are fixed across time points specified by \code{pos}, default = "all_flexible"}
   \item{cv.vote.thres}{a scalar between 0 and 1: an edge is kept after cv.vote if and only if it exists in no less than \code{cv.vote.thres}*\code{cv.fold} cv folds, default = 0.8}
-  \item{early.stop.thres}{a scalar: stopping criterion in grid search -- grid search stops when the ratio between number of detected edges and number of nodes exceeds \code{early.stop.thres}, default = 5}
-  \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4. When it is a scalar, it is shared by each element in \code{d.list}}
-  \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2. When it is a scalar, it is shared by each element in \code{d.list}}
+  \item{early.stop.thres}{a scalar: stopping criterion in grid search -- grid search stops when the ratio between number of detected edges and number of variables exceeds \code{early.stop.thres}, default = 5}
+  \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4.}
+  \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2.}
   \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
-  \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centralization), default = TRUE}
+  \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centering), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
-  \item{h.correct}{logic: if TRUE, apply bandwidth correction to \code{h} in calculating cv scores for validation sets, default = TRUE}
+  \item{h.correct}{logic: if TRUE, apply bandwidth adjustment for validation sets due to sample size difference, default = TRUE}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
   \item{print.detail}{logic: if TRUE, print details in model fitting procedure, default = TRUE}
 }
   
 \details{
-This function conducts grid search for optimal \code{d} and \code{lambda} selection, while \code{h} is pre-specified. To select the optimal \code{h} as well, one can use \link{loggle.cv} or apply this function to different candidate \code{h}'s.
+This function conducts grid search for optimal \code{d} and \code{lambda}, while \code{h} is pre-determined. To select the optimal \code{h} as well, one can use \link{loggle.cv} or apply this function to different candidate \code{h}'s.
 
 The model fitting method based on pseudo-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than that based on likelihood (\code{fit.type = "likelihood"}), with similar model fitting performance.
 
-\code{select.type = "all_flexible"} is chosen in model selection if we believe both the extent of structure smoothness (controlled by \code{d}) and sparsity (controlled by \code{lambda}) vary across time points. If only the extent of sparsity varies across time points, we choose \code{select.type = "d_fixed"}. If both of them are the same across time points, we choose \code{select.type = "all_fixed"}.
+\code{select.type = "all_flexible"} is for the situation where we expect both the extent of structure smoothness (controlled by \code{d}) and the extent of graph sparsity (controlled by \code{lambda}) vary across time points. If only the extent of graph sparsity varies across time points, \code{select.type = "d_fixed"} should be used. If both of them are expected to be similar across time points, \code{select.type = "all_fixed"} should be used.
 
 \code{cv.vote.thres} controls the tradeoff between false discovery rate and power in model selection. A large value of \code{cv.vote.thres} would decrease false discovery rate but also hurt power. 
 
-When underlying graphs are sparse, there is usually no need to conduct the complete grid search, especially for those dense graphs which may need a large amount of training time. \code{early.stop.thres} is used as an early stopping criterion in grid search, where the grid search of \code{lambda} for each \code{d} stops when the number of detected edges is large enough. In this case, the output corresponding to the remaining \code{lambda}'s will be \code{NA}.
+\code{early.stop.thres} is used as an early stopping criterion. With limited sample size, a very complicated model seldom leads to a competitive cv score. Therefore in grid search for \code{lambda}, when the estimated model is already large determined by \code{early.stop.thres}, we stop fitting models for smaller \code{lambda}'s (as they often lead to more complicated models). In this case, the output corresponding to the remaining \code{lambda}'s will be \code{NA}.
 
-If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is suggested to detrend each variable in data matrix by subtracting corresponding kernel weighted moving average.
+If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is recommended to detrend each variable in data matrix by subtracting corresponding kernel weighted moving average.
 
-\code{fit.corr = TRUE} is suggested in model fitting such that lasso-type penalty can perform better when all the variables are of similar scales. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} should be changed accordingly.
+\code{fit.corr = TRUE} is recommended such that all the variables are of the same scales. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} may need to be changed accordingly.
 
-\code{h.correct = TRUE} is suggested in calculating cross-validation scores for validation sets. The bandwidth correction can make the choice of bandwidth \code{h} consistent between training and validation sets, since the optimal bandwidth \code{h} is related to sample size \code{N}, which differs in training and validation sets. 
+\code{h.correct = TRUE} is recommended in calculating kernel smoothed sample covariance matrix for validation sets. This is because bandwidth \code{h} should reflect the difference in sample sizes between training and validation sets.
 }
 
 \value{
-  \item{cv.score}{an array of cv scores for each combination of d, lambda, position of time point and cv fold}
-  \item{cv.result.fold}{a list of model fitting results (of the same format as the results from \link{loggle}) for each cv fold}
+  \item{cv.score}{an array of cv scores for each combination of d, lambda, time point and cv fold}
+  \item{cv.result.fold}{a list of model fitting results for each cv fold, including a list of estimated precision matrices for each combination of d, lambda and time point, an array of numbers of edges for each combination of d, lambda and time point, and a list of edges for each combination of d, lambda and time point}
   \item{cv.select.result}{results from \link{loggle.cv.select.h} if \code{return.select = TRUE}}
 }
 
 \references{
-Peng, J., Wang, P., Zhou, N., & Zhu, J. (2012). Partial correlation estimation by joint sparse regression models. Journal of the American Statistical Association.
 }
 
 \author{
@@ -75,7 +74,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{loggle} for learning time-varying graphical models, \link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.refit} for model refitting based on estimated graphs.
+\link{loggle} for learning time-varying graphical models, \link{loggle.cv} for learning time-varying graphical models via cross validation， \link{loggle.cv.select} for model selection based on cross validation results.
 }
 
 \examples{
@@ -89,7 +88,8 @@ K <- length(pos)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
 # num.thread can be set as large as number of cores 
-# on a multi-core machine
+# on a multi-core machine (however when p is large, 
+# memory overflow should also be taken caution of)
 ts <- proc.time()
 result <- loggle.cv.h(X, pos, h = 0.2, 
 d.list = c(0, 0.01, 0.05, 0.1, 0.2, 0.3, 1), 
