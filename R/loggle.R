@@ -250,9 +250,9 @@ loggle.local <- function(pos, Corr, sd.X, d, lambda, fit.type, refit, epi.abs, e
     }
     
     Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
-    Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi  # set rho = 1e-10 instead of 0 to avoid warning
+    Omega <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi  # set rho = 1e-10 instead of 0 to avoid warning
     if(det(Omega) < 0) {
-      Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+      Omega <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
     Omega <- Matrix(Omega, sparse = TRUE)
   }
@@ -351,9 +351,9 @@ loggle.global <- function(pos, Corr, sd.X, lambda, fit.type, refit, epi.abs, epi
     Omega.list <- vector("list", K)
     for(k in 1:K) {
       Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-      Omega.list[[k]] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
+      Omega.list[[k]] <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
       if(det(Omega.list[[k]]) < 0) {
-        Omega.list[[k]] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+        Omega.list[[k]] <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
       }
       Omega.list[[k]] <- Matrix(Omega.list[[k]], sparse = TRUE)
     }
@@ -382,7 +382,7 @@ dataDetrend <- function(X, detrend) {
   
   for(i in 1:p) {
     if(detrend) {
-      X[i, ] <- X[i, ] - sm::sm.regression(1:N, X[i, ], ngrid = N, display = "none")$estimate
+      X[i, ] <- X[i, ] - sm.regression(1:N, X[i, ], ngrid = N, display = "none")$estimate
     } else {
       X[i, ] <- X[i, ] - mean(X[i, ])
     }

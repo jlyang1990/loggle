@@ -1,2 +1,3 @@
 useDynLib(loggle)
+import(stats, Matrix, doParallel, igraph, glasso, sm)
 export(loggle, loggle.cv, loggle.cv.h, loggle.cv.select, loggle.cv.select.h, loggle.cv.vote, loggle.refit)

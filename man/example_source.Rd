@@ -65,7 +65,7 @@ loggle.true.graph <- function(p, N, alpha = 0.28) {
         break
       }
       
-      Omega.true[[i]] <- Matrix(Omega, sparse = T)
+      Omega.true[[i]] <- Matrix(Omega, sparse = TRUE)
       
       # generate observations from precision matrix
       X[, i] <- rmvn.sparse(1, rep(0, p), 

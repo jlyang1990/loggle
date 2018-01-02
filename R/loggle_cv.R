@@ -389,9 +389,9 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
       edge.zero = NULL
     }
     
-    Omega[[k]] <- glasso::glasso(s = Sigma[, , pos[k]], rho = 1e-10, zero = edge.zero)$wi
+    Omega[[k]] <- glasso(s = Sigma[, , pos[k]], rho = 1e-10, zero = edge.zero)$wi
     if(det(Omega[[k]]) < 0) {
-      Omega[[k]] <- glasso::glasso(s = Sigma[, , pos[k]], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+      Omega[[k]] <- glasso(s = Sigma[, , pos[k]], rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
     }
     Omega[[k]] <- Matrix(Omega[[k]], sparse = TRUE)
     
@@ -603,9 +603,9 @@ loggle.local.cv <- function(pos, Corr, sd.X, d.list, lambda.list, fit.type, earl
         }
           
         Sigma <- diag(sd.X) %*% Corr[, , pos] %*% diag(sd.X)
-        Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
+        Omega <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
         if(det(Omega) < 0) {
-          Omega <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+          Omega <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
         }
       
         Omega.list[[l, j]] <- Matrix(Omega, sparse = TRUE)
@@ -737,9 +737,9 @@ loggle.global.cv <- function(pos, Corr, sd.X, lambda.list, fit.type, early.stop.
       Omega <- array(0, c(p, p, K))
       for(k in 1:K) {
         Sigma <- diag(sd.X) %*% Corr[, , pos[k]] %*% diag(sd.X)
-        Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
+        Omega[, , k] <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero)$wi
         if(det(Omega[, , k]) < 0) {
-          Omega[, , k] <- glasso::glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
+          Omega[, , k] <- glasso(s = Sigma, rho = 1e-10, zero = edge.zero, thr = 5*1e-5)$wi
         }
       }
       
