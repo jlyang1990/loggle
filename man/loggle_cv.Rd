@@ -7,17 +7,15 @@ This function is to efficiently conduct model selection via cross validation for
 }
 
 \usage{
-loggle.cv <- function(X, pos = 1:ncol(X), 
+loggle.cv(X, pos = 1:ncol(X), 
 h.list = seq(0.1, 0.3, 0.05), d.list = c(0, 0.001, 0.01, 
 0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 1), 
 lambda.list = seq(0.15, 0.35, 0.02), cv.fold = 5, 
-fit.type = c("likelihood", "pseudo", "space"), 
-return.select = TRUE,
-select.type = c("all_flexible", "d_fixed", "all_fixed"), 
-cv.vote.thres = 0.8, early.stop.thres = 5, 
-epi.abs = 1e-4, epi.rel = 1e-2, max.step = 500, 
-detrend = TRUE, fit.corr = TRUE, h.correct = TRUE, 
-num.thread = 1, print.detail = TRUE)
+fit.type = "pseudo", return.select = TRUE,
+select.type = "all_flexible", cv.vote.thres = 0.8, 
+early.stop.thres = 5, epi.abs = 1e-4, epi.rel = 1e-2, 
+max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+h.correct = TRUE, num.thread = 1, print.detail = TRUE)
 }
 
 \arguments{

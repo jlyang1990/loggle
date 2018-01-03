@@ -14,6 +14,12 @@ Imports:
   igraph (>= 0.7),
   glasso (>= 1.8),
   sm
+Suggests:
+  sparseMVN,
+  matrixcalc,
+  XML,
+  RCurl,
+  quantmod
 License: GPL (>= 2)
 NeedsCompilation: yes
 URL: https://github.com/jlyang1990/loggle

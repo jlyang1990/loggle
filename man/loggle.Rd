@@ -8,11 +8,11 @@ This function is to efficiently learn time-varying graphical models for a given 
 
 \usage{
 loggle(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), 
-d = 0.2, lambda = 0.25, fit.type = c("likelihood", 
-"pseudo", "space"), refit = TRUE, epi.abs = 1e-5, 
-epi.rel = 1e-3, max.step = 500, detrend = TRUE, 
-fit.corr = TRUE, pos.corr = 1:ncol(X), 
-num.thread = 1, print.detail = TRUE)
+d = 0.2, lambda = 0.25, fit.type = "pseudo", 
+refit = TRUE, epi.abs = 1e-5, epi.rel = 1e-3, 
+max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+pos.corr = 1:ncol(X), num.thread = 1, 
+print.detail = TRUE)
 }
 
 \arguments{

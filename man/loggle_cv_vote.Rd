@@ -9,11 +9,10 @@ This function is to efficiently learn time-varying graphical models for a given 
 \usage{
 loggle.cv.vote(X, pos = 1:ncol(X), 
 h = 0.8*ncol(X)^(-1/5), d = 0.2, lambda = 0.25, 
-cv.fold = 5, fit.type = c("likelihood", "pseudo", 
-"space"), refit = TRUE, cv.vote.thres = 0.8, 
-epi.abs = 1e-5, epi.rel = 1e-3, max.step = 500, 
-detrend = TRUE, fit.corr = TRUE, num.thread = 1, 
-print.detail = TRUE)
+cv.fold = 5, fit.type = "pseudo", refit = TRUE, 
+cv.vote.thres = 0.8, epi.abs = 1e-5, epi.rel = 1e-3, 
+max.step = 500, detrend = TRUE, fit.corr = TRUE, 
+num.thread = 1, print.detail = TRUE)
 }
 
 \arguments{

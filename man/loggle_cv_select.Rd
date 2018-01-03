@@ -7,8 +7,7 @@ This function is to conduct model selection for time-varying graphical models ba
 }
 
 \usage{
-loggle.cv.select <- function(cv.result, 
-select.type = c("all_flexible", "d_fixed", "all_fixed"), 
+loggle.cv.select(cv.result, select.type = "all_flexible", 
 cv.vote.thres = 0.8)
 }
 
