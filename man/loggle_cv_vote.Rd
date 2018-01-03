@@ -66,7 +66,10 @@ Yang, J. and Peng, J.
 }
 
 \examples{
-data(example)  # load data matrix
+data(example)  # load example dataset
+# data matrix and true precision matrices
+X <- example$X
+Omega.true <- example$Omega.true
 dim(X)  # dimension of data matrix
 p <- nrow(X)  # number of variables
 

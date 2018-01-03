@@ -4,7 +4,7 @@
 \title{Source code for generating true time-varying graphs}
 
 \description{
-This is the source code for generating true time-varying graphs including true precision matrices and observations.
+This is the source code for generating true time-varying graphs including true precision matrices and observations in \link{example}.
 }
 
 \references{
@@ -15,6 +15,7 @@ Yang, J. and Peng, J.
 }
 
 \examples{
+library(Matrix)
 library(sparseMVN)
 library(matrixcalc)
 
@@ -88,5 +89,6 @@ Omega.true <- result$Omega.true[seq(1, 2001, 2)]
 X <- result$X[, seq(1, 2001, 2)]
 
 # save Omega.true and X into example.rda
-save(Omega.true, X, file = "example.rda")
+example <- list(Omega.true = Omega.true, X = X)
+save(example, file = "example.rda")
 }

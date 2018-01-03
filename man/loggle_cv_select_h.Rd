@@ -45,7 +45,8 @@ Yang, J. and Peng, J.
 }
 
 \examples{
-data(example)  # load data matrix
+data(example)  # load example dataset
+X <- example$X  # data matrix
 dim(X)  # dimension of data matrix
 
 # positions of time points to estimate graphs

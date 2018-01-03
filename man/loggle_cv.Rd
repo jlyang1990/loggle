@@ -73,11 +73,14 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{loggle} for learning time-varying graphical models, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example_source} for generating true time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for generating stock price dataset of S&P 500 companies.
+\link{loggle} for learning time-varying graphical models, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example} for description of an example dataset of true time-varying graphs, \link{example_source} for generating true time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for generating stock price dataset of S&P 500 companies.
 }
 
 \examples{
-data(example)  # load data matrix
+data(example)  # load example dataset
+# data matrix and true precision matrices
+X <- example$X
+Omega.true <- example$Omega.true
 dim(X)  # dimension of data matrix
 p <- nrow(X)  # number of variables
 
