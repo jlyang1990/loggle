@@ -4,7 +4,7 @@
 \title{Stock prices of S&P 500 companies from 2007 to 2016}
 
 \description{
-This dataset contains stock closing prices and company information of S&P 500 companies.
+This dataset contains stock closing prices and company information of S&P 500 companies (updated on 2017-01-01).
 }
 
 \usage{
