@@ -64,15 +64,16 @@ for(i in 1:p) {
 dim(X)  # dimension of data matrix
 
 # positions of time points to estimate graphs
-pos <- round(seq(0.005, 0.995, length=25)*(N-1)+1)
+pos <- round(seq(0.005, 0.995, length=13)*(N-1)+1)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
 result <- loggle.cv.h(X, pos, h = 0.1, 
-d.list = c(0, 0.01, 0.05, 0.1, 0.2, 0.3, 1), 
+d.list = c(0, 0.05, 0.1, 0.2, 1), 
 lambda.list = 10 ^ seq(-0.8, -0.2, length = 4), 
 fit.type = "pseudo", num.thread = 1)
 
 # graphs at specified time points in selected model
+library(igraph)
 pos.plot <- round(seq(2, length(pos)-1, length = 4))
 for(k in 1:length(pos.plot)) {
   adj.matrix <- 

@@ -91,6 +91,7 @@ print(cbind("time" = seq(0.02, 0.98, length=49),
 "edge.num" = result$edge.num))
 
 # graphs at specified time points
+library(igraph)
 par(mfrow = c(2, 4))
 pos.plot <- pos[round(seq(1, K, length=16))]
 for(k in 1:length(pos.plot)) {
