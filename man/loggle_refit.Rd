@@ -7,7 +7,8 @@ This function is to efficiently conduct model refitting given learned time-varyi
 }
 
 \usage{
-loggle.refit(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5))
+loggle.refit(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5), 
+print.detail = TRUE)
 }
 
 \arguments{
@@ -15,6 +16,7 @@ loggle.refit(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5))
   \item{pos}{a vector constitutes a subset of \{1, 2, ..., N\}: indices of time points where graphs are estimated, default = 1:N}
   \item{adj.mat}{a list of the same length as \code{pos}: adjacency matrices at time points specified by \code{pos}}
   \item{h}{a scalar between 0 and 1: bandwidth in kernel smoothed sample covariance/correlation matrix, default = 0.8*N^(-1/5)}
+  \item{print.detail}{logic: if TRUE, print details in model refitting procedure, default = TRUE}
 }
 
 \details{

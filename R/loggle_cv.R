@@ -357,11 +357,12 @@ loggle.cv.select <- function(cv.result, select.type = "all_flexible", cv.vote.th
 # pos: indices of time points where graphs are estimated
 # adj.mat: adjacency matrices at time points specified by pos
 # h: bandwidth in kernel smoothed sample covariance/correlation matrix
+# print.detail: if TRUE, print details in model refitting procedure
 
 # Output ###
 # Omega: a list of estimated precision matrices at time points specified by pos
 
-loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
+loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5), print.detail = TRUE) {
   
   p <- dim(X)[1]
   N <- dim(X)[2]
@@ -395,7 +396,9 @@ loggle.refit <- function(X, pos, adj.mat, h = 0.8*ncol(X)^(-1/5)) {
     }
     Omega[[k]] <- Matrix(Omega[[k]], sparse = TRUE)
     
-    cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
+    if(print.detail) {
+      cat("Complete: t =", round((pos[k]-1) / (N-1), 2), "\n")
+    }
   }
   
   return(Omega)
