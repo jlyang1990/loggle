@@ -482,7 +482,7 @@ loggle.cv.vote <- function(X, pos = 1:ncol(X), h = 0.8*ncol(X)^(-1/5), d = 0.2, 
   }
   
   if(refit) {
-    Omega.list <- loggle.refit(X, pos, Omega.list, h)
+    Omega.list <- loggle.refit(X, pos, Omega.list, h, print.detail)
   }
   
   result <- list(result.fold = result.fold, Omega = Omega.list, edge.num = edge.num.list, edge = edge.list)
