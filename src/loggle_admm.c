@@ -7,7 +7,7 @@
 #include "loggle_admm.h"
 
 
-//apply ADMM across lambda's when h and d are fixed
+//apply ADMM on lambda grid given h and d
 void ADMM_lambda(double *Corr, double *Z, int *P, int *Len, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, 
 	int *No, double *Lambda, int *Lambda_Len, int *fit_type, double *thres, double *Rho, double *Epi_abs, 
 	double *Epi_rel, int *Max_step){
@@ -39,7 +39,6 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *Len, int *Pos, int *Pos_L
 			Epi_abs, Epi_rel, Max_step);
 
 		S_L = 0;
-
 		for(j=0; j<p; j++){
 			for(k=0; k<p; k++){
 				if(j<k && Z_i[p*p*Pos[0]+p*j+k] != 0){
@@ -59,7 +58,7 @@ void ADMM_lambda(double *Corr, double *Z, int *P, int *Len, int *Pos, int *Pos_L
 }
 
 
-//apply ADMM across block diagonals when h, d and lambda are fixed
+//apply ADMM across block diagonals given h, d and lambda
 void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *Len, int *member_ind, int *csize_ind, int *No, 
 	double *Lambda, int *fit_type, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
 
@@ -72,7 +71,7 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *Len, int *mem
 		p_n = csize_ind[n+1] - csize_ind[n];
 		member_ind_n = &member_ind[csize_ind[n]];
 
-		//block diagonal with dimension equals one
+		//block diagonal with dimension one
 		if(p_n == 1){
 			if(*fit_type == 0){
 				for(i=0; i<L; i++){
@@ -136,7 +135,7 @@ void ADMM_cluster(double *Corr, double *Z, double *U, int *P, int *Len, int *mem
 }
 
 
-//apply ADMM across block diagonals when h, d and lambda are fixed (simple version)
+//apply ADMM across block diagonals given h, d and lambda (no initialization of Z and U)
 void ADMM_simple(double *Corr, double *Z, int *P, int *Len, int *Pos, int *Pos_Len, int *member_ind, int *csize_ind, 
 	int *No, double *Lambda, int *fit_type, double *Rho, double *Epi_abs, double *Epi_rel, int *Max_step){
   
@@ -149,7 +148,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *Len, int *Pos, int *Pos_L
 		p_n = csize_ind[n+1] - csize_ind[n];
 		member_ind_n = &member_ind[csize_ind[n]];
     
-		//block diagonal with dimension equals one
+		//block diagonal with dimension one
 		if(p_n==1){
 			if(*fit_type == 0){
 				for(i=0; i<Pos_L; i++){
@@ -196,7 +195,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *Len, int *Pos, int *Pos_L
 				free(d_n);
 			}
       		
-      		for(i=0; i<Pos_L; i++){
+      for(i=0; i<Pos_L; i++){
 				for(j=0; j<p_n; j++){
 					for(k=0; k<p_n; k++){
 						Z[p*p*i+p*member_ind_n[j]+member_ind_n[k]] = Z_n[p_n*p_n*Pos[i]+p_n*j+k];
@@ -212,7 +211,7 @@ void ADMM_simple(double *Corr, double *Z, int *P, int *Len, int *Pos, int *Pos_L
 }
 
 
-//local group graphical lasso (likelihood estimation)
+//ADMM on likelihood estimation
 void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, double *Lambda, double *Rho, 
 	double *Epi_abs, double *Epi_rel, int *Max_step){
  
@@ -249,7 +248,7 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 				work, &lwork, iwork, &liwork, &info);
 			
 			for(j=0; j<p; j++){
-				eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho)) / (2*rho);
+				eig_val[j] = (-eig_val[j] + sqrt(pow(eig_val[j], 2) + 4*rho))/(2*rho);
 				for(k=0; k<p; k++){
 					eig_vec[p*j+k] *= sqrt(eig_val[j]);
 				}
@@ -258,7 +257,7 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 			for(j=0; j<p; j++){
 				Omega_ij = Omega+p*p*i+p*j, Z_ij = Z+p*p*i+p*j, U_ij = U+p*p*i+p*j;
 				for(k=j; k<p; k++){
-					U_ij[k] += alpha * Omega_ij[k] + (1-alpha) * Z_ij[k];
+					U_ij[k] += alpha*Omega_ij[k] + (1-alpha)*Z_ij[k];
 				}
 			}
 		}
@@ -278,7 +277,7 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 		}
 		for(j=0; j<p; j++){
 			for(k=j+1; k<p; k++){
-				coef[p*j+k] = 1 - lambda / (rho * sqrt(coef[p*j+k]));
+				coef[p*j+k] = 1 - lambda/(rho*sqrt(coef[p*j+k]));
 			}
 		}
 		for(i=0; i<L; i++){
@@ -294,7 +293,7 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 					}
 					else{
 						temp_1 = Z_ij[k];
-						Z_ij[k] = U_ij[k] * coef[p*j+k];
+						Z_ij[k] = U_ij[k]*coef[p*j+k];
 						U_ij[k] -= Z_ij[k];
 						s += pow(Z_ij[k] - temp_1, 2);
 					}
@@ -303,8 +302,8 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 			}
 		}	
 
-		s = rho * sqrt(2*s);
-		epi_dual = sqrt(L*p) * epi_abs + epi_rel * rho * sqrt(2*epi_dual);
+		s = rho*sqrt(2*s);
+		epi_dual = sqrt(L*p)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
 		drd = s - epi_dual;
 		if(drd < 0){
 			for(i=0; i<L; i++){
@@ -321,7 +320,7 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 				}
 			}
 			r = sqrt(2*r);
-			epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+			epi_pri = sqrt(L*p)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
 			prd = r - epi_pri;
 		}
 		max_step--;	
@@ -351,7 +350,7 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 }
 
 
-//pseudo-likelihood group lasso (pseudo-likelihood estimation)
+//ADMM on pseudo-likelihood estimation
 void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, double *Lambda, double *Rho, 
 	double *Epi_abs, double *Epi_rel, int *Max_step){ 
 
@@ -394,16 +393,16 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 				Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j, U_ij = U+p_1*p*i+p_1*j;
 				Givens_rotation(Chol_ij, Corr_i, P, &j);
 				for(k=0; k<j; k++){
-					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_i[p*j+k];
+					C[k] = rho*(Z_ij[k] - U_ij[k]) + Corr_i[p*j+k];
 				}
 				for(k=j; k<p_1; k++){
-					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_i[p*(k+1)+j];
+					C[k] = rho*(Z_ij[k] - U_ij[k]) + Corr_i[p*(k+1)+j];
 				}
 				F77_CALL(dtrsv)("L", "N", "N", &p_1, Chol_ij, &p_1, C, &one);
 				F77_CALL(dtrsv)("L", "T", "N", &p_1, Chol_ij, &p_1, C, &one);
 				for(k=0; k<p_1; k++){
 					Omega_ij[k] = C[k];
-					U_ij[k] += alpha * C[k] + (1-alpha) * Z_ij[k];
+					U_ij[k] += alpha*C[k] + (1-alpha)*Z_ij[k];
 				}
 			}
 		}
@@ -423,7 +422,7 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 		}
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
-				coef[p_1*j+k] = 1 - sqrt(2) * lambda / (rho * sqrt(coef[p_1*j+k]));
+				coef[p_1*j+k] = 1 - sqrt(2)*lambda/(rho*sqrt(coef[p_1*j+k]));
 			}
 		}
 		for(i=0; i<L; i++){
@@ -437,8 +436,8 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 					}
 					else{
 						temp_1 = Z[index_ijk], temp_2 = Z[index_ikj];
-						Z[index_ijk] = coef[p_1*j+k] * U[index_ijk];
-						Z[index_ikj] = coef[p_1*j+k] * U[index_ikj];
+						Z[index_ijk] = coef[p_1*j+k]*U[index_ijk];
+						Z[index_ikj] = coef[p_1*j+k]*U[index_ikj];
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
 						s += (pow(Z[index_ijk] - temp_1, 2) + pow(Z[index_ikj] - temp_2, 2));
@@ -448,8 +447,8 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 			}
 		}
 		
-		s = rho * sqrt(s);
-		epi_dual = sqrt(L*p) * epi_abs + epi_rel * rho * sqrt(2*epi_dual);
+		s = rho*sqrt(s);
+		epi_dual = sqrt(L*p)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
 		drd = s - epi_dual;
 		if(drd < 0){
 			for(i=0; i<L; i++){
@@ -463,7 +462,7 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 				}
 			}
 			r = sqrt(r);
-			epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+			epi_pri = sqrt(L*p)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
 			prd = r - epi_pri;
 		}
 		max_step--;
@@ -495,7 +494,7 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 }
 
 
-//SPACE (sparse partial correlation estimation) (rho step)
+//ADMM on SPACE(sparse partial correlation estimation) (rho step)
 void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *Len, double *Lambda, double *Rho, 
 	double *Epi_abs, double *Epi_rel, int *Max_step){
  
@@ -522,7 +521,7 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 				U[p_1*p*i+p_1*j+k] = U[p*p*i+p*j+k+1];
 			}
 			for(k=j; k<p; k++){
-				Chol[p*p*i+p*j+k] = Corr[p*p*i+p*j+k] * sqrt(d[p*i+j] * d[p*i+k]);
+				Chol[p*p*i+p*j+k] = Corr[p*p*i+p*j+k]*sqrt(d[p*i+j]*d[p*i+k]);
 			}
 			Chol[p*p*i+p*j+j] += rho;
 		}
@@ -540,16 +539,16 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 				Omega_ij = Omega+p_1*p*i+p_1*j, Z_ij = Z+p_1*p*i+p_1*j, U_ij = U+p_1*p*i+p_1*j, Corr_ij = Corr+p*p*i+p*j;
 				Givens_rotation(Chol_ij, (Chol+p*p*i), P, &j);
 				for(k=0; k<j; k++){
-					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_ij[k] * sqrt(d[p*i+j] * d[p*i+k]);
+					C[k] = rho*(Z_ij[k] - U_ij[k]) + Corr_ij[k]*sqrt(d[p*i+j]*d[p*i+k]);
 				}
 				for(k=j; k<p_1; k++){
-					C[k] = rho * (Z_ij[k] - U_ij[k]) + Corr_ij[k+1] * sqrt(d[p*i+j] * d[p*i+k+1]);
+					C[k] = rho*(Z_ij[k] - U_ij[k]) + Corr_ij[k+1]*sqrt(d[p*i+j]*d[p*i+k+1]);
 				}
 				F77_CALL(dtrsv)("L", "N", "N", &p_1, Chol_ij, &p_1, C, &one);
 				F77_CALL(dtrsv)("L", "T", "N", &p_1, Chol_ij, &p_1, C, &one);
 				for(k=0; k<p_1; k++){
 					Omega_ij[k] = C[k];
-					U_ij[k] += alpha * C[k] + (1-alpha) * Z_ij[k];
+					U_ij[k] += alpha*C[k] + (1-alpha)*Z_ij[k];
 				}
 			}
 		}
@@ -569,7 +568,7 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 		}
 		for(j=1; j<p; j++){
 			for(k=0; k<j; k++){
-				coef[p_1*j+k] = 1 - lambda / (rho * sqrt(coef[p_1*j+k]));
+				coef[p_1*j+k] = 1 - lambda/(rho*sqrt(coef[p_1*j+k]));
 			}
 		}
 		for(i=0; i<L; i++){
@@ -583,7 +582,7 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 					}
 					else{
 						temp_1 = Z[index_ijk], temp_2 = Z[index_ikj];
-						Z[index_ijk] = coef[p_1*j+k] * (U[index_ijk] + U[index_ikj])/2;
+						Z[index_ijk] = coef[p_1*j+k]*(U[index_ijk] + U[index_ikj])/2;
 						Z[index_ikj] = Z[index_ijk];
 						U[index_ijk] -= Z[index_ijk];
 						U[index_ikj] -= Z[index_ikj];
@@ -594,8 +593,8 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 			}
 		}
 
-		s = rho * sqrt(s);
-		epi_dual = sqrt(L*p) * epi_abs + epi_rel * rho * sqrt(2*epi_dual);
+		s = rho*sqrt(s);
+		epi_dual = sqrt(L*p)*epi_abs + epi_rel*rho*sqrt(2*epi_dual);
 		drd = s - epi_dual;
 		if(drd < 0){
 			for(i=0; i<L; i++){
@@ -609,7 +608,7 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 				}
 			}
 			r = sqrt(r);
-			epi_pri = sqrt(L*p) * epi_abs + epi_rel * sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
+			epi_pri = sqrt(L*p)*epi_abs + epi_rel*sqrt(2*((epi_pri_1>epi_pri_2)?epi_pri_1:epi_pri_2));
 			prd = r - epi_pri;
 		}
 		max_step--;
@@ -642,7 +641,7 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 }
 
 
-//SPACE (sparse partial correlation estimation) (d step)
+//ADMM on SPACE(sparse partial correlation estimation) (d step)
 void ADMM_SPACE_d(double *Corr, double *d, double *Z, int *P, int *Len){
 
 	int p = *P, L = *Len;
@@ -658,15 +657,15 @@ void ADMM_SPACE_d(double *Corr, double *d, double *Z, int *P, int *Len){
 			}
 			for(k=0; k<p; k++){
 				if(rho[k] != 0){
-					d_new[j] += pow(rho[k], 2) * d[p*i+k] * Corr[p*p*i+p*k+k];
+					d_new[j] += pow(rho[k], 2)*d[p*i+k]*Corr[p*p*i+p*k+k];
 					for(m=k+1; m<p; m++){
 						if(rho[m] != 0){
-							d_new[j] += 2 * rho[k] * rho[m] * sqrt(d[p*i+k] * d[p*i+m]) * Corr[p*p*i+p*k+m];
+							d_new[j] += 2*rho[k]*rho[m]*sqrt(d[p*i+k]*d[p*i+m])*Corr[p*p*i+p*k+m];
 						}
 					}
 				}
 			}
-			d_new[j] = 1 / (-d_new[j] / d[p*i+j] + Corr[p*p*i+p*j+j]);
+			d_new[j] = 1/(-d_new[j]/d[p*i+j] + Corr[p*p*i+p*j+j]);
 		}
 		for(j=0; j<p; j++){
 			d[p*i+j] = d_new[j];
@@ -686,17 +685,17 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J){
 	double *U_k, *Chol_k;
 
 	//inherit from previous upper triangular matrix with j-1
-	//restore (j-1)th column
+	//recover (j-1)th column
 	for(k=0; k<j; k++){
 		U[p_1*k+j-1] = Chol[p*k+j-1];
 	}
-	//restore (j-1)th row
+	//recover (j-1)th row
 	if(j >= 1){
 		for(m=j; m<p_1; m++){
 			U[p_1*(j-1)+m] = Chol[p*(j-1)+m+1];
 		}
 	}
-	//restore jth row
+	//recover jth row
 	for(m=j; m<p_1; m++){
 		U[p_1*j+m] = Chol[p*j+m+1];
 	}
@@ -705,13 +704,13 @@ void Givens_rotation(double *U, double *Chol, int *P, int *J){
 	for(k=j; k<p_1; k++){
 		U_k = U+p_1*k+k, Chol_k = Chol+p*(k+1)+k+1;
 		r = sqrt(pow(U_k[0], 2) + pow(Chol_k[0], 2));
-		c = U_k[0] / r;
-		s = -Chol_k[0] / r;
+		c = U_k[0]/r;
+		s = -Chol_k[0]/r;
 		U_k[0] = r;	
 		for(m=1; m<p_1-k; m++){
 			temp_1 = U_k[m], temp_2 = Chol_k[m];
-			U_k[m] = c * temp_1 - s * temp_2;
-			U_k[m+p_1] = s * temp_1 + c * temp_2;
+			U_k[m] = c*temp_1 - s*temp_2;
+			U_k[m+p_1] = s*temp_1 + c*temp_2;
 		}
 	}
 }
