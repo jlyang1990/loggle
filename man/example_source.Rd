@@ -21,7 +21,7 @@ library(matrixcalc)
 
 # function to generate time-varying graphs and 
 # observations
-loggle.true.graph <- function(p, N, alpha = 0.28) {
+loggle.graph <- function(p, N, alpha = 0.28) {
   
   done <- FALSE
   
@@ -82,9 +82,9 @@ loggle.true.graph <- function(p, N, alpha = 0.28) {
   return(result)
 }
 
-# implement loggle.true.graph
+# implement loggle.graph
 set.seed(1)
-result <- loggle.true.graph(p = 50, N = 2001)
+result <- loggle.graph(p = 50, N = 2001)
 Omega.true <- result$Omega.true[seq(1, 2001, 2)]
 X <- result$X[, seq(1, 2001, 2)]
 

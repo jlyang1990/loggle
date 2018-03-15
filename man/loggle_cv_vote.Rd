@@ -35,7 +35,7 @@ num.thread = 1, print.detail = TRUE)
 }
   
 \details{
-The idea of cross-validation is implemented in this function, where \link{loggle} is applied on each cross-validation fold to get fold-wise estimated time-varying graphs, and cv.vote is then applied across cross-validation folds to get the unified version of estimated time-varying graphs.
+The idea of cross-validation is implemented in this function, where \link{loggle} is applied on each cross-validation fold to get fold-wise estimated time-varying graphs, and cv.vote is then applied across cross-validation folds to get the final version of estimated time-varying graphs.
 
 The model fitting method based on pseudo-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than that based on likelihood (\code{fit.type = "likelihood"}), with similar model fitting performance.
 

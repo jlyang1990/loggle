@@ -59,7 +59,7 @@ If no pre-processing has been done to the data matrix \code{X}, \code{detrend = 
 }
 
 \value{
-  \item{cv.result.h}{a list of model fitting results from \link{loggle.cv.h} for each h}
+  \item{cv.result.h}{a list of model fitting results from \link{loggle.cv.h} for each \code{h}}
   \item{cv.select.result}{results from \link{loggle.cv.select} if \code{return.select = TRUE}}
 }
 
@@ -71,7 +71,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{loggle} for learning time-varying graphical models, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example} for description of an example dataset of time-varying graphs, \link{example_source} for generating time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for obtaining stock price dataset of S&P 500 companies.
+\link{loggle} for learning time-varying graphical models, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example} for description of an example dataset of time-varying graphs, \link{example_source} for generating the example dataset of time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for obtaining stock price dataset of S&P 500 companies.
 }
 
 \examples{

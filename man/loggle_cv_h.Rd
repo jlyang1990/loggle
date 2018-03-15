@@ -3,7 +3,7 @@
 \title{A function to learn time-varying graphical models via cross validation (with \code{h} fixed)}
 
 \description{
-This function is to efficiently conduct model selection via cross validation for learning time-varying graphical models. Different from \link{loggle.cv}, \code{h} (bandwidth in kernel smoothed sample covariance/correlation matrix) should be pre-determined.
+This function is to efficiently conduct model selection via cross validation for learning time-varying graphical models. Different from \link{loggle.cv}, \code{h} (bandwidth in kernel smoothed sample covariance/correlation matrix) should be pre-specified.
 }
 
 \usage{
@@ -41,7 +41,7 @@ h.correct = TRUE, num.thread = 1, print.detail = TRUE)
 }
   
 \details{
-This function conducts grid search for optimal \code{d} and \code{lambda}, while \code{h} is pre-determined. To select the optimal \code{h} as well, one can use \link{loggle.cv} or apply this function to different candidate \code{h}'s.
+This function conducts grid search for optimal \code{d} and \code{lambda}, while \code{h} is pre-specified. To select the optimal \code{h} as well, one can use \link{loggle.cv} or apply this function to different candidate \code{h}'s.
 
 The model fitting method based on pseudo-likelihood (\code{fit.type = "pseudo"} or \code{fit.type = "space"}) is usually less computationally intensive than that based on likelihood (\code{fit.type = "likelihood"}), with similar model fitting performance.
 

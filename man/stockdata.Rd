@@ -14,11 +14,11 @@ data(stockdata)
 \format{
   This dataset consists of two matrices:
   
-  1. data - 2518x455: 455 stocks' closing prices for 2518 trading days from 2007 to 2016. Trading dates are represented as row name in the data matrix and company names are represented as column name in the data matrix.
+  1. data - 2518x455: 455 stocks' closing prices at 2518 trading days from 2007 to 2016. Trading dates are represented as row name in data matrix and company names are represented as column name in data matrix.
   
   2. info - 455x3:
-  1st column: ticker symbol for each company. 
-  2nd column: name of Global Industry Classification Standard (GICS) sector for each company.
+  1st column: ticker symbol of each company. 
+  2nd column: Global Industry Classification Standard (GICS) sector of each company.
   3rd column: full name of each company.
 }
 
@@ -27,7 +27,7 @@ This dataset can be used in time-varying graph estimation to reveal the dynamic 
 }
 
 \source{
-Data are publicly available at www.yahoo.com, and R package \code{quantmod} can be used to extract the stock information. The source code for stockdata is in \link{stockdata_source}.
+Data are publicly available at www.yahoo.com, and R package \code{quantmod} can be used to extract the stock information. The source code is in \link{stockdata_source}.
 }
 
 \references{
@@ -92,9 +92,9 @@ for(k in 1:length(pos.plot)) {
   plot(net, vertex.size = 3, vertex.label = NA, layout = 
   layout.circle, main = date.index[pos[pos.plot[k]]])
   legend("bottomright", c("Materials", "Tele. Services", 
-  "Utilities"), pch = 19, col = rainbow(3), cex = 0.4)
+  "Utilities"), pch = 21, pt.bg = rainbow(3), cex = 0.6)
   legend("bottomleft", c("within sector", 
-  "between sector"), lwd = c(1, 0.4), col = c("black", 
-  "gray"), cex = 0.4)
+  "cross sector"), lwd = c(1, 0.4), col = c("black", 
+  "gray"), cex = 0.6)
 }
 }

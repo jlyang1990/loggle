@@ -28,7 +28,7 @@ print.detail = TRUE)
   \item{max.step}{an integer: maximum iteration steps in ADMM iteration, default = 500}
   \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centering), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
-  \item{pos.corr}{a vector constitutes a subset of \{1, 2, ..., N\}: indices of time points used to get kernel smoothed covariance/correlation matrix, default = 1:N}
+  \item{pos.corr}{a vector constitutes a subset of \{1, 2, ..., N\}: indices of time points used to get kernel smoothed sample covariance/correlation matrix, default = 1:N}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
   \item{print.detail}{logic: if TRUE, print details in model fitting procedure, default = TRUE}
 }
@@ -59,7 +59,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example} for description of an example dataset of time-varying graphs, \link{example_source} for generating time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for obtaining stock price dataset of S&P 500 companies.
+\link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example} for description of an example dataset of time-varying graphs, \link{example_source} for generating the example dataset of time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for obtaining stock price dataset of S&P 500 companies.
 }
 
 \examples{
