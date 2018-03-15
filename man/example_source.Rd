@@ -1,10 +1,10 @@
 \name{example_source}
 \alias{example_source}
 \docType{data}
-\title{Source code for generating true time-varying graphs}
+\title{Source code for generating time-varying graphs}
 
 \description{
-This is the source code for generating true time-varying graphs including true precision matrices and observations in \link{example}.
+This is the source code for generating time-varying graphs including precision matrices and observations in \link{example}.
 }
 
 \references{

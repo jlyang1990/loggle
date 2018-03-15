@@ -27,7 +27,7 @@ num.thread = 1, print.detail = TRUE)
   \item{cv.vote.thres}{a scalar between 0 and 1: an edge is kept after cv.vote if and only if it exists in no less than \code{cv.vote.thres}*\code{cv.fold} cv folds, default = 0.8}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
-  \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
+  \item{max.step}{an integer: maximum iteration steps in ADMM iteration, default = 500}
   \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centering), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
@@ -43,7 +43,7 @@ The model fitting method based on pseudo-likelihood (\code{fit.type = "pseudo"} 
 
 If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is recommended to detrend each variable in data matrix by subtracting corresponding kernel weighted moving average.
 
-\code{fit.corr = TRUE} is recommended such that all the variables are of the same scales. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} may need to be changed accordingly.
+\code{fit.corr = TRUE} is recommended such that all the variables are of the same scale. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} may need to be changed accordingly.
 }
 
 \value{

@@ -25,10 +25,10 @@ print.detail = TRUE)
   \item{refit}{logic: if TRUE, conduct model refitting given learned graph structures, default = TRUE}
   \item{epi.abs}{a scalar: absolute tolerance in ADMM stopping criterion, default = 1e-5}
   \item{epi.rel}{a scalar: relative tolerance in ADMM stopping criterion, default = 1e-3}
-  \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
+  \item{max.step}{an integer: maximum iteration steps in ADMM iteration, default = 500}
   \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centering), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
-  \item{pos.corr}{a vector constitutes a subset of \{1, 2, ..., N\}: indices of time points used to generate sample covariance/correlation matrix, default = 1:N}
+  \item{pos.corr}{a vector constitutes a subset of \{1, 2, ..., N\}: indices of time points used to get kernel smoothed covariance/correlation matrix, default = 1:N}
   \item{num.thread}{an integer: number of threads used in parallel computing, default = 1}
   \item{print.detail}{logic: if TRUE, print details in model fitting procedure, default = TRUE}
 }
@@ -40,7 +40,7 @@ The model fitting method based on pseudo-likelihood (\code{fit.type = "pseudo"} 
 
 If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is recommended to detrend each variable in data matrix by subtracting corresponding kernel weighted moving average.
 
-\code{fit.corr = TRUE} is recommended such that all the variables are of the same scales. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} may need to be changed accordingly.
+\code{fit.corr = TRUE} is recommended such that all the variables are of the same scale. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} may need to be changed accordingly.
 
 An ADMM (alternating directions method of multipliers) algorithm is implemented in learning time-varying graphical models.
 }
@@ -59,7 +59,7 @@ Yang, J. and Peng, J.
 }
 
 \seealso{
-\link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example} for description of an example dataset of true time-varying graphs, \link{example_source} for generating true time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for generating stock price dataset of S&P 500 companies.
+\link{loggle.cv} for learning time-varying graphical models via cross validation, \link{loggle.cv.select} for model selection based on cross validation results, \link{loggle.cv.vote} for learning time-varying graphical models using cv.vote, \link{loggle.cv.h} for learning time-varying graphical models via cross validation (with \code{h} fixed), \link{loggle.cv.select.h} for model selection based on cross validation results (with \code{h} fixed), \link{loggle.refit} for model refitting based on estimated graphs, \link{example} for description of an example dataset of time-varying graphs, \link{example_source} for generating time-varying graphs, \link{stockdata} for description of stock price dataset of S&P 500 companies, \link{stockdata_source} for obtaining stock price dataset of S&P 500 companies.
 }
 
 \examples{

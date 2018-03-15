@@ -4,7 +4,7 @@
 \title{Source code for stock prices of S&P 500 companies from 2007 to 2016}
 
 \description{
-This is the source code for generating the stock closing prices and company information of S&P 500 companies in \link{stockdata}.
+This is the source code for obtaining the stock closing prices and company information of S&P 500 companies in \link{stockdata}.
 }
 
 \references{

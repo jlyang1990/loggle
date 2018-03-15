@@ -32,7 +32,7 @@ h.correct = TRUE, num.thread = 1, print.detail = TRUE)
   \item{early.stop.thres}{a scalar: stopping criterion in grid search -- grid search stops when the ratio between number of detected edges and number of variables exceeds \code{early.stop.thres}, default = 5}
   \item{epi.abs}{a scalar or a vector of the same length as \code{d.list}: absolute tolerance in ADMM stopping criterion, default = 1e-4.}
   \item{epi.rel}{a scalar or a vector of the same length as \code{d.list}: relative tolerance in ADMM stopping criterion, default = 1e-2.}
-  \item{max.step}{an integer: maximum steps in ADMM iteration, default = 500}
+  \item{max.step}{an integer: maximum iteration steps in ADMM iteration, default = 500}
   \item{detrend}{logic: if TRUE, subtract kernel weighted moving average for each variable in data matrix (i.e., detrending), if FALSE, subtract overall average for each variable in data matrix (i.e., centering), default = TRUE}
   \item{fit.corr}{logic: if TRUE, use sample correlation matrix in model fitting, if FALSE, use sample covariance matrix in model fitting, default = TRUE}
   \item{h.correct}{logic: if TRUE, apply bandwidth adjustment for validation sets due to sample size difference, default = TRUE}
@@ -53,7 +53,7 @@ The model fitting method based on pseudo-likelihood (\code{fit.type = "pseudo"} 
 
 If no pre-processing has been done to the data matrix \code{X}, \code{detrend = TRUE} is recommended to detrend each variable in data matrix by subtracting corresponding kernel weighted moving average.
 
-\code{fit.corr = TRUE} is recommended such that all the variables are of the same scales. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} may need to be changed accordingly.
+\code{fit.corr = TRUE} is recommended such that all the variables are of the same scale. If \code{fit.corr = FALSE} is used, the default value of \code{lambda} may need to be changed accordingly.
 
 \code{h.correct = TRUE} is recommended in calculating kernel smoothed sample covariance matrix for validation sets. This is because bandwidth \code{h} should reflect the difference in sample sizes between training and validation sets.
 }

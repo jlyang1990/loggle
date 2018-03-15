@@ -1,10 +1,10 @@
 \name{example}
 \alias{example}
 \docType{data}
-\title{An example of true time-varying graphs}
+\title{An example of time-varying graphs}
 
 \description{
-This dataset contains an example of true time-varying graphs including true precision matrices and observations, with number of variables set as 50.
+This dataset contains an example of time-varying graphs including precision matrices and observations, with number of variables set as 50.
 }
 
 \usage{
@@ -16,7 +16,7 @@ data(example)
   
   1. X - 50x1001: a data matrix containing 1001 observations for 50 variables on an equally-spaced time grid ranging from 0 to 1.
   
-  2. Omega.true - a list of length 1001 with each element being a 50x50 matrix: a list of true precision matrices on an equally-spaced time grid ranging from 0 to 1.
+  2. Omega.true - a list of length 1001 with each element being a 50x50 matrix: a list of precision matrices on an equally-spaced time grid ranging from 0 to 1.
 }
 
 \details{
