@@ -84,10 +84,10 @@ loggle.graph <- function(p, N, alpha = 0.28) {
 }
 
 # implement loggle.graph
-set.seed(1)
-result <- loggle.graph(p = 50, N = 2001)
-Omega.true <- result$Omega.true[seq(1, 2001, 2)]
-X <- result$X[, seq(1, 2001, 2)]
+set.seed(10)
+result <- loggle.graph(p = 15, N = 1001)
+Omega.true <- result$Omega.true
+X <- result$X
 
 # save Omega.true and X into example.rda
 example <- list(Omega.true = Omega.true, X = X)

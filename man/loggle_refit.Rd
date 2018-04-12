@@ -45,13 +45,13 @@ X <- example$X  # data matrix
 dim(X)  # dimension of data matrix
 
 # positions of time points to estimate graphs
-pos <- round(seq(0.02, 0.98, length=25)*(ncol(X)-1)+1)
+pos <- round(seq(0.1, 0.9, length=9)*(ncol(X)-1)+1)
 # estimate time-varying graphs and conduct model 
 # selection via cross-validation
 result <- loggle.cv.h(X, pos, h = 0.2, 
-d.list = c(0, 0.01, 0.05, 0.1, 0.2, 0.3, 1), 
-lambda.list = c(0.15, 0.2, 0.25, 0.3), fit.type 
-= "pseudo", cv.vote.thres = 1, num.thread = 1)
+d.list = c(0, 0.05, 0.15, 1), lambda.list 
+= c(0.2, 0.25), cv.fold = 3, fit.type = "pseudo", 
+cv.vote.thres = 1, num.thread = 1)
 
 # estimated adjacency matrices at each time point
 adj.mat.opt <- result$cv.select.result$adj.mat.opt

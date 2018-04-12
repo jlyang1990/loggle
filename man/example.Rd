@@ -4,7 +4,7 @@
 \title{An example dataset of time-varying graphs}
 
 \description{
-This dataset contains an example of time-varying graphs including precision matrices and observations, with number of variables being 50.
+This dataset contains an example of time-varying graphs including precision matrices and observations, with number of variables being 15.
 }
 
 \usage{
@@ -14,9 +14,9 @@ data(example)
 \format{
   This dataset consists of two parts:
   
-  1. X - 50x1001: a data matrix containing 1001 observations of 50 variables on an equally-spaced time grid ranging from 0 to 1.
+  1. X - 15x1001: a data matrix containing 1001 observations of 15 variables on an equally-spaced time grid ranging from 0 to 1.
   
-  2. Omega.true - a list of length 1001 with each element being a 50x50 matrix: a list of precision matrices on an equally-spaced time grid ranging from 0 to 1.
+  2. Omega.true - a list of length 1001 with each element being a 15x15 matrix: a list of precision matrices on an equally-spaced time grid ranging from 0 to 1.
 }
 
 \details{

@@ -72,7 +72,7 @@ dim(X)  # dimension of data matrix
 p <- nrow(X)  # number of variables
 
 # positions of time points to estimate graphs
-pos <- round(seq(0.02, 0.98, length=49)*(ncol(X)-1)+1)
+pos <- round(seq(0.1, 0.9, length=9)*(ncol(X)-1)+1)
 K <- length(pos)
 # estimate time-varying graphs
 # num.thread can be set as large as number of cores 
@@ -80,22 +80,20 @@ K <- length(pos)
 # memory overflow should also be taken caution of)
 ts <- proc.time()
 result <- loggle(X, pos, h = 0.1, d = 0.15, 
-lambda = 0.225, fit.type = "pseudo", refit = TRUE, 
+lambda = 0.25, fit.type = "pseudo", refit = TRUE, 
 num.thread = 1)
 te <- proc.time()
 sprintf("Time used for loggle: \%.2fs", (te-ts)[3])
 
 # number of edges at each time point
-print(cbind("time" = seq(0.02, 0.98, length=49),
+print(cbind("time" = seq(0.1, 0.9, length=9),
 "edge.num" = result$edge.num))
 
-# graphs at specified time points
+# graph at each time point
 library(igraph)
-par(mfrow = c(2, 4))
-pos.plot <- pos[round(seq(1, K, length=16))]
-for(k in 1:length(pos.plot)) {
-  adj.matrix <- result$Omega[[which(pos == 
-  pos.plot[k])]] != 0
+par(mfrow = c(3, 3))
+for(k in 1:length(pos)) {
+  adj.matrix <- result$Omega[[k]] != 0
   net <- graph.adjacency(adj.matrix, mode = 
   "undirected", diag = FALSE)
   set.seed(0)
@@ -103,7 +101,7 @@ for(k in 1:length(pos.plot)) {
   "lightblue", vertex.label = NA, edge.color = 
   "black", layout = layout.circle)
   title(main = paste("t =", 
-  round(pos.plot[k]/(ncol(X)-1), 2)), cex.main = 0.8)
+  round(pos[k]/(ncol(X)-1), 2)), cex.main = 0.8)
 }
 
 # false discovery rate (FDR) and power based on 
