@@ -54,6 +54,7 @@ If no pre-processing has been done to the data matrix \code{X}, \code{detrend = 
 }
 
 \references{
+Yang, J. & Peng, J. (2018), 'Estimating Time-Varying Graphical Models', arXiv preprint arXiv:1804.03811
 }
 
 \author{

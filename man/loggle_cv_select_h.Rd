@@ -33,6 +33,7 @@ cv.vote.thres = 0.8)
 }
 
 \references{
+Yang, J. & Peng, J. (2018), 'Estimating Time-Varying Graphical Models', arXiv preprint arXiv:1804.03811
 }
 
 \author{

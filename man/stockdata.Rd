@@ -31,6 +31,7 @@ Data are publicly available at www.yahoo.com, and R package \code{quantmod} can 
 }
 
 \references{
+Yang, J. & Peng, J. (2018), 'Estimating Time-Varying Graphical Models', arXiv preprint arXiv:1804.03811
 }
 
 \author{

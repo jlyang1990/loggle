@@ -28,6 +28,7 @@ Function "glasso" in R package \code{glasso} is applied in model refitting.
 }
 
 \references{
+Yang, J. & Peng, J. (2018), 'Estimating Time-Varying Graphical Models', arXiv preprint arXiv:1804.03811
 }
 
 \author{

@@ -8,6 +8,7 @@ This is the source code for obtaining the stock closing prices and company infor
 }
 
 \references{
+Yang, J. & Peng, J. (2018), 'Estimating Time-Varying Graphical Models', arXiv preprint arXiv:1804.03811
 }
 
 \author{

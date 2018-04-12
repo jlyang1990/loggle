@@ -52,6 +52,7 @@ An ADMM (alternating directions method of multipliers) algorithm is implemented 
 }
 
 \references{
+Yang, J. & Peng, J. (2018), 'Estimating Time-Varying Graphical Models', arXiv preprint arXiv:1804.03811
 }
 
 \author{
