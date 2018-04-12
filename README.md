@@ -5,6 +5,8 @@ The R package `loggle` provides a set of methods that learn time-varying graphic
 
 `loggle` has been applied to S&P 500 stock price dataset from 2007 to 2016, where the evolution pattern of relationships between stocks during that period can be revealed. Detailed description and analysis of S&P 500 stock price dataset is in `?stockdata`.
 
+For more details on estimating time-varying graphical models and the package, please refer to: Estimating Time-Varying Graphical Models https://arxiv.org/abs/1804.03811.
+
 ## Dependencies
 Please make sure to install the following package dependencies before using R package `loggle`. R with version later than 3.0.2 is needed.
 ```r
