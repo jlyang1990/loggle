@@ -1,7 +1,7 @@
 Package: loggle
 Title: LOcal Group Graphical Lasso Estimation
 Version: 1.0
-Date: 2018-01-02
+Date: 2018-04-11
 Author: Jilei Yang, Jie Peng
 Maintainer: Jilei Yang <jlyang@ucdavis.edu>
 Description: The R package loggle provides a set of methods that learn time-varying graphical models. 
