@@ -327,7 +327,7 @@ void ADMM_local_glasso(double *Corr, double *Z, double *U, int *P, int *Len, dou
 	}//end ADMM iteration
 
 	if(max_step == 0){
-		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
+		Rprintf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
 	}
 
 	for(i=0; i<L; i++){
@@ -469,7 +469,7 @@ void ADMM_pseudo_glasso(double *Corr, double *Z, double *U, int *P, int *Len, do
 	}//end ADMM iteration
 
 	if(max_step == 0){
-		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
+		Rprintf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
 	}
 
 	for(i=L-1; i>=0; i--){
@@ -615,7 +615,7 @@ void ADMM_SPACE_rho(double *Corr, double *d, double *Z, double *U, int *P, int *
 	}//end ADMM iteration
 
 	if(max_step == 0){
-		printf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
+		Rprintf("Warning: algorithm does not converge at max step = %d!\n", *Max_step);
 	}
 
 	for(i=L-1; i>=0; i--){
