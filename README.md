@@ -1,9 +1,9 @@
 # LOGGLE (LOcal Group Graphical Lasso Estimation)
 
 ## Description
-The R package `loggle` provides a set of methods that learn time-varying graphical models, where these models can be used to identify the dynamic relationships between a bunch of variables. `loggle` is motivated by the cases where the observations of variables are measured on a time grid, such that the direct interactions between these variables can evolve over time. For example, the gene regulatory network over the course of organismal development, and the dynamic relationship between individuals in a community over several years. `loggle` estimates the time-varying graphical models under smoothness assumptions on both the covariance matrix and graph structure. 
+The R package `loggle` provides a set of methods that learn time-varying graphical models based on data measured over a temporal grid. `loggle` is motivated by the needs to describe and understand evolving interacting relationships among a set of random variables in many real applications, for instance, the gene regulatory networks over the course of organismal development, and the dynamic relationships between individuals in a community over a few years. `loggle` estimates time-varying graphical models under the assumption that the graph topology changes gradually over time.
 
-`loggle` has been applied to S&P 500 stock price dataset from 2007 to 2016, where the evolution pattern of relationships between stocks during that period can be revealed. Detailed description and analysis of S&P 500 stock price dataset is in `?stockdata`.
+`loggle` has been applied to S&P 500 stock price dataset, where the interacting relationships among stocks and among industrial sectors in a time period that covers the recent global financial crisis can be revealed. Detailed description of S&P 500 stock price dataset is in `?stockdata`.
 
 For more details on estimating time-varying graphical models and the package, please refer to: **Estimating Time-Varying Graphical Models** https://arxiv.org/abs/1804.03811.
 

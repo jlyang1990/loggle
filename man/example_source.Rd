@@ -83,13 +83,8 @@ loggle.graph <- function(p, N, alpha = 0.28) {
   return(result)
 }
 
-# implement loggle.graph
+# generate an example dataset of time-varying graphs 
+# via loggle.graph
 set.seed(10)
-result <- loggle.graph(p = 15, N = 1001)
-Omega.true <- result$Omega.true
-X <- result$X
-
-# save Omega.true and X into example.rda
-example <- list(Omega.true = Omega.true, X = X)
-save(example, file = "example.rda")
+example <- loggle.graph(p = 15, N = 1001)
 }

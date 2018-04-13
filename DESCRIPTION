@@ -1,10 +1,10 @@
 Package: loggle
-Title: LOcal Group Graphical Lasso Estimation
+Title: Local Group Graphical Lasso Estimation
 Version: 1.0
 Date: 2018-04-11
 Author: Jilei Yang, Jie Peng
 Maintainer: Jilei Yang <jlyang@ucdavis.edu>
-Description: The R package loggle provides a set of methods that learn time-varying graphical models. 
+Description: Provides a set of methods that learn time-varying graphical models based on data measured over a temporal grid. The underlying statistical model is motivated by the needs to describe and understand evolving interacting relationships among a set of random variables in many real applications, for instance the study of how stocks interact with each other and how such interactions change over time. The time-varying graphical models are estimated under the assumption that the graph topology changes gradually over time. For more details on estimating time-varying graphical models, please refer to: Yang, J. & Peng, J. (2018) <arXiv:1804.03811>.
 Depends:
   R (>= 3.0.2)
 Imports:
