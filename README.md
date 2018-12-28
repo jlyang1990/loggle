@@ -5,7 +5,7 @@ The R package `loggle` provides a set of methods that learn time-varying graphic
 
 `loggle` has been applied to S&P 500 stock price dataset, where the interacting relationships among stocks and among industrial sectors in a time period that covers the recent global financial crisis can be revealed. Detailed description of S&P 500 stock price dataset is in `?stockdata`.
 
-`loggle` is available on [CRAN](https://CRAN.R-project.org/package=loggle) now. For more details on estimating time-varying graphical models and the package, please refer to: Yang, J. & Peng, J. (2018), **Estimating Time-Varying Graphical Models**, [arXiv:1804.03811](https://arxiv.org/abs/1804.03811).
+`loggle` is available on [CRAN](https://CRAN.R-project.org/package=loggle) now. For more details on estimating time-varying graphical models and the package, please refer to: Yang, J. & Peng, J. (2018), **Estimating Time-Varying Graphical Models**, [arXiv:1804.03811](https://arxiv.org/abs/1804.03811). For codes and data used in the simulation and real data application in this paper, please refer to: [https://github.com/jlyang1990/loggle_test](https://github.com/jlyang1990/loggle_test).
 
 ## Dependencies
 Please make sure to install the following package dependencies before using R package `loggle`. R with version later than 3.0.2 is needed.
